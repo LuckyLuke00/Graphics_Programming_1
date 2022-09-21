@@ -40,7 +40,21 @@ void Renderer::Render(Scene* pScene) const
 			};
 			rayDirection.Normalize();
 
-			ColorRGB finalColor{ rayDirection.x, rayDirection.y, rayDirection.z };
+			Ray viewRay{ {0,0,0}, rayDirection };
+
+			//Color to write to the color buffer
+			ColorRGB finalColor{};
+
+			HitRecord closestHit{};
+
+			Sphere testSphere{ {0.f,0.f,100.f}, 50.f,0 };
+
+			GeometryUtils::HitTest_Sphere(testSphere, viewRay, closestHit);
+
+			if (closestHit.didHit)
+			{
+				finalColor = materials[closestHit.materialIndex]->Shade();
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
