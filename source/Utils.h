@@ -18,18 +18,18 @@ namespace dae
 
 			Vector3 sphereToRay{ ray.origin - sphere.origin };
 
-			float a{ Vector3::Dot(ray.direction, ray.direction) };
-			float b{ 2.f * Vector3::Dot(sphereToRay, ray.direction) };
-			float c{ Vector3::Dot(sphereToRay, sphereToRay) - sphere.radius * sphere.radius };
+			const float a{ Vector3::Dot(ray.direction, ray.direction) };
+			const float b{ 2.f * Vector3::Dot(sphereToRay, ray.direction) };
+			const float c{ Vector3::Dot(sphereToRay, sphereToRay) - sphere.radius * sphere.radius };
 
-			float discriminant{ b * b - 4.f * a * c };
+			const float discriminant{ b * b - 4.f * a * c };
 
 			if (discriminant < 0.f) return false;
 
-			float t0{ (-b - sqrt(discriminant)) / (2.f * a) };
-			float t1{ (-b + sqrt(discriminant)) / (2.f * a) };
+			const float t0{ (-b - sqrt(discriminant)) / (2.f * a) };
+			const float t1{ (-b + sqrt(discriminant)) / (2.f * a) };
 
-			float t{ t0 < t1 ? t0 : t1 };
+			const float t{ t0 < t1 ? t0 : t1 };
 
 			if (t < 0.f) return false;
 
@@ -53,9 +53,26 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
-			return false;
+			// Check plane intersection with ray
+			// If intersection, return true and update hitRecord
+			// If no intersection, return false and keep hitRecord unchanged
+
+			const float denominator{ Vector3::Dot(plane.normal, ray.direction) };
+
+			if (denominator == 0.f) return false;
+
+			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator };
+
+			if (t < 0.f) return false;
+
+			if (ignoreHitRecord) return true;
+
+			hitRecord.didHit = true;
+			hitRecord.t = t;
+			hitRecord.normal = plane.normal;
+			hitRecord.materialIndex = plane.materialIndex;
+
+			return true;
 		}
 
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray)

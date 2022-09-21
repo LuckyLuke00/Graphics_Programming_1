@@ -47,7 +47,7 @@ void Renderer::Render(Scene* pScene) const
 
 			HitRecord closestHit{};
 			pScene->GetClosestHit(viewRay, closestHit);
-
+			
 			if (closestHit.didHit)
 			{
 				finalColor = materials[closestHit.materialIndex]->Shade();

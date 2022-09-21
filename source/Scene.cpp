@@ -28,11 +28,20 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		// This function iterates all spheres (planes, triangles are added later) and returns the HitRecord of the closest (smallest t-value) hit
+		// This function iterates all spheres planes, triangles and returns the HitRecord of the closest (smallest t-value) hit
 		for (const Sphere& sphere : m_SphereGeometries)
 		{
 			HitRecord hit{};
 			if (GeometryUtils::HitTest_Sphere(sphere, ray, hit) && hit.t < closestHit.t)
+			{
+				closestHit = hit;
+			}
+		}
+
+		for (const Plane& plane : m_PlaneGeometries)
+		{
+			HitRecord hit{};
+			if (GeometryUtils::HitTest_Plane(plane, ray, hit) && hit.t < closestHit.t)
 			{
 				closestHit = hit;
 			}
