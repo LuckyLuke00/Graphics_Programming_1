@@ -19,6 +19,7 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
+	m_AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
 }
 
 void Renderer::Render(Scene* pScene) const
@@ -31,11 +32,15 @@ void Renderer::Render(Scene* pScene) const
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+			Vector3 rayDirection
+			{
+				(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f)* m_AspectRatio,
+				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)),
+				1.f
+			};
+			rayDirection.Normalize();
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+			ColorRGB finalColor{ rayDirection.x, rayDirection.y, rayDirection.z };
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
