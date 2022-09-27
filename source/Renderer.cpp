@@ -34,13 +34,13 @@ void Renderer::Render(Scene* pScene) const
 		{
 			Vector3 rayDirection
 			{
-				(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f)* m_AspectRatio,
+				(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f) * m_AspectRatio,
 				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)),
 				1.f
 			};
 			rayDirection.Normalize();
 
-			Ray viewRay{ {0,0,0}, rayDirection };
+			Ray viewRay{ camera.origin, rayDirection };
 
 			//Color to write to the color buffer
 			ColorRGB finalColor{};
