@@ -4,6 +4,7 @@
 
 //Project includes
 #include "Renderer.h"
+
 #include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
@@ -28,12 +29,14 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	//Calculate FOV
-	const float fov{ tanf(TO_RADIANS * camera.fovAngle / 2.f) };
+	camera.cameraToWorld = camera.CalculateCameraToWorld();
 
-	for (int px{}; px < m_Width; ++px)
+	//Calculate FOV
+	static const float fov{ tanf(TO_RADIANS * camera.fovAngle / 2.f) };
+
+	for (int px{0}; px < m_Width; ++px)
 	{
-		for (int py{}; py < m_Height; ++py)
+		for (int py{0}; py < m_Height; ++py)
 		{
 			Vector3 rayDirection
 			{
@@ -41,7 +44,9 @@ void Renderer::Render(Scene* pScene) const
 				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * fov,
 				1.f
 			};
-			rayDirection.Normalize();
+			
+			// Transform rayDirection with cameraToWorld
+			rayDirection = camera.cameraToWorld.TransformVector(rayDirection).Normalized();
 
 			Ray viewRay{ camera.origin, rayDirection };
 
