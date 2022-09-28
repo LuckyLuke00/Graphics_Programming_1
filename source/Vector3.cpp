@@ -11,11 +11,11 @@ namespace dae {
 	const Vector3 Vector3::UnitZ = Vector3{ 0, 0, 1 };
 	const Vector3 Vector3::Zero = Vector3{ 0, 0, 0 };
 
-	Vector3::Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z){}
+	Vector3::Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
-	Vector3::Vector3(const Vector4& v) : x(v.x), y(v.y), z(v.z){}
+	Vector3::Vector3(const Vector4& v) : x(v.x), y(v.y), z(v.z) {}
 
-	Vector3::Vector3(const Vector3& from, const Vector3& to) : x(to.x - from.x), y(to.y - from.y), z(to.z - from.z){}
+	Vector3::Vector3(const Vector3& from, const Vector3& to) : x(to.x - from.x), y(to.y - from.y), z(to.z - from.z) {}
 
 	float Vector3::Magnitude() const
 	{

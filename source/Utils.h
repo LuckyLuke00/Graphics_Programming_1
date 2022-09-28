@@ -16,7 +16,7 @@ namespace dae
 			// If intersection, return true and update hitRecord
 			// If no intersection, return false and keep hitRecord unchanged
 
-			Vector3 sphereToRay{ ray.origin - sphere.origin };
+			const Vector3 sphereToRay{ ray.origin - sphere.origin };
 
 			const float a{ Vector3::Dot(ray.direction, ray.direction) };
 			const float b{ 2.f * Vector3::Dot(sphereToRay, ray.direction) };
@@ -145,9 +145,9 @@ namespace dae
 			// start a while iteration ending when the end of file is reached (ios::eof)
 			while (!file.eof())
 			{
-				//read the first word of the string, use the >> operator (istream::operator>>) 
+				//read the first word of the string, use the >> operator (istream::operator>>)
 				file >> sCommand;
-				//use conditional statements to process the different commands	
+				//use conditional statements to process the different commands
 				if (sCommand == "#")
 				{
 					// Ignore Comment
@@ -164,14 +164,14 @@ namespace dae
 					float i0, i1, i2;
 					file >> i0 >> i1 >> i2;
 
-					indices.push_back((int)i0 - 1);
-					indices.push_back((int)i1 - 1);
-					indices.push_back((int)i2 - 1);
+					indices.push_back(static_cast<int>(i0) - 1);
+					indices.push_back(static_cast<int>(i1) - 1);
+					indices.push_back(static_cast<int>(i2) - 1);
 				}
 				//read till end of line and ignore all remaining chars
 				file.ignore(1000, '\n');
 
-				if (file.eof()) 
+				if (file.eof())
 					break;
 			}
 
@@ -186,7 +186,7 @@ namespace dae
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];
 				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if(isnan(normal.x))
+				if (isnan(normal.x))
 				{
 					int k = 0;
 				}

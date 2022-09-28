@@ -40,7 +40,7 @@ void Timer::Update()
 	{
 		m_FPS = 0;
 		m_ElapsedTime = 0.0f;
-		m_TotalTime = (float)(((m_StopTime - m_PausedTime) - m_BaseTime) * m_BaseTime);
+		m_TotalTime = static_cast<float>(((m_StopTime - m_PausedTime) - m_BaseTime) * m_BaseTime);
 		return;
 	}
 

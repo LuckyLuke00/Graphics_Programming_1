@@ -69,7 +69,6 @@ namespace dae
 			return {};
 		}
 
-
 		/**
 		 * \brief BRDF Geometry Function >> Schlick GGX (Direct Lighting + UE4 implementation - squared(roughness))
 		 * \param n Normal of the surface
@@ -98,6 +97,5 @@ namespace dae
 			assert(false && "Not Implemented Yet");
 			return {};
 		}
-
 	}
 }

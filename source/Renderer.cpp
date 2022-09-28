@@ -13,7 +13,7 @@
 
 using namespace dae;
 
-Renderer::Renderer(SDL_Window * pWindow) :
+Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow(pWindow),
 	m_pBuffer(SDL_GetWindowSurface(pWindow))
 {
@@ -29,14 +29,14 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	camera.cameraToWorld = camera.CalculateCameraToWorld();
+	camera.CalculateCameraToWorld();
 
 	//Calculate FOV
 	static const float fov{ tanf(TO_RADIANS * camera.fovAngle / 2.f) };
 
-	for (int px{0}; px < m_Width; ++px)
+	for (int px{ 0 }; px < m_Width; ++px)
 	{
-		for (int py{0}; py < m_Height; ++py)
+		for (int py{ 0 }; py < m_Height; ++py)
 		{
 			Vector3 rayDirection
 			{
@@ -44,18 +44,18 @@ void Renderer::Render(Scene* pScene) const
 				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * fov,
 				1.f
 			};
-			
-			// Transform rayDirection with cameraToWorld
-			rayDirection = camera.cameraToWorld.TransformVector(rayDirection).Normalized();
 
-			Ray viewRay{ camera.origin, rayDirection };
+			// Transform rayDirection with cameraToWorld
+			rayDirection = camera.cameraToWorld.TransformVector(rayDirection);
+
+			const Ray viewRay{ camera.origin, rayDirection };
 
 			//Color to write to the color buffer
 			ColorRGB finalColor{};
 
 			HitRecord closestHit{};
 			pScene->GetClosestHit(viewRay, closestHit);
-			
+
 			if (closestHit.didHit)
 			{
 				finalColor = materials[closestHit.materialIndex]->Shade();

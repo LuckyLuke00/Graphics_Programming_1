@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <SDL_keyboard.h>
 #include <SDL_mouse.h>
 
@@ -17,10 +16,16 @@ namespace dae
 			fovAngle{ _fovAngle }
 		{
 		}
-		// Movement speed constants
-		static constexpr float moveSpeed = 10.f;
-		static constexpr float turnSpeed = 1.f;
 
+		// Movement speed constants
+		static constexpr float moveSpeed{ 10.f };
+		static constexpr float maxSpeed{ 25.f };
+		static constexpr float turnSpeed{ 0.25f };
+
+		// Ease factor (between 0 and 1)
+		static constexpr float ease{ 0.8f };
+
+		Vector3 velocity{};
 		Vector3 origin{};
 		float fovAngle{ 90.f };
 
@@ -33,7 +38,6 @@ namespace dae
 
 		Matrix cameraToWorld{};
 
-
 		Matrix CalculateCameraToWorld()
 		{
 			//This function should return the Camera ONB matrix
@@ -41,10 +45,10 @@ namespace dae
 			//Combine to a matrix (also include origin) and return
 
 			//Get the right vector
-			right = Vector3::Cross(up, forward);
+			right = Vector3::Cross(up, forward).Normalized();
 
 			//Get the up vector
-			up = Vector3::Cross(forward, right);
+			up = Vector3::Cross(forward, right).Normalized();
 
 			//Make the matrix
 			cameraToWorld = Matrix{ right,up,forward,origin };
@@ -59,31 +63,86 @@ namespace dae
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
-
 			//Mouse Input
-			int mouseX{}, mouseY{};
+			int mouseX{};
+			int mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			// Camera Movement: Transforming the camera’s origin (WASD || LMB + MouseY || LMB + RMB + MouseY)
-			// Camera Rotation: Transforming the camera’s forward vector (LMB + MouseX || LMR + MouseX/Y)
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
+			{
+				SDL_SetRelativeMouseMode(SDL_TRUE);
+				SDL_ShowCursor(SDL_FALSE);
+			}
+			else
+			{
+				SDL_SetRelativeMouseMode(SDL_FALSE);
+				SDL_ShowCursor(SDL_TRUE);
+			}
 
-			//Camera Movement
-			if (pKeyboardState[SDL_SCANCODE_W])
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
-				origin += forward * moveSpeed * deltaTime;
+				if (pKeyboardState[SDL_SCANCODE_W])
+				{
+					velocity += forward * moveSpeed;
+				}
+				if (pKeyboardState[SDL_SCANCODE_S])
+				{
+					velocity -= forward * moveSpeed;
+				}
+				if (pKeyboardState[SDL_SCANCODE_A])
+				{
+					velocity -= right * moveSpeed;
+				}
+				if (pKeyboardState[SDL_SCANCODE_D])
+				{
+					velocity += right * moveSpeed;
+				}
 			}
-			if (pKeyboardState[SDL_SCANCODE_S])
+
+			// Ease in and out the movement
+			velocity *= ease;
+			if (velocity.Magnitude() < 0.1f)
 			{
-				origin -= forward * moveSpeed * deltaTime;
+				velocity = Vector3{};
 			}
-			if (pKeyboardState[SDL_SCANCODE_A])
+
+			// Clamp the velocity
+			if (velocity.Magnitude() > maxSpeed)
 			{
-				origin -= right * moveSpeed * deltaTime;
+				velocity.Normalize();
+				velocity *= maxSpeed;
 			}
-			if (pKeyboardState[SDL_SCANCODE_D])
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
-				origin += right * moveSpeed * deltaTime;
+				// Move up and down
+				origin += up * -static_cast<float>(mouseY) * deltaTime;
 			}
+
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)))
+			{
+				origin += forward * -static_cast<float>(mouseY) * deltaTime;
+			}
+
+			// Rotate camera
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)))
+			{
+				// Rotate camera left and right
+				totalYaw += turnSpeed * static_cast<float>(mouseX) * deltaTime;
+
+				// Rotate camera up and down
+				totalPitch += turnSpeed * static_cast<float>(mouseY) * deltaTime;
+			}
+
+			// Update the camera's position
+			origin += velocity * deltaTime;
+
+			// Calculate the forward vector
+			const Matrix finalRotation{ Matrix::CreateRotationY(totalYaw) * Matrix::CreateRotationX(totalPitch) };
+			forward = finalRotation.TransformVector(Vector3::UnitZ);
+			forward.Normalize();
+
+			// Prevent the camera from rolling, it can only pitch and yaw
+			up = Vector3::UnitY;
 		}
 	};
 }

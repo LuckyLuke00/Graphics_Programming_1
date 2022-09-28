@@ -4,4 +4,3 @@
 #include "Matrix.h"
 #include "ColorRGB.h"
 #include "MathHelpers.h"
-
