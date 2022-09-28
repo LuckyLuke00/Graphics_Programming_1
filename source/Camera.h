@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <SDL_keyboard.h>
 #include <SDL_mouse.h>
 
@@ -129,6 +130,26 @@ namespace dae
 				// Rotate camera left and right
 				totalYaw += turnSpeed * static_cast<float>(mouseX) * deltaTime;
 
+				// Prevent totalYaw and totalPitch from endlessly increasing or decreasing in value
+				// When rotating a lot
+				if (totalYaw > PI_2)
+				{
+					totalYaw -= PI_2;
+				}
+				else if (totalYaw < -PI_2)
+				{
+					totalYaw += PI_2;
+				}
+
+				if (totalPitch > PI_2)
+				{
+					totalPitch -= PI_2;
+				}
+				else if (totalPitch < -PI_2)
+				{
+					totalPitch += PI_2;
+				}
+
 				// Rotate camera up and down
 				totalPitch += turnSpeed * static_cast<float>(mouseY) * deltaTime;
 			}
@@ -136,10 +157,12 @@ namespace dae
 			// Update the camera's position
 			origin += velocity * deltaTime;
 
-			// Calculate the forward vector
-			const Matrix finalRotation{ Matrix::CreateRotationY(totalYaw) * Matrix::CreateRotationX(totalPitch) };
+			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
 			forward = finalRotation.TransformVector(Vector3::UnitZ);
 			forward.Normalize();
+
+			std::cout << "totalYaw: " << totalYaw << '\n';
+			std::cout << "totalPitch: " << totalPitch << '\n';
 
 			// Prevent the camera from rolling, it can only pitch and yaw
 			up = Vector3::UnitY;

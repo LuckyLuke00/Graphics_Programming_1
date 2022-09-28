@@ -59,6 +59,15 @@ void Renderer::Render(Scene* pScene) const
 			if (closestHit.didHit)
 			{
 				finalColor = materials[closestHit.materialIndex]->Shade();
+
+				// Check if pixel is shadowed
+				// For each light
+				//for (const Light& light : lights)
+				//{
+				//	// Calculate Hit towards light RAY
+				//	// Use small offset for the ray origin (self-shadowing)
+				//	// Ray.max > Magnitude of vector between hit & light
+				//}
 			}
 
 			//Update Color in Buffer

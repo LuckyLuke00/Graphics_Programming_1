@@ -49,8 +49,24 @@ namespace dae {
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
-		//todo W3
-		assert(false && "No Implemented Yet!");
+		// this function should return true on the first hit for the given ray,
+		// otherwise false. (No need to check for the closest hit, or filling in the HitRecord...)
+		for (const Sphere& sphere : m_SphereGeometries)
+		{
+			if (GeometryUtils::HitTest_Sphere(sphere, ray))
+			{
+				return true;
+			}
+		}
+
+		for (const Plane& plane : m_PlaneGeometries)
+		{
+			if (GeometryUtils::HitTest_Plane(plane, ray))
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
