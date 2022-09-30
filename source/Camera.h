@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <SDL_keyboard.h>
 #include <SDL_mouse.h>
 
@@ -14,7 +13,8 @@ namespace dae
 
 		Camera(const Vector3& _origin, float _fovAngle) :
 			origin{ _origin },
-			fovAngle{ _fovAngle }
+			fovAngle{ _fovAngle },
+			lastFovAngle{ _fovAngle }
 		{
 		}
 
@@ -22,13 +22,19 @@ namespace dae
 		static constexpr float moveSpeed{ 10.f };
 		static constexpr float maxSpeed{ 25.f };
 		static constexpr float turnSpeed{ 0.25f };
-
+		
 		// Ease factor (between 0 and 1)
 		static constexpr float ease{ 0.8f };
 
 		Vector3 velocity{};
 		Vector3 origin{};
+
 		float fovAngle{ 90.f };
+		float lastFovAngle{ fovAngle };
+		float fov{ tanf(TO_RADIANS * fovAngle / 2.f) };
+		static constexpr float maxFovAngle{ 170.f };
+		static constexpr float minFovAngle{ 5.f };
+		static constexpr float fovSpeed{ 100.f };
 
 		Vector3 forward{ Vector3::UnitZ };
 		Vector3 up{ Vector3::UnitY };
@@ -69,6 +75,25 @@ namespace dae
 			int mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
+			// FOV
+			// Decrease FOV when left arrow is pressed
+			if (fovAngle > minFovAngle && pKeyboardState[SDL_SCANCODE_LEFT])
+			{
+				fovAngle -= fovSpeed * deltaTime;
+			}
+			// Increase FOV when right arrow is pressed
+			else if (fovAngle < maxFovAngle && pKeyboardState[SDL_SCANCODE_RIGHT])
+			{
+				fovAngle += fovSpeed * deltaTime;
+			}
+
+			// Float safe NEQ check
+			if (fovAngle < lastFovAngle || fovAngle > lastFovAngle)
+			{
+				fov = tanf(TO_RADIANS * fovAngle / 2.f);
+			}
+
+			// Hide mouse when pressed else reveal mouse
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
 				SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -80,6 +105,7 @@ namespace dae
 				SDL_ShowCursor(SDL_TRUE);
 			}
 
+			// WASD movement when left or right mouse button is pressed (up, down, left right)
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
 				if (pKeyboardState[SDL_SCANCODE_W])
@@ -113,18 +139,20 @@ namespace dae
 				velocity.Normalize();
 				velocity *= maxSpeed;
 			}
+
+			// Move camera up and down when right and left mouse buttons are pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
-				// Move up and down
 				origin += up * -static_cast<float>(mouseY) * deltaTime;
 			}
 
+			// Move camera forward and backward when only the left mouse button is pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)))
 			{
 				origin += forward * -static_cast<float>(mouseY) * deltaTime;
 			}
 
-			// Rotate camera
+			// Yaw and pitch the camera when only the right mouse button is pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)))
 			{
 				// Rotate camera left and right

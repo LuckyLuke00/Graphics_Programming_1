@@ -31,17 +31,14 @@ void Renderer::Render(Scene* pScene) const
 
 	camera.CalculateCameraToWorld();
 
-	//Calculate FOV
-	static const float fov{ tanf(TO_RADIANS * camera.fovAngle / 2.f) };
-
 	for (int px{ 0 }; px < m_Width; ++px)
 	{
 		for (int py{ 0 }; py < m_Height; ++py)
 		{
 			Vector3 rayDirection
 			{
-				(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f) * m_AspectRatio * fov,
-				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * fov,
+				(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f) * m_AspectRatio * camera.fov,
+				(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * camera.fov,
 				1.f
 			};
 
