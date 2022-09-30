@@ -22,6 +22,8 @@ namespace dae
 		static constexpr float moveSpeed{ 10.f };
 		static constexpr float maxSpeed{ 25.f };
 		static constexpr float turnSpeed{ 0.25f };
+
+		float shiftMultiplier{ 1.f };
 		
 		// Ease factor (between 0 and 1)
 		static constexpr float ease{ 0.8f };
@@ -93,7 +95,17 @@ namespace dae
 				fov = tanf(TO_RADIANS * fovAngle / 2.f);
 			}
 
-			// Hide mouse when pressed else reveal mouse
+			// If shift is held increase any movement by a factor of 4
+			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
+			{
+				shiftMultiplier = 4.f;
+			}
+			else
+			{
+				shiftMultiplier = 1.f;
+			}
+
+			// Hide mouse when any mouse button is pressed else reveal mouse
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
 				SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -104,25 +116,26 @@ namespace dae
 				SDL_SetRelativeMouseMode(SDL_FALSE);
 				SDL_ShowCursor(SDL_TRUE);
 			}
+			
 
 			// WASD movement when left or right mouse button is pressed (up, down, left right)
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
 				if (pKeyboardState[SDL_SCANCODE_W])
 				{
-					velocity += forward * moveSpeed;
+					velocity += forward * moveSpeed * shiftMultiplier;
 				}
 				if (pKeyboardState[SDL_SCANCODE_S])
 				{
-					velocity -= forward * moveSpeed;
+					velocity -= forward * moveSpeed * shiftMultiplier;
 				}
 				if (pKeyboardState[SDL_SCANCODE_A])
 				{
-					velocity -= right * moveSpeed;
+					velocity -= right * moveSpeed * shiftMultiplier;
 				}
 				if (pKeyboardState[SDL_SCANCODE_D])
 				{
-					velocity += right * moveSpeed;
+					velocity += right * moveSpeed * shiftMultiplier;
 				}
 			}
 
@@ -134,32 +147,32 @@ namespace dae
 			}
 
 			// Clamp the velocity
-			if (velocity.Magnitude() > maxSpeed)
+			if (velocity.Magnitude() > maxSpeed * shiftMultiplier)
 			{
 				velocity.Normalize();
-				velocity *= maxSpeed;
+				velocity *= maxSpeed * shiftMultiplier;
 			}
 
 			// Move camera up and down when right and left mouse buttons are pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
-				origin += up * -static_cast<float>(mouseY) * deltaTime;
+				origin += up * -static_cast<float>(mouseY) * shiftMultiplier * deltaTime;
 			}
 
 			// Move camera forward and backward when only the left mouse button is pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)))
 			{
-				origin += forward * -static_cast<float>(mouseY) * deltaTime;
+				origin += forward * -static_cast<float>(mouseY) * shiftMultiplier * deltaTime;
 			}
 
 			// Yaw and pitch the camera when only the right mouse button is pressed
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) && !(mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)))
 			{
 				// Rotate camera left and right
-				totalYaw += turnSpeed * static_cast<float>(mouseX) * deltaTime;
+				totalYaw += turnSpeed * static_cast<float>(mouseX) * shiftMultiplier * deltaTime;
 
 				// Rotate camera up and down
-				totalPitch += turnSpeed * static_cast<float>(mouseY) * deltaTime;
+				totalPitch += turnSpeed * static_cast<float>(mouseY) * shiftMultiplier * deltaTime;
 			}
 
 			// Update the camera's position
