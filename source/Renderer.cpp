@@ -60,26 +60,46 @@ void Renderer::Render(Scene* pScene) const
 			{
 				finalColor = materials[closestHit.materialIndex]->Shade();
 
-				// Check if pixel is shadowed
-				// For each light
+				//// Check if pixel is shadowed
 				//for (const Light& light : lights)
 				//{
-				//	// Calculate Hit towards light RAY
+				//	// Use pScene->DoesHit()
+				//	// Use LightUtils::GetDirectionToLight()
+
+				//	// Calculate Hit towards Light RAY
 				//	// Use small offset for the ray origin (self-shadowing)
 				//	// Ray.max > Magnitude of vector between hit & light
+				//	// If hit, do not add light to final color
+
+				//	// Origin > Offset Point (offset along the normal of the original hitpoint)
+				//	// Direction > Hit to Light Direction (Normalized!)
+				//	// Min > 0.0001f
+				//	// Max > Distance between hit & light
+
+				//	const Ray shadowRay
+				//	{
+				//		closestHit.origin + closestHit.normal * 0.0001f,
+				//		LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized(),
+				//		0.0001f,
+				//		(light.origin - closestHit.origin).Magnitude()
+				//	};
+				//	
+				//	if (pScene->DoesHit(shadowRay))
+				//	{
+				//		finalColor *= 0.5f; // Works
+				//	}
 				//}
+
+				//Update Color in Buffer
+				finalColor.MaxToOne();
+
+				m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
 			}
-
-			//Update Color in Buffer
-			finalColor.MaxToOne();
-
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
 		}
 	}
-
 	//@END
 	//Update SDL Surface
 	SDL_UpdateWindowSurface(m_pWindow);

@@ -22,13 +22,15 @@ namespace dae
 			const float b{ 2.f * Vector3::Dot(sphereToRay, ray.direction) };
 			const float c{ Vector3::Dot(sphereToRay, sphereToRay) - sphere.radius * sphere.radius };
 
-			const float discriminant{ b * b - 4.f * a * c };
+			float discriminant{ b * b - 4.f * a * c };
 
 			if (discriminant < 0.f) return false;
 
-			const float t0{ (-b - sqrt(discriminant)) / (2.f * a) };
-			const float t1{ (-b + sqrt(discriminant)) / (2.f * a) };
+			discriminant = sqrtf(discriminant);
 
+			const float t0{ (-b + discriminant) / (2.f * a) };
+			const float t1{ (-b - discriminant) / (2.f * a) }; // Will always be smaller than t0
+			
 			const float t{ t0 < t1 ? t0 : t1 };
 
 			if (t < 0.f) return false;

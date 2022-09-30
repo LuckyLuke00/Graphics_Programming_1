@@ -51,6 +51,7 @@ namespace dae {
 	{
 		// this function should return true on the first hit for the given ray,
 		// otherwise false. (No need to check for the closest hit, or filling in the HitRecord...)
+
 		for (const Sphere& sphere : m_SphereGeometries)
 		{
 			if (GeometryUtils::HitTest_Sphere(sphere, ray))
@@ -189,7 +190,7 @@ namespace dae {
 		AddSphere({ 1.75f, 3.f, 0.f }, .75f, matId_Solid_Blue);
 
 		//Light
-		AddPointLight({ 0.f,5.f,5.f }, 70.f, colors::White);
+		AddPointLight({ 0.f,5.f,-5.f }, 70.f, colors::White);
 	}
 #pragma endregion
 }
