@@ -30,17 +30,20 @@ namespace dae
 
 			const float t0{ (-b + discriminant) / (2.f * a) };
 			const float t1{ (-b - discriminant) / (2.f * a) }; // Will always be smaller than t0
-			
-			const float t{ t0 < t1 ? t0 : t1 };
+
+			const float t{ t1 < 0.f ? t0 : t1 };
 
 			if (t < 0.f) return false;
+
+			if (t > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
 
 			hitRecord.didHit = true;
-			hitRecord.t = t;
-			hitRecord.normal = (ray.origin + ray.direction * t - sphere.origin).Normalized();
 			hitRecord.materialIndex = sphere.materialIndex;
+			hitRecord.origin = ray.origin + ray.direction * t;
+			hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
+			hitRecord.t = t;
 
 			return true;
 		}
@@ -67,12 +70,15 @@ namespace dae
 
 			if (t < 0.f) return false;
 
+			if (t > ray.max) return false;
+
 			if (ignoreHitRecord) return true;
 
 			hitRecord.didHit = true;
-			hitRecord.t = t;
-			hitRecord.normal = plane.normal;
 			hitRecord.materialIndex = plane.materialIndex;
+			hitRecord.origin = ray.origin + ray.direction * t;
+			hitRecord.normal = plane.normal;
+			hitRecord.t = t;
 
 			return true;
 		}
@@ -119,11 +125,10 @@ namespace dae
 		//Direction from target to light
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
-			// this function should return a vector going from 
+			// this function should return a vector going from
 			// the origin to the light’s origin.
 
 			return Vector3{ light.origin - origin };
-			
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)

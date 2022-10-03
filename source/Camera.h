@@ -24,7 +24,7 @@ namespace dae
 		static constexpr float turnSpeed{ 0.25f };
 
 		float shiftMultiplier{ 1.f };
-		
+
 		// Ease factor (between 0 and 1)
 		static constexpr float ease{ 0.8f };
 
@@ -116,7 +116,6 @@ namespace dae
 				SDL_SetRelativeMouseMode(SDL_FALSE);
 				SDL_ShowCursor(SDL_TRUE);
 			}
-			
 
 			// WASD movement when left or right mouse button is pressed (up, down, left right)
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) || mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
