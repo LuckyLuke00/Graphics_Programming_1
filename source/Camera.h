@@ -90,7 +90,7 @@ namespace dae
 			}
 
 			// Float safe NEQ check
-			if (fovAngle < lastFovAngle || fovAngle > lastFovAngle)
+			if (!AreEqual(fovAngle, lastFovAngle))
 			{
 				fov = tanf(TO_RADIANS * fovAngle / 2.f);
 			}
