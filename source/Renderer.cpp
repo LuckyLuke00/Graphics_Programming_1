@@ -106,3 +106,9 @@ bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
 }
+
+void Renderer::CycleLightingMode()
+{
+	static constexpr int enumSize{ sizeof(LightingMode) };
+	m_CurrentLightingMode = static_cast<LightingMode>((static_cast<int>(m_CurrentLightingMode) + 1) % enumSize);
+}
