@@ -228,9 +228,33 @@ namespace dae {
 		AddSphere({ 1.75f, 3.f, 0.f }, .75f, matCT_GraySmoothPlastic);
 
 		//Light
-		AddPointLight({ 0.f,5.f,5.f }, 50.f, ColorRGB{ 1.f,.61f,.45f });
-		AddPointLight({ -2.5f,5.f,-5.f }, 70.f, ColorRGB{ 1.f,.8f,.45f });
+		AddPointLight({ 0.f,5.f,5.f }, 50.f, ColorRGB{ 1.f,.61f,.45f }); //Back light
+		AddPointLight({ -2.5f,5.f,-5.f }, 70.f, ColorRGB{ 1.f,.8f,.45f }); //Front light left
 		AddPointLight({ 2.5f,2.5f,-5.f }, 50.f, ColorRGB{ .34f,.47f,.68f });
+	}
+#pragma endregion
+
+#pragma region SCENE W3 TEST SCENE
+	void Scene_W3_TestScene::Initialize()
+	{
+		m_Camera.origin = { 0.f,1.f,-5.f };
+		m_Camera.fovAngle = 45.f;
+
+		//default: Material id0 >> SolidColor Material (RED)
+		const auto matLambert_Red{ AddMaterial(new Material_Lambert(colors::Red, 1.f)) };
+		const auto matLambert_Blue{ AddMaterial(new Material_Lambert(colors::Blue, 1.f)) };
+		const auto matLambert_Yellow{ AddMaterial(new Material_Lambert(colors::Yellow, 1.f)) };
+
+		//Spheres
+		AddSphere({ -.75f, 1.f, .0f }, 1.f, matLambert_Red);
+		AddSphere({ .75f, 1.f, .0f }, 1.f, matLambert_Blue);
+
+		//Plane
+		AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f,0.f }, matLambert_Yellow);
+
+		//Light
+		AddPointLight({ 0.f,5.f,5.f }, 25.f, colors::White);
+		AddPointLight({ 0.f,2.5f,-5.f }, 25.f, colors::White);
 	}
 #pragma endregion
 }

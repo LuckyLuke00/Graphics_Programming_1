@@ -5,6 +5,8 @@
 //Project includes
 #include "Renderer.h"
 
+#include <iostream>
+
 #include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
@@ -55,36 +57,33 @@ void Renderer::Render(Scene* pScene) const
 
 			if (closestHit.didHit)
 			{
-				finalColor = materials[closestHit.materialIndex]->Shade();
+				//finalColor = materials[closestHit.materialIndex]->Shade();
 
-				// Check if pixel is shadowed
-				for (const Light& light : pScene->GetLights())
+				// For each light
+				for (const Light& light : lights)
 				{
-					// Use pScene->DoesHit()
-					// Use LightUtils::GetDirectionToLight()
+					const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
+					const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
-					// Calculate Hit towards Light RAY
-					// Use small offset for the ray origin (self-shadowing)
-					// Ray.max > Magnitude of vector between hit & light
-					// If hit, do not add light to final color
+					if (observedArea < 0.f) continue;
 
-					// Origin > Offset Point (offset along the normal of the original hitpoint)
-					// Direction > Hit to Light Direction (Normalized!)
-					// Min > 0.0001f
-					// Max > Distance between hit & light
-
-					const Ray shadowRay
+					if (m_ShadowsEnabled)
 					{
-						closestHit.origin + closestHit.normal * 0.0001f,
-						LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized(),
-						0.0001f,
-						(light.origin - closestHit.origin).Magnitude()
-					};
+						const Ray lightRay
+						{
+							closestHit.origin + closestHit.normal * 0.0001f,
+							LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized(),
+							0.0001f,(light.origin - closestHit.origin).Magnitude()
+						};
 
-					if (pScene->DoesHit(shadowRay))
-					{
-						finalColor *= 0.5f;
+						if (pScene->DoesHit(lightRay)) // Is the light occluded?
+						{
+							finalColor *= 0.5f;
+							continue;
+						}
 					}
+
+					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade() * observedArea;
 				}
 
 				//Update Color in Buffer

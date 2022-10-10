@@ -32,6 +32,11 @@ namespace dae
 		SDL_Surface* m_pBuffer{};
 		uint32_t* m_pBufferPixels{};
 
+		int m_Width{};
+		int m_Height{};
+
+		float m_AspectRatio{};
+
 		enum class LightingMode
 		{
 			ObservedArea, // Lambert Cosine Law
@@ -41,11 +46,7 @@ namespace dae
 		};
 
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
-		bool m_ShadowsEnabled{ true };
-
-		int m_Width{};
-		int m_Height{};
-
-		float m_AspectRatio{};
+		bool m_ShadowsEnabled{ false };
+		
 	};
 }

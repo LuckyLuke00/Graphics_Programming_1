@@ -79,7 +79,7 @@ namespace dae
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 2 Test Scene
+	//WEEK 2
 	class Scene_W2 final : public Scene
 	{
 	public:
@@ -95,7 +95,7 @@ namespace dae
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
-//WEEK 3 Test Scene
+	//WEEK 3 Test Scene
 	class Scene_W3 final : public Scene
 	{
 	public:
@@ -106,6 +106,22 @@ namespace dae
 		Scene_W3(Scene_W3&&) noexcept = delete;
 		Scene_W3& operator=(const Scene_W3&) = delete;
 		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 3 Test Scene
+	class Scene_W3_TestScene final : public Scene
+	{
+	public:
+		Scene_W3_TestScene() = default;
+		~Scene_W3_TestScene() override = default;
+
+		Scene_W3_TestScene(const Scene_W2&) = delete;
+		Scene_W3_TestScene(Scene_W3_TestScene&&) noexcept = delete;
+		Scene_W3_TestScene& operator=(const Scene_W3_TestScene&) = delete;
+		Scene_W3_TestScene& operator=(Scene_W3_TestScene&&) noexcept = delete;
 
 		void Initialize() override;
 	};
