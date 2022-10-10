@@ -45,7 +45,7 @@ void Renderer::Render(Scene* pScene) const
 			};
 
 			// Transform rayDirection with cameraToWorld
-			rayDirection = camera.cameraToWorld.TransformVector(rayDirection);
+			rayDirection = camera.cameraToWorld.TransformVector(rayDirection).Normalized();
 
 			const Ray viewRay{ camera.origin, rayDirection };
 
@@ -82,8 +82,7 @@ void Renderer::Render(Scene* pScene) const
 							continue;
 						}
 					}
-
-					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade() * observedArea;
+					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, rayDirection) * observedArea;
 				}
 
 				//Update Color in Buffer
