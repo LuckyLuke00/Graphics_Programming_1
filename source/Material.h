@@ -82,6 +82,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
+			// Why is l inverted and not v?
 			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor) + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
 		}
 
@@ -105,6 +106,16 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
+			// Determine F0 value -> (0.04, 0.04, 0.04) or Albedo based on Metalness
+			//const ColorRGB f0{ m_Metalness * m_Albedo + (1.f - m_Metalness) * ColorRGB { 0.04f, 0.04f, 0.04f } };
+			//const ColorRGB f0{ 0.04f, 0.04f, 0.04f };
+			const ColorRGB f0{ AreEqual(m_Metalness, 0.f) ? ColorRGB{ 0.04f, 0.04f, 0.04f } : m_Albedo };
+			// Calculate half vector between view direction and light direction
+			const Vector3 h{ (l + v).Normalized() };
+			//// Calculate Fresnel (F)
+			const ColorRGB f{ BRDF::FresnelFunction_Schlick(h, v, f0) };
+			return f;
+
 			//todo: W3
 			//assert(false && "Not Implemented Yet");
 			return {};

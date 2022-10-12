@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <iostream>
 #include "Math.h"
 
 namespace dae
@@ -32,7 +32,12 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			const float phong{ ks * powf(Vector3::Dot(Vector3::Reflect(n, l), v),exp) };
+			// Why Vector3::Reflect(n, l) and not Vector3::Reflect(l, n) & why -n?
+			const float phong{ ks * powf(Vector3::Dot(Vector3::Reflect(-n, l), v),exp) };
+			//const float phong{ ks * (powf(Vector3::Dot(Vector3::Reflect(-n, l), v),exp))};
+
+			if (phong < 0.f) return {}; // Is this normal?
+
 			return ColorRGB{ phong, phong , phong };
 
 		}
@@ -46,9 +51,7 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			return f0 + (colors::White - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
 		}
 
 		/**
@@ -60,9 +63,9 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			const float a{ roughness * roughness };
+
+			return a / (M_PI * powf(Vector3::Dot(n, h) * Vector3::Dot(n, h) * (a - 1.f) + 1.f, 2.f));
 		}
 
 		/**

@@ -55,44 +55,53 @@ void Renderer::Render(Scene* pScene) const
 			HitRecord closestHit{};
 			pScene->GetClosestHit(viewRay, closestHit);
 
-			if (closestHit.didHit)
+			if (!closestHit.didHit) continue;
+			//finalColor = materials[closestHit.materialIndex]->Shade();
+
+			// For each light
+			for (const Light& light : lights)
 			{
-				//finalColor = materials[closestHit.materialIndex]->Shade();
+				const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
+				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
-				// For each light
-				for (const Light& light : lights)
+				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance) continue;
+
+				if (!m_ShadowsEnabled)
 				{
-					const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
-					const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
-
-					if (observedArea < 0.f) continue;
-
-					if (m_ShadowsEnabled)
+					const Ray lightRay
 					{
-						const Ray lightRay
-						{
-							closestHit.origin + closestHit.normal * 0.0001f,
-							LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized(),
-							0.0001f,(light.origin - closestHit.origin).Magnitude()
-						};
+						closestHit.origin + closestHit.normal * 0.0001f,
+						lightDirection,
+						0.0001f,(light.origin - closestHit.origin).Magnitude()
+					};
 
-						if (pScene->DoesHit(lightRay)) // Is the light occluded?
-						{
-							finalColor *= 0.5f;
-							continue;
-						}
-					}
-					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, rayDirection) * observedArea;
+					if (pScene->DoesHit(lightRay)) continue;
 				}
 
-				//Update Color in Buffer
-				finalColor.MaxToOne();
-
-				m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-					static_cast<uint8_t>(finalColor.r * 255),
-					static_cast<uint8_t>(finalColor.g * 255),
-					static_cast<uint8_t>(finalColor.b * 255));
+				switch (m_CurrentLightingMode)
+				{
+				case LightingMode::ObservedArea:
+					finalColor+= {observedArea, observedArea, observedArea };
+					break;
+				case LightingMode::Radiance:
+					finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+					break;
+				case LightingMode::BRDF:
+					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
+					break;
+				case LightingMode::Combined:
+					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * observedArea;
+					break;
+				}
 			}
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
 		}
 	}
 	//@END
