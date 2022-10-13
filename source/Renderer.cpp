@@ -55,26 +55,25 @@ void Renderer::Render(Scene* pScene) const
 			HitRecord closestHit{};
 			pScene->GetClosestHit(viewRay, closestHit);
 
-			if (closestHit.didHit)
+			if (!closestHit.didHit) continue;
+			//finalColor = materials[closestHit.materialIndex]->Shade();
+
+			// For each light
+			for (const Light& light : lights)
 			{
-				//finalColor = materials[closestHit.materialIndex]->Shade();
+				const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
+				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
-				// For each light
-				for (const Light& light : lights)
+				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance) continue;
+
+				if (!m_ShadowsEnabled)
 				{
-					const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
-					const float observedArea = Vector3::Dot(lightDirection, closestHit.normal);
-
-					if (observedArea < 0.f) continue; // This breaks shit for some reason
-
-					if (m_ShadowsEnabled)
+					const Ray lightRay
 					{
-						const Ray lightRay
-						{
-							closestHit.origin + closestHit.normal * 0.0001f,
-							LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized(),
-							0.0001f,(light.origin - closestHit.origin).Magnitude()
-						};
+						closestHit.origin + closestHit.normal * 0.0001f,
+						lightDirection,
+						0.0001f,(light.origin - closestHit.origin).Magnitude()
+					};
 
 						if (pScene->DoesHit(lightRay)) // Is the light occluded?
 						{
@@ -99,14 +98,13 @@ void Renderer::Render(Scene* pScene) const
 
 				}
 
-				//Update Color in Buffer
-				finalColor.MaxToOne();
+			//Update Color in Buffer
+			finalColor.MaxToOne();
 
-				m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-					static_cast<uint8_t>(finalColor.r * 255),
-					static_cast<uint8_t>(finalColor.g * 255),
-					static_cast<uint8_t>(finalColor.b * 255));
-			}
+			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
 		}
 	}
 	//@END

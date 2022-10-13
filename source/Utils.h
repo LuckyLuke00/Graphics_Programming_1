@@ -133,10 +133,10 @@ namespace dae
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
-			if (light.type == LightType::Directional)
-			{
-				return light.color * light.intensity;
-			}
+			//if (light.type == LightType::Directional)
+			//{
+			//	return light.color * light.intensity;
+			//}
 
 			return light.color * (light.intensity / (light.origin - target).SqrMagnitude());
 		}
