@@ -126,7 +126,7 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			// this function should return a vector going from
-			// the origin to the light’s origin.
+			// the origin to the light's origin.
 
 			return Vector3{ light.origin - origin };
 		}

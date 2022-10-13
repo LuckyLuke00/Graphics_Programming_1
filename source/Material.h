@@ -82,7 +82,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor) + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
+			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor) + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, -l, v, hitRecord.normal);
 		}
 
 	private:
@@ -105,6 +105,29 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
+			// Determine F0 value -> (0.04, 0.04, 0.04) or Albedo based on Metalness
+			//const ColorRGB f0{ m_Metalness * m_Albedo + (1.f - m_Metalness) * ColorRGB { 0.04f, 0.04f, 0.04f } };
+			const ColorRGB f0{ AreEqual(m_Metalness, 0.f) ? ColorRGB{ 0.04f, 0.04f, 0.04f } : m_Albedo };
+			// Calculate half vector between view direction and light direction
+			const Vector3 h{ (l + v).Normalized() };
+			// Calculate Fresnel (F)
+			const ColorRGB f{ BRDF::FresnelFunction_Schlick(h, v, f0) };
+			return f;
+			// Calculate Normal Distribution (D)
+			//const float d{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
+			//// Calculate Geometry (G)
+			//const float g{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
+			//// Calculate specular -> Cook-Torrance -> (DFG)/4(dot(v,n)dot(l,n))
+			//ColorRGB specular{ d * f * g };
+			//specular /= (4.f * Vector3::Dot(hitRecord.normal, v) * Vector3::Dot(hitRecord.normal, l));
+			//// Determine kd -> 1 - Fresnel, cancel out if it's a metal (kd = 0)
+			//const ColorRGB kd{ (colors::White - f) * (1.f - m_Metalness) };
+			//// Calculate Diffuse -> BRDF::Lambert using the kd
+			//const ColorRGB diffuse{ BRDF::Lambert(kd, m_Albedo) };
+			//// Return final color -> diffuse + specular
+			//return diffuse + specular;
+
+
 			//todo: W3
 			//assert(false && "Not Implemented Yet");
 			return {};

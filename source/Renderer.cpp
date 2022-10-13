@@ -63,9 +63,9 @@ void Renderer::Render(Scene* pScene) const
 				for (const Light& light : lights)
 				{
 					const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
-					const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
+					const float observedArea = Vector3::Dot(lightDirection, closestHit.normal);
 
-					if (observedArea < 0.f) continue;
+					if (observedArea < 0.f) continue; // This breaks shit for some reason
 
 					if (m_ShadowsEnabled)
 					{
@@ -78,11 +78,25 @@ void Renderer::Render(Scene* pScene) const
 
 						if (pScene->DoesHit(lightRay)) // Is the light occluded?
 						{
-							finalColor *= 0.5f;
 							continue;
 						}
 					}
-					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, rayDirection) * observedArea;
+					switch (m_CurrentLightingMode)
+					{
+					case LightingMode::ObservedArea:
+						finalColor += {observedArea, observedArea, observedArea };
+						break;
+					case LightingMode::Radiance:
+						finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+						break;
+					case LightingMode::BRDF:
+						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
+						break;
+					case LightingMode::Combined:
+						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
+						break;
+					}
+
 				}
 
 				//Update Color in Buffer

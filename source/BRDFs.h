@@ -32,9 +32,12 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
+			// Why Vector3::Reflect(n, l) and not Vector3::Reflect(l, n)?
 			const float phong{ ks * powf(Vector3::Dot(Vector3::Reflect(n, l), v),exp) };
-			return ColorRGB{ phong, phong , phong };
 
+			if (phong < 0.f) return {}; // Is this normal?
+
+			return ColorRGB{ phong, phong , phong };
 		}
 
 		/**
@@ -46,9 +49,8 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			//return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
+			return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
 		}
 
 		/**
@@ -60,9 +62,12 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			//const float a2{ roughness * roughness };
+			//const float nDotH{ Vector3::Dot(n, h) };
+			//const float denominator{ (nDotH * nDotH * (a2 - 1.f) + 1.f) };
+
+			//return a2 / (static_cast<float>(M_PI) * (denominator * denominator));
+			return{};
 		}
 
 		/**
@@ -74,9 +79,10 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			//const float nDotV{ Vector3::Dot(n, v) };
+
+			//return nDotV / (nDotV * (1.f - roughness) + roughness);
+			return{};
 		}
 
 		/**
@@ -89,9 +95,8 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			return {};
+			//return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
+			return{};
 		}
 	}
 }
