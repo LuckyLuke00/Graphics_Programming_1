@@ -56,7 +56,6 @@ void Renderer::Render(Scene* pScene) const
 			pScene->GetClosestHit(viewRay, closestHit);
 
 			if (!closestHit.didHit) continue;
-			//finalColor = materials[closestHit.materialIndex]->Shade();
 
 			// For each light
 			for (const Light& light : lights)
@@ -64,7 +63,7 @@ void Renderer::Render(Scene* pScene) const
 				const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
 				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
-				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance) continue;
+				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance && m_CurrentLightingMode != LightingMode::BRDF) continue;
 
 				if (!m_ShadowsEnabled)
 				{
@@ -88,7 +87,7 @@ void Renderer::Render(Scene* pScene) const
 					case LightingMode::Radiance:
 						finalColor += LightUtils::GetRadiance(light, closestHit.origin);
 						break;
-					case LightingMode::BRDF:
+				case LightingMode::BRDF:
 						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
 						break;
 					case LightingMode::Combined:

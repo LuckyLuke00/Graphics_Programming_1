@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include "Math.h"
 
 namespace dae
@@ -49,7 +48,6 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
 			return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
 		}
 
@@ -62,9 +60,17 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
+			//const float a{ roughness * roughness };
+			//const float a2{ a * a };
+			//const float nDotH{ Vector3::Dot(n, h) };
+			//const float nDotH2{ nDotH * nDotH };
+
+			//const float f{ nDotH2 * (a2 - 1.f) + 1.f };
+			//return a2 / (static_cast<float>(M_PI) * f * f);
+
 			//const float a2{ roughness * roughness };
 			//const float nDotH{ Vector3::Dot(n, h) };
-			//const float denominator{ (nDotH * nDotH * (a2 - 1.f) + 1.f) };
+			//const float denominator{ ((nDotH * nDotH) * (a2 - 1.f) + 1.f) };
 
 			//return a2 / (static_cast<float>(M_PI) * (denominator * denominator));
 			return{};
@@ -80,8 +86,13 @@ namespace dae
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
 			//const float nDotV{ Vector3::Dot(n, v) };
+			//const float k{ roughness * roughness };
 
-			//return nDotV / (nDotV * (1.f - roughness) + roughness);
+			//return nDotV / (nDotV * (1.f - k) + k);
+
+			//const float nDotV{ Vector3::Dot(n, v) };
+
+			//return nDotV / (nDotV * (1.f - roughness * roughness) + roughness * roughness);
 			return{};
 		}
 
@@ -95,7 +106,7 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
+			return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
 			return{};
 		}
 	}
