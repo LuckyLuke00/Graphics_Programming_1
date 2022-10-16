@@ -4,9 +4,6 @@
 
 //Project includes
 #include "Renderer.h"
-
-#include <iostream>
-
 #include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
@@ -49,13 +46,13 @@ void Renderer::Render(Scene* pScene) const
 
 			const Ray viewRay{ camera.origin, rayDirection };
 
-			//Color to write to the color buffer
-			ColorRGB finalColor{};
-
 			HitRecord closestHit{};
 			pScene->GetClosestHit(viewRay, closestHit);
 
 			if (!closestHit.didHit) continue;
+
+			//Color to write to the color buffer
+			ColorRGB finalColor{};
 
 			// For each light
 			for (const Light& light : lights)
@@ -63,9 +60,10 @@ void Renderer::Render(Scene* pScene) const
 				const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
 				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
+				// We need to check the LightingMode because 
 				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance && m_CurrentLightingMode != LightingMode::BRDF) continue;
 
-				if (!m_ShadowsEnabled)
+				if (m_ShadowsEnabled)
 				{
 					const Ray lightRay
 					{
@@ -74,28 +72,27 @@ void Renderer::Render(Scene* pScene) const
 						0.0001f,(light.origin - closestHit.origin).Magnitude()
 					};
 
-						if (pScene->DoesHit(lightRay)) // Is the light occluded?
-						{
-							continue;
-						}
-					}
-					switch (m_CurrentLightingMode)
+					if (pScene->DoesHit(lightRay)) // Is the light occluded?
 					{
+						continue;
+					}
+				}
+				switch (m_CurrentLightingMode)
+				{
 					case LightingMode::ObservedArea:
 						finalColor += {observedArea, observedArea, observedArea };
 						break;
 					case LightingMode::Radiance:
 						finalColor += LightUtils::GetRadiance(light, closestHit.origin);
 						break;
-				case LightingMode::BRDF:
+					case LightingMode::BRDF:
 						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
 						break;
 					case LightingMode::Combined:
 						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
 						break;
-					}
-
 				}
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
