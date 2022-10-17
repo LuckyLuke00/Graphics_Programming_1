@@ -13,9 +13,14 @@ namespace dae
 	constexpr auto TO_DEGREES = (180.0f / PI);
 	constexpr auto TO_RADIANS(PI / 180.0f);
 
-	inline float Square(float a)
+	inline bool AreEqual(float a, float b, float epsilon = FLT_EPSILON)
 	{
-		return a * a;
+		return abs(a - b) < epsilon;
+	}
+
+	inline const float& Clampf(float& v, const float& lo, const float& hi)
+	{
+		return v = v < lo ? lo : v > hi ? hi : v;
 	}
 
 	inline float Lerpf(float a, float b, float factor)
@@ -23,8 +28,9 @@ namespace dae
 		return ((1 - factor) * a) + (factor * b);
 	}
 
-	inline bool AreEqual(float a, float b, float epsilon = FLT_EPSILON)
+	inline float Square(float a)
 	{
-		return abs(a - b) < epsilon;
+		return a * a;
 	}
+
 }
