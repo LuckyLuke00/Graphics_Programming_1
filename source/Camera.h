@@ -23,8 +23,7 @@ namespace dae
 		static constexpr float moveSpeed{ 10.f };
 		static constexpr float maxSpeed{ 25.f };
 		static constexpr float turnSpeed{ 0.25f };
-
-		float shiftMultiplier{ 4.f };
+		static constexpr float shiftMultiplier{ 4.f };
 
 		// Ease factor (between 0 and 1)
 		static constexpr float ease{ 0.8f };
@@ -61,22 +60,20 @@ namespace dae
 			up = Vector3::Cross(forward, right).Normalized();
 
 			//Make the matrix
-			cameraToWorld = Matrix{ right,up,forward,origin };
-
-			return cameraToWorld;
+			return cameraToWorld = Matrix{ right,up,forward,origin };
 		}
 
 		void Update(Timer* pTimer)
 		{
-			const float deltaTime = pTimer->GetElapsed();
+			const float deltaTime{ pTimer->GetElapsed() };
 
 			//Keyboard Input
-			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+			const uint8_t* pKeyboardState{ SDL_GetKeyboardState(nullptr) };
 
 			//Mouse Input
 			int mouseX{};
 			int mouseY{};
-			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+			const uint32_t mouseState{ SDL_GetRelativeMouseState(&mouseX, &mouseY) };
 
 			// Float safe NEQ check
 			if (!AreEqual(fovAngle, lastFovAngle))
@@ -85,13 +82,13 @@ namespace dae
 			}
 
 			// Multiplier if shift is held
-			const float shift{ 1.f + (shiftMultiplier - 1.f) * pKeyboardState[SDL_SCANCODE_LSHIFT] };
+			const float shift{ 1.f + (shiftMultiplier - 1.f) * static_cast<float>(pKeyboardState[SDL_SCANCODE_LSHIFT]) };
 
 			// Ease in and out the velocity
 			velocity *= ease;
 			if (velocity.Magnitude() < 0.1f)
 			{
-				velocity = Vector3{};
+				velocity = Vector3::Zero;
 			}
 
 			// Clamp the velocity
@@ -119,8 +116,8 @@ namespace dae
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 
 			// FOV
-			fovAngle += pKeyboardState[SDL_SCANCODE_RIGHT] * fovSpeed * deltaTime;
-			fovAngle -= pKeyboardState[SDL_SCANCODE_LEFT] * fovSpeed * deltaTime;
+			fovAngle += static_cast<float>(pKeyboardState[SDL_SCANCODE_RIGHT]) * fovSpeed * deltaTime;
+			fovAngle -= static_cast<float>(pKeyboardState[SDL_SCANCODE_LEFT]) * fovSpeed * deltaTime;
 			Clampf(fovAngle, minFovAngle, maxFovAngle);
 
 
@@ -140,14 +137,13 @@ namespace dae
 
 			// Yaw and pitch the camera when only the right mouse button is pressed
 			// Rotate camera left and right
-			totalYaw += turnSpeed * static_cast<float>(mouseX) * (!leftMousePressed && rightMousePressed) * deltaTime;
+			totalYaw += turnSpeed * static_cast<float>(mouseX) * static_cast<float>(!leftMousePressed && rightMousePressed) * deltaTime;
 
 			// Rotate camera up and down
-			totalPitch += turnSpeed * static_cast<float>(mouseY) * (!leftMousePressed && rightMousePressed) * deltaTime;
+			totalPitch += turnSpeed * static_cast<float>(mouseY) * static_cast<float>(!leftMousePressed && rightMousePressed) * deltaTime;
 
 			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
-			forward = finalRotation.TransformVector(Vector3::UnitZ);
-			forward.Normalize();
+			forward = finalRotation.TransformVector(Vector3::UnitZ).Normalized();
 
 			// Prevent the camera from rolling, it can only pitch and yaw
 			up = Vector3::UnitY;
