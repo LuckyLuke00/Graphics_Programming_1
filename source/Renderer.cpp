@@ -61,15 +61,14 @@ void Renderer::Render(Scene* pScene) const
 				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
 				// We need to check the LightingMode because 
-				if (observedArea < 0.f && m_CurrentLightingMode != LightingMode::Radiance && m_CurrentLightingMode != LightingMode::BRDF) continue;
-
 				if (m_ShadowsEnabled)
 				{
 					const Ray lightRay
 					{
 						closestHit.origin + closestHit.normal * 0.0001f,
 						lightDirection,
-						0.0001f,(light.origin - closestHit.origin).Magnitude()
+						0.0001f,
+						(light.origin - closestHit.origin).Magnitude()
 					};
 
 					if (pScene->DoesHit(lightRay)) // Is the light occluded?
@@ -77,9 +76,11 @@ void Renderer::Render(Scene* pScene) const
 						continue;
 					}
 				}
+
 				switch (m_CurrentLightingMode)
 				{
 					case LightingMode::ObservedArea:
+						if (observedArea < 0.f) break;
 						finalColor += {observedArea, observedArea, observedArea };
 						break;
 					case LightingMode::Radiance:
@@ -89,6 +90,7 @@ void Renderer::Render(Scene* pScene) const
 						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
 						break;
 					case LightingMode::Combined:
+						if (observedArea < 0.f) break;
 						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
 						break;
 				}

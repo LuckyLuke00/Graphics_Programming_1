@@ -48,7 +48,7 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - Vector3::Dot(h, v), 5.f);
+			return f0 + (ColorRGB{ 1.f,1.f,1.f } - f0) * powf(1.f - std::max(Vector3::Dot(h, v), 0.f), 5.f);
 		}
 
 		/**
@@ -61,7 +61,7 @@ namespace dae
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
 			const float a2{ (roughness * roughness) * (roughness * roughness) };
-			const float nDotH{ Vector3::Dot(n, h) };
+			const float nDotH{ std::max(Vector3::Dot(n, h), 0.f) };
 
 			const float denominator{ (nDotH * nDotH) * (a2 - 1.f) + 1.f };
 			return a2 / (static_cast<float>(M_PI) * (denominator * denominator));
@@ -80,7 +80,7 @@ namespace dae
 			const float a{ roughness * roughness };
 			const float k{ (a + 1.f) * (a + 1.f) / 8.f };
 
-			const float nDotV{ Vector3::Dot(n, v) };
+			const float nDotV{ std::max(Vector3::Dot(n, v), 0.f) };
 
 			return nDotV / (nDotV * (1.f - k) + k);
 		}
