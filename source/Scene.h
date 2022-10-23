@@ -51,6 +51,9 @@ namespace dae
 		std::vector<Light> m_Lights{};
 		std::vector<Material*> m_Materials{};
 
+		// Temp (Individual Triangle Testing)
+		std::vector<Triangle> m_Triangles{};
+
 		Camera m_Camera{};
 
 		Sphere* AddSphere(const Vector3& origin, float radius, unsigned char materialIndex = 0);
@@ -95,14 +98,14 @@ namespace dae
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 3 Test Scene
+	//WEEK 3
 	class Scene_W3 final : public Scene
 	{
 	public:
 		Scene_W3() = default;
 		~Scene_W3() override = default;
 
-		Scene_W3(const Scene_W2&) = delete;
+		Scene_W3(const Scene_W3&) = delete;
 		Scene_W3(Scene_W3&&) noexcept = delete;
 		Scene_W3& operator=(const Scene_W3&) = delete;
 		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
@@ -118,10 +121,26 @@ namespace dae
 		Scene_W3_TestScene() = default;
 		~Scene_W3_TestScene() override = default;
 
-		Scene_W3_TestScene(const Scene_W2&) = delete;
+		Scene_W3_TestScene(const Scene_W3_TestScene&) = delete;
 		Scene_W3_TestScene(Scene_W3_TestScene&&) noexcept = delete;
 		Scene_W3_TestScene& operator=(const Scene_W3_TestScene&) = delete;
 		Scene_W3_TestScene& operator=(Scene_W3_TestScene&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 4
+	class Scene_W4 final : public Scene
+	{
+	public:
+		Scene_W4() = default;
+		~Scene_W4() override = default;
+
+		Scene_W4(const Scene_W4&) = delete;
+		Scene_W4(Scene_W4&&) noexcept = delete;
+		Scene_W4& operator=(const Scene_W4&) = delete;
+		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
 
 		void Initialize() override;
 	};

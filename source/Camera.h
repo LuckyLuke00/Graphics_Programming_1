@@ -104,7 +104,6 @@ namespace dae
 			const unsigned leftMousePressed{ mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) };
 			const unsigned rightMousePressed{ mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) };
 
-
 			// If right mouse button is not pressed return
 			if (!(leftMousePressed || rightMousePressed))
 			{
@@ -120,14 +119,12 @@ namespace dae
 			fovAngle -= static_cast<float>(pKeyboardState[SDL_SCANCODE_LEFT]) * fovSpeed * deltaTime;
 			Clampf(fovAngle, minFovAngle, maxFovAngle);
 
-
 			// WASD movement
 			velocity += forward * moveSpeed * pKeyboardState[SDL_SCANCODE_W] * shift;
 			velocity -= forward * moveSpeed * pKeyboardState[SDL_SCANCODE_S] * shift;
 
 			velocity -= right * moveSpeed * pKeyboardState[SDL_SCANCODE_A] * shift;
 			velocity += right * moveSpeed * pKeyboardState[SDL_SCANCODE_D] * shift;
-
 
 			// Move camera up and down when right and left mouse buttons are pressed
 			origin += up * -static_cast<float>(mouseY) * (leftMousePressed && rightMousePressed) * deltaTime;

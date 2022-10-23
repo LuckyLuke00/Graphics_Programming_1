@@ -60,7 +60,7 @@ void Renderer::Render(Scene* pScene) const
 				const Vector3 lightDirection{ LightUtils::GetDirectionToLight(light, closestHit.origin).Normalized() };
 				const float observedArea{ Vector3::Dot(closestHit.normal, lightDirection) };
 
-				// We need to check the LightingMode because 
+				// We need to check the LightingMode because
 				if (m_ShadowsEnabled)
 				{
 					const Ray lightRay
@@ -79,20 +79,20 @@ void Renderer::Render(Scene* pScene) const
 
 				switch (m_CurrentLightingMode)
 				{
-					case LightingMode::ObservedArea:
-						if (observedArea < 0.f) break;
-						finalColor += {observedArea, observedArea, observedArea };
-						break;
-					case LightingMode::Radiance:
-						finalColor += LightUtils::GetRadiance(light, closestHit.origin);
-						break;
-					case LightingMode::BRDF:
-						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
-						break;
-					case LightingMode::Combined:
-						if (observedArea < 0.f) break;
-						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
-						break;
+				case LightingMode::ObservedArea:
+					if (observedArea < 0.f) break;
+					finalColor += {observedArea, observedArea, observedArea };
+					break;
+				case LightingMode::Radiance:
+					finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+					break;
+				case LightingMode::BRDF:
+					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction);
+					break;
+				case LightingMode::Combined:
+					if (observedArea < 0.f) break;
+					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction) * LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
+					break;
 				}
 			}
 

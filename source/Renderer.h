@@ -47,6 +47,5 @@ namespace dae
 
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		bool m_ShadowsEnabled{ true };
-		
 	};
 }

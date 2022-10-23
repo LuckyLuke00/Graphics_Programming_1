@@ -32,5 +32,4 @@ namespace dae
 	{
 		return a * a;
 	}
-
 }
