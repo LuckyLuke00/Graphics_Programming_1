@@ -93,15 +93,6 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			// 1. Normal VS Ray-Direction Check (Perpendicular?)
-			// 2. Cull Mode Check
-			// 2a. Based on the Cull-Mode the Triangle is visible or invisible (culled),
-			// keep in mind the cull-mode must be inverted for the shadowrays.
-			// (Hint: We can assume that if ‘ignoreHitRecord’ is TRUE that we are performing a shadow hittest...)
-			// 3. Ray-Plane test (plane defined by Triangle) + T range check
-			// 4. Check if hitpoint is inside the Triangle
-			// 5. Fill-in HitRecord (if required)
-
 			//1. Check if ray is perpendicular to triangle
 			const float denominator{ Vector3::Dot(triangle.normal, ray.direction) };
 			if (Vector3::Dot(triangle.normal, ray.direction) == 0.f) return false;
@@ -109,15 +100,13 @@ namespace dae
 			//2. Check if triangle is visible
 			if (!ignoreHitRecord)
 			{
-				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
-				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
-			}
-
-			//2a. Check if triangle is visible for shadow rays
-			if (ignoreHitRecord)
-			{
 				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < 0) return false;
 				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > 0) return false;
+			}
+			else
+			{
+				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
 			}
 
 			//3. Ray-Plane test (plane defined by Triangle) + T range check
