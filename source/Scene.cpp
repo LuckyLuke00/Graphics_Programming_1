@@ -45,6 +45,15 @@ namespace dae {
 				closestHit = hit;
 			}
 		}
+
+		for (const Triangle& triangle : m_Triangles)
+		{
+			HitRecord hit{};
+			if (GeometryUtils::HitTest_Triangle(triangle, ray, hit) && hit.t < closestHit.t)
+			{
+				closestHit = hit;
+			}
+		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -63,6 +72,14 @@ namespace dae {
 		for (const Plane& plane : m_PlaneGeometries)
 		{
 			if (GeometryUtils::HitTest_Plane(plane, ray))
+			{
+				return true;
+			}
+		}
+
+		for (const Triangle& triangle : m_Triangles)
+		{
+			if (GeometryUtils::HitTest_Triangle(triangle, ray))
 			{
 				return true;
 			}
@@ -274,7 +291,7 @@ namespace dae {
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
 		//Triangle (Temp)
-		auto triangle{ Triangle{{-.75f, 5.f, .0f}, {-.75f, 2.f, .0f}, {.75f, .5f, 0.f}} };
+		auto triangle{ Triangle{{-.75f, .5f, .0f}, {-.75f, 2.f, .0f}, {.75f, .5f, 0.f}} };
 		triangle.cullMode = TriangleCullMode::NoCulling;
 		triangle.materialIndex = matLambert_White;
 

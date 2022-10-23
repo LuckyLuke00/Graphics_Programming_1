@@ -93,9 +93,65 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			// 1. Normal VS Ray-Direction Check (Perpendicular?)
+			// 2. Cull Mode Check
+			// 2a. Based on the Cull-Mode the Triangle is visible or invisible (culled),
+			// keep in mind the cull-mode must be inverted for the shadowrays.
+			// (Hint: We can assume that if ‘ignoreHitRecord’ is TRUE that we are performing a shadow hittest...)
+			// 3. Ray-Plane test (plane defined by Triangle) + T range check
+			// 4. Check if hitpoint is inside the Triangle
+			// 5. Fill-in HitRecord (if required)
+
+			//1. Check if ray is perpendicular to triangle
+			const float denominator{ Vector3::Dot(triangle.normal, ray.direction) };
+			if (Vector3::Dot(triangle.normal, ray.direction) == 0.f) return false;
+
+			//2. Check if triangle is visible
+			if (!ignoreHitRecord)
+			{
+				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
+			}
+
+			//2a. Check if triangle is visible for shadow rays
+			if (ignoreHitRecord)
+			{
+				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < 0) return false;
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > 0) return false;
+			}
+
+			//3. Ray-Plane test (plane defined by Triangle) + T range check
+			const float t{ Vector3::Dot(triangle.v0 - ray.origin, triangle.normal) / denominator };
+			if (t < ray.min || t > ray.max) return false;
+
+			//4. Check if hitpoint is inside the Triangle
+			const Vector3 hitPoint{ ray.origin + ray.direction * t };
+			const Vector3 v0v1{ triangle.v1 - triangle.v0 };
+			const Vector3 v0v2{ triangle.v2 - triangle.v0 };
+			const Vector3 v0p{ hitPoint - triangle.v0 };
+
+			const float dot00{ Vector3::Dot(v0v1, v0v1) };
+			const float dot01{ Vector3::Dot(v0v1, v0v2) };
+			const float dot02{ Vector3::Dot(v0v1, v0p) };
+			const float dot11{ Vector3::Dot(v0v2, v0v2) };
+			const float dot12{ Vector3::Dot(v0v2, v0p) };
+
+			const float invDenom{ 1.f / (dot00 * dot11 - dot01 * dot01) };
+			const float u{ (dot11 * dot02 - dot01 * dot12) * invDenom };
+			const float v{ (dot00 * dot12 - dot01 * dot02) * invDenom };
+
+			if (u < 0.f || v < 0.f || u + v > 1.f) return false;
+
+			//5. Fill-in HitRecord (if required)
+			if (ignoreHitRecord) return true;
+
+			hitRecord.didHit = true;
+			hitRecord.materialIndex = triangle.materialIndex;
+			hitRecord.origin = hitPoint;
+			hitRecord.normal = triangle.normal;
+			hitRecord.t = t;
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
