@@ -110,26 +110,32 @@ namespace dae
 			}
 
 			//3. Ray-Plane test (plane defined by Triangle) + T range check
-			const float t{ Vector3::Dot(triangle.v0 - ray.origin, triangle.normal) / denominator };
+			const Vector3 a{ triangle.v1 - triangle.v0 };
+			const Vector3 b{ triangle.v2 - triangle.v0 };
+			const Vector3 normal{ Vector3::Cross(a, b).Normalized() };
+
+			if (AreEqual(Vector3::Dot(normal, ray.direction), .0f)) return false;
+
+			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
+			const Vector3 l{ center - ray.origin };
+			const float t{ Vector3::Dot(l, normal) / Vector3::Dot(normal, ray.direction) };
+
 			if (t < ray.min || t > ray.max) return false;
 
+			const Vector3 hitPoint{ ray.origin + t * ray.direction };
+
 			//4. Check if hitpoint is inside the Triangle
-			const Vector3 hitPoint{ ray.origin + ray.direction * t };
-			const Vector3 v0v1{ triangle.v1 - triangle.v0 };
-			const Vector3 v0v2{ triangle.v2 - triangle.v0 };
-			const Vector3 v0p{ hitPoint - triangle.v0 };
+			const Vector3 edgeA{ triangle.v1 - triangle.v0 };
+			Vector3 pointToSide{ hitPoint - triangle.v0 };
+			if (Vector3::Dot(normal, Vector3::Cross(edgeA, pointToSide)) < 0.f) return false;
 
-			const float dot00{ Vector3::Dot(v0v1, v0v1) };
-			const float dot01{ Vector3::Dot(v0v1, v0v2) };
-			const float dot02{ Vector3::Dot(v0v1, v0p) };
-			const float dot11{ Vector3::Dot(v0v2, v0v2) };
-			const float dot12{ Vector3::Dot(v0v2, v0p) };
+			const Vector3 edgeB{ triangle.v2 - triangle.v1 };
+			pointToSide = hitPoint - triangle.v1;
+			if (Vector3::Dot(normal, Vector3::Cross(edgeB, pointToSide)) < 0.f) return false;
 
-			const float invDenom{ 1.f / (dot00 * dot11 - dot01 * dot01) };
-			const float u{ (dot11 * dot02 - dot01 * dot12) * invDenom };
-			const float v{ (dot00 * dot12 - dot01 * dot02) * invDenom };
-
-			if (u < 0.f || v < 0.f || u + v > 1.f) return false;
+			const Vector3 edgeC{ triangle.v0 - triangle.v2 };
+			pointToSide = hitPoint - triangle.v2;
+			if (Vector3::Dot(normal, Vector3::Cross(edgeC, pointToSide)) < 0.f) return false;
 
 			//5. Fill-in HitRecord (if required)
 			if (ignoreHitRecord) return true;
@@ -152,8 +158,25 @@ namespace dae
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
+			// Each set of 3 indices represents a Triangle – use HitTest_Triangle to find the triangle of the TriangleMesh with the (!) closest hit
+			// Use the ‘transformedPositions’ & ‘transformedNormals’ to define each individual triangle!
+
+			// 1. Find the Triangle with the (!) closest hit
+			for (size_t i{ 0 }; i < mesh.indices.size(); i += 3)
+			{
+				Triangle triangle
+				{
+					mesh.transformedPositions[mesh.indices[i]],
+					mesh.transformedPositions[mesh.indices[i + 1]],
+					mesh.transformedPositions[mesh.indices[i + 2]],
+					mesh.normals[mesh.indices[i]]
+				};
+				triangle.materialIndex = mesh.materialIndex;
+				triangle.cullMode = mesh.cullMode;
+
+				if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord)) return true;
+			}
+
 			return false;
 		}
 
