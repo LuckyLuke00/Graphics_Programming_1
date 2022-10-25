@@ -345,7 +345,7 @@ namespace dae {
 	}
 #pragma endregion
 
-#pragma region SCENE W4 TEST SCENE
+#pragma region SCENE W4 REFERENCE SCENE
 	void Scene_W4_ReferenceScene::Initialize()
 	{
 		sceneName = "Reference Scene";
@@ -415,6 +415,47 @@ namespace dae {
 			m->RotateY(yawAngle);
 			m->UpdateTransforms();
 		}
+	}
+#pragma endregion
+
+#pragma region SCENE W4 BUNNY SCENE
+	void Scene_W4_BunnyScene::Initialize()
+	{
+		sceneName = "Bunny Scene";
+		m_Camera.origin = { 0.f,3.f,-9.f };
+		m_Camera.fovAngle = 45.f;
+
+		//Materials
+		const auto matLambert_GrayBlue{ AddMaterial(new Material_Lambert({.49f, .57f, .57f}, 1.f)) };
+		const auto matLambert_White{ AddMaterial(new Material_Lambert(colors::White, 1.f)) };
+
+		//Planes
+		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
+		AddPlane(Vector3{ 0.f, 0.f, 0.f }, Vector3{ 0.f, 1.f, 0.f }, matLambert_GrayBlue); //BOTTOM
+		AddPlane(Vector3{ 0.f, 10.f, 0.f }, Vector3{ 0.f, -1.f, 0.f }, matLambert_GrayBlue); //TOP
+		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
+		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
+
+		//Triangle Mesh
+		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+
+		pMesh->Scale({ 2.f, 2.f, 2.f });
+		pMesh->UpdateTransforms();
+
+		//Light
+		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
+		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Light Left
+		AddPointLight(Vector3{ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ .34f, .47f, .68f });
+	}
+
+	void Scene_W4_BunnyScene::Update(dae::Timer* pTimer)
+	{
+		// Call base update
+		Scene::Update(pTimer);
+
+		pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
+		pMesh->UpdateTransforms();
 	}
 #pragma endregion
 }

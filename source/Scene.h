@@ -163,7 +163,7 @@ namespace dae
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
-//WEEK 4 Test Scene
+	//WEEK 4 Reference Scene
 	class Scene_W4_ReferenceScene final : public Scene
 	{
 	public:
@@ -180,5 +180,25 @@ namespace dae
 
 	private:
 		TriangleMesh* m_Meshes[3]{};
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 4 Bunny Scene
+	class Scene_W4_BunnyScene final : public Scene
+	{
+	public:
+		Scene_W4_BunnyScene() = default;
+		~Scene_W4_BunnyScene() override = default;
+
+		Scene_W4_BunnyScene(const Scene_W4_BunnyScene&) = delete;
+		Scene_W4_BunnyScene(Scene_W4_BunnyScene&&) noexcept = delete;
+		Scene_W4_BunnyScene& operator=(const Scene_W4_BunnyScene&) = delete;
+		Scene_W4_BunnyScene& operator=(Scene_W4_BunnyScene&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(Timer* pTimer) override;
+
+	private:
+		TriangleMesh* pMesh{ nullptr };
 	};
 }
