@@ -54,15 +54,6 @@ namespace dae {
 				closestHit = hit;
 			}
 		}
-
-		//for (const Triangle& triangle : m_Triangles)
-		//{
-		//	HitRecord hit{};
-		//	if (GeometryUtils::HitTest_Triangle(triangle, ray, hit) && hit.t < closestHit.t)
-		//	{
-		//		closestHit = hit;
-		//	}
-		//}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -93,14 +84,6 @@ namespace dae {
 				return true;
 			}
 		}
-
-		//for (const Triangle& triangle : m_Triangles)
-		//{
-		//	if (GeometryUtils::HitTest_Triangle(triangle, ray))
-		//	{
-		//		return true;
-		//	}
-		//}
 
 		return false;
 	}
@@ -307,13 +290,35 @@ namespace dae {
 		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
-		//Triangle Mesh
-		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
 
-		pMesh->Scale({ .7f, .7f, .7f });
-		pMesh->Translate({ 0.f,1.f,0.f });
+		//Triangle Mesh - Test
+		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		pMesh->positions = {
+			{ -.75f, -1.f, .0f },
+			{ -.75f, 1.f, .0f },
+			{ .75f, 1.f, 1.f },
+			{ .75f, -1.f, 0.f }
+		};
+
+		pMesh->indices = {
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		pMesh->CalculateNormals();
+
+		pMesh->Translate({ .0f, 1.5f, .0f });
+		pMesh->RotateY( 45.f);
+
 		pMesh->UpdateTransforms();
+
+		////Triangle Mesh - Cube
+		//pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		//Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+
+		//pMesh->Scale({ .7f, .7f, .7f });
+		//pMesh->Translate({ 0.f,1.f,0.f });
+		//pMesh->UpdateTransforms();
 
 		//Light
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
@@ -348,7 +353,7 @@ namespace dae {
 		const auto matCT_GrayMediumPlastic{ AddMaterial(new Material_CookTorrence({.75f,.75f,.75f }, .0f, .6f)) };
 		const auto matCT_GraySmoothPlastic{ AddMaterial(new Material_CookTorrence({.75f,.75f,.75f }, .0f, .1f)) };
 
-		const auto matLambert_GrayBlue{ AddMaterial(new Material_Lambert({.49,.57f,.57f}, 1.f)) };
+		const auto matLambert_GrayBlue{ AddMaterial(new Material_Lambert({.49f,.57f,.57f}, 1.f)) };
 		const auto matLambert_White{ AddMaterial(new Material_Lambert(colors::White, 1.f)) };
 
 		//Planes

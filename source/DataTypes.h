@@ -121,85 +121,33 @@ namespace dae
 				UpdateTransforms();
 		}
 
-		//void CalculateNormals()
-		//{
-		//	normals.resize(indices.size() / 3);
-
-		//	Vector3 v0{}, v1{}, v2{};
-
-		//	for (int index{}; index < normals.size(); index += 3)
-		//	{
-		//		v0 = positions[indices[index]];
-		//		v1 = positions[indices[index + 1]];
-		//		v2 = positions[indices[index + 2]];
-
-		//		normals[index] = Vector3::Cross(v1 - v0, v2 - v0).Normalized();
-		//	}
-		//}
-
-		//void UpdateTransforms()
-		//{
-		//	//Calculate Final Transform 
-		//	auto transformMatrix = scaleTransform * rotationTransform * translationTransform;
-
-		//	transformedPositions.reserve(positions.size());
-		//	transformedNormals.reserve(normals.size());
-
-		//	//Transform Positions (positions > transformedPositions)
-		//	for (int index{}; index < positions.size(); ++index)
-		//	{
-		//		transformedPositions[index] = transformMatrix.TransformPoint(positions[index]);
-		//	}
-
-		//	//Transform Normals (normals > transformedNormals)
-		//	for (int index{}; index < normals.size(); ++index)
-		//	{
-		//		transformedNormals[index] = transformMatrix.TransformVector(normals[index]);
-		//	}
-		//}
-
 		void CalculateNormals()
 		{
-			normals.resize(indices.size() / 3);
-
-			Vector3 v0{}, v1{}, v2{};
-
-			for (int index{}; index < normals.size(); ++index)
+			// Should calculate the normal for each triangle defined by the Positions & Indices buffers, store the results in ‘normals’
+			for (size_t i = 0; i < indices.size(); i += 3)
 			{
-				const int indicesIndex{ index * 3 };
+				const Vector3 edgeV0V1 = positions[indices[i + 1]] - positions[indices[i]];
+				const Vector3 edgeV0V2 = positions[indices[i + 2]] - positions[indices[i]];
+				const Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2).Normalized();
 
-				v0 = positions[indices[indicesIndex]];
-				v1 = positions[indices[indicesIndex + 1]];
-				v2 = positions[indices[indicesIndex + 2]];
-
-				normals[index] = Vector3::Cross(v1 - v0, v2 - v0).Normalized();
+				normals.push_back(normal);
 			}
-
-			//// Should calculate the normal for each triangle defined by the Positions & Indices buffers, store the results in ‘normals’
-			//for (size_t i = 0; i < indices.size(); i += 3)
-			//{
-			//	const Vector3 edgeV0V1 = positions[indices[i + 1]] - positions[indices[i]];
-			//	const Vector3 edgeV0V2 = positions[indices[i + 2]] - positions[indices[i]];
-			//	const Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2).Normalized();
-
-			//	normals.push_back(normal);
-			//}
 		}
 
 		void UpdateTransforms()
 		{
-			const Matrix transformMatrix = scaleTransform * rotationTransform * translationTransform;
+			const Matrix transformMatrix{ scaleTransform * rotationTransform * translationTransform };
 
 			//Transform Positions
 			transformedPositions.clear();
-			for (const auto& position : positions)
+			for (const Vector3& position : positions)
 			{
 				transformedPositions.emplace_back(transformMatrix.TransformPoint(position));
 			}
 
 			//Transform Normals
 			transformedNormals.clear();
-			for (const auto& normal : normals)
+			for (const Vector3& normal : normals)
 			{
 				transformedNormals.emplace_back(transformMatrix.TransformVector(normal));
 			}

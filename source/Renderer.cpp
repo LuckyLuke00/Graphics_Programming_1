@@ -120,7 +120,6 @@ void Renderer::CycleLightingMode()
 	static constexpr int enumSize{ sizeof(LightingMode) };
 	m_CurrentLightingMode = static_cast<LightingMode>((static_cast<int>(m_CurrentLightingMode) + 1) % enumSize);
 
-
 	// Print current m_CurrentLightingMode
 	switch (m_CurrentLightingMode)
 	{

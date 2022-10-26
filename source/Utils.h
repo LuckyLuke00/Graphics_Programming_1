@@ -62,7 +62,7 @@ namespace dae
 
 			const float denominator{ Vector3::Dot(plane.normal, ray.direction) };
 
-			if (denominator == 0.f) return false;
+			if (AreEqual(denominator, .0f)) return false;
 
 			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator };
 
@@ -90,8 +90,13 @@ namespace dae
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//1. Check if ray is perpendicular to triangle
-			const float denominator{ Vector3::Dot(triangle.normal, ray.direction) };
-			if (Vector3::Dot(triangle.normal, ray.direction) == 0.f) return false;
+			const Vector3 a{ triangle.v1 - triangle.v0 };
+			const Vector3 b{ triangle.v2 - triangle.v0 };
+			const Vector3 normal{ Vector3::Cross(a, b).Normalized() };
+
+			const float denominator{ Vector3::Dot(normal, ray.direction) };
+
+			if (AreEqual(denominator, .0f)) return false;
 
 			//2. Check if triangle is visible
 			if (!ignoreHitRecord)
@@ -106,14 +111,8 @@ namespace dae
 			}
 
 			//3. Ray-Plane test (plane defined by Triangle) + T range check
-			const Vector3 a{ triangle.v1 - triangle.v0 };
-			const Vector3 b{ triangle.v2 - triangle.v0 };
-			const Vector3 normal{ Vector3::Cross(a, b).Normalized() };
-
-			if (AreEqual(Vector3::Dot(normal, ray.direction), .0f)) return false;
-
 			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
-			const float t{ Vector3::Dot(center - ray.origin, normal) / Vector3::Dot(ray.direction, normal) };
+			const float t{ Vector3::Dot(center - ray.origin, normal) / denominator };
 
 			if (t < ray.min || t > ray.max) return false;
 
@@ -181,10 +180,7 @@ namespace dae
 					}
 				}
 			}
-
-			if (hitRecord.didHit) return true;
-
-			return false;
+			return hitRecord.didHit;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
