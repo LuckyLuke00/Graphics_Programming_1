@@ -11,10 +11,11 @@
 #include "Utils.h"
 
 // Standard includes
-#include <future>
+#include <future> //Async
+#include <ppl.h> //Parallel_for
 
-#define ASYNC
-//#define PARALLEL_FOR
+//#define ASYNC
+#define PARALLEL_FOR
 
 using namespace dae;
 
@@ -47,6 +48,7 @@ void Renderer::Render(Scene* pScene) const
 #if defined(ASYNC)
 	//Async Logic
 	//+++++++++++
+
 	const uint32_t numCores{ std::thread::hardware_concurrency() };
 	const uint32_t numPixelsPerTask{ numPixels / numCores };
 
@@ -86,17 +88,20 @@ void Renderer::Render(Scene* pScene) const
 #elif defined(PARALLEL_FOR)
 	//Parallel-For Logic
 	//++++++++++++++++++
+	concurrency::parallel_for(0u, numPixels, [=, this](int i)
+		{
+			RenderPixel(pScene, i, fov, aspectRatio, camera, lights, materials);
+		});
+
 #else
 	//Synchronous Logic (no threading)
 	//++++++++++++++++++++++++++++++++
-#endif
-
-	//No Threading
-	//++++++++++++
 	for (uint32_t i{ 0 }; i < numPixels; ++i)
 	{
 		RenderPixel(pScene, i, fov, aspectRatio, pScene->GetCamera(), lights, materials);
 	}
+
+#endif
 
 	//@END
 	//Update SDL Surface
