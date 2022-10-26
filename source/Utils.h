@@ -33,9 +33,7 @@ namespace dae
 
 			const float t{ t1 < 0.f ? t0 : t1 };
 
-			if (t < 0.f) return false;
-
-			if (t > ray.max) return false;
+			if (t < ray.min || t > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
 
@@ -68,9 +66,7 @@ namespace dae
 
 			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator };
 
-			if (t < 0.f) return false;
-
-			if (t > ray.max) return false;
+			if (t < ray.min || t > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
 
@@ -117,8 +113,7 @@ namespace dae
 			if (AreEqual(Vector3::Dot(normal, ray.direction), .0f)) return false;
 
 			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
-			const Vector3 l{ center - ray.origin };
-			const float t{ Vector3::Dot(l, normal) / Vector3::Dot(normal, ray.direction) };
+			const float t{ Vector3::Dot(center - ray.origin, normal) / Vector3::Dot(ray.direction, normal) };
 
 			if (t < ray.min || t > ray.max) return false;
 
@@ -143,7 +138,7 @@ namespace dae
 			hitRecord.didHit = true;
 			hitRecord.materialIndex = triangle.materialIndex;
 			hitRecord.origin = hitPoint;
-			hitRecord.normal = triangle.normal;
+			hitRecord.normal = normal;
 			hitRecord.t = t;
 
 			return true;
@@ -161,7 +156,8 @@ namespace dae
 			// Each set of 3 indices represents a Triangle – use HitTest_Triangle to find the triangle of the TriangleMesh with the (!) closest hit
 			// Use the ‘transformedPositions’ & ‘transformedNormals’ to define each individual triangle!
 
-			// 1. Find the Triangle with the (!) closest hit
+			HitRecord temp{};
+
 			for (size_t i{ 0 }; i < mesh.indices.size(); i += 3)
 			{
 				Triangle triangle
@@ -171,11 +167,22 @@ namespace dae
 					mesh.transformedPositions[mesh.indices[i + 2]],
 					mesh.normals[mesh.indices[i]]
 				};
+
 				triangle.materialIndex = mesh.materialIndex;
 				triangle.cullMode = mesh.cullMode;
 
-				if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord)) return true;
+				if (HitTest_Triangle(triangle, ray, temp, ignoreHitRecord))
+				{
+					if (ignoreHitRecord) return true;
+
+					if (hitRecord.t > temp.t)
+					{
+						hitRecord = temp;
+					}
+				}
 			}
+
+			if (hitRecord.didHit) return true;
 
 			return false;
 		}
