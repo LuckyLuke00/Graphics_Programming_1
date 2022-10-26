@@ -311,20 +311,6 @@ namespace dae {
 		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
 
-		//pMesh->positions = {
-		//	{-.75f, -1.f, .0f },
-		//	{-.75f, 1.f, .0f },
-		//	{.75f, 1.f, .1f },
-		//	{.75f, -1.f, .0f },
-		//};
-
-		//pMesh->indices = {
-		//	0, 1, 2,
-		//	0, 2, 3
-		//};
-
-		//pMesh->CalculateNormals();
-
 		pMesh->Scale({ .7f, .7f, .7f });
 		pMesh->Translate({ 0.f,1.f,0.f });
 		pMesh->UpdateTransforms();

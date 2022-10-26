@@ -119,4 +119,22 @@ void Renderer::CycleLightingMode()
 {
 	static constexpr int enumSize{ sizeof(LightingMode) };
 	m_CurrentLightingMode = static_cast<LightingMode>((static_cast<int>(m_CurrentLightingMode) + 1) % enumSize);
+
+
+	// Print current m_CurrentLightingMode
+	switch (m_CurrentLightingMode)
+	{
+	case LightingMode::ObservedArea:
+		std::cout << "\nLIGHTING MODE: OBSERVED AREA\n\n";
+		break;
+	case LightingMode::Radiance:
+		std::cout << "\nLIGHTING MODE: RADIANCE\n\n";
+		break;
+	case LightingMode::BRDF:
+		std::cout << "\nLIGHTING MODE: BRDF\n\n";
+		break;
+	case LightingMode::Combined:
+		std::cout << "\nLIGHTING MODE: COMBINED\n\n";
+		break;
+	}
 }
