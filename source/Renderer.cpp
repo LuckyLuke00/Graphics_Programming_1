@@ -3,12 +3,18 @@
 #include "SDL_surface.h"
 
 //Project includes
-#include "Renderer.h"
+#include "Material.h"
 #include "Math.h"
 #include "Matrix.h"
-#include "Material.h"
+#include "Renderer.h"
 #include "Scene.h"
 #include "Utils.h"
+
+// Standard includes
+#include <future>
+
+#define ASYNC
+//#define PARALLEL_FOR
 
 using namespace dae;
 
@@ -37,12 +43,52 @@ void Renderer::Render(Scene* pScene) const
 
 	const uint32_t numPixels{ static_cast<uint32_t>(m_Width * m_Height) };
 
+
 #if defined(ASYNC)
 	//Async Logic
+	//+++++++++++
+	const uint32_t numCores{ std::thread::hardware_concurrency() };
+	const uint32_t numPixelsPerTask{ numPixels / numCores };
+
+	std::vector<std::future<void>> async_futures{};
+
+	uint32_t numUnassignedPixels{ numPixels % numCores };
+	uint32_t currPixelIndex{ 0 };
+
+	for (uint32_t coreId{ 0 }; coreId < numCores; ++coreId)
+	{
+		uint32_t taskSize{ numPixelsPerTask };
+		if (numUnassignedPixels > 0)
+		{
+			++taskSize;
+			--numUnassignedPixels;
+		}
+
+		async_futures.push_back(std::async(std::launch::async, [=, this]
+			{
+				//Render all pixels for this task (currPixelIndex > currPixelIndex + taskSize)
+				const uint32_t pixelIndexEnd{ currPixelIndex + taskSize };
+				for (uint32_t pixelIndex{ currPixelIndex }; pixelIndex < pixelIndexEnd; ++pixelIndex)
+				{
+					RenderPixel(pScene, pixelIndex, fov, aspectRatio, camera, lights, materials);
+				}
+			}));
+
+		currPixelIndex += taskSize;
+	}
+
+	//Wait for async completion of all tasks
+	for (const std::future<void>& f : async_futures)
+	{
+		f.wait();
+	}
+
 #elif defined(PARALLEL_FOR)
 	//Parallel-For Logic
+	//++++++++++++++++++
 #else
-	//Synchronous Logic (no threading
+	//Synchronous Logic (no threading)
+	//++++++++++++++++++++++++++++++++
 #endif
 
 	//No Threading
@@ -105,10 +151,7 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 				(light.origin - closestHit.origin).Magnitude()
 			};
 
-			if (pScene->DoesHit(lightRay)) // Is the light occluded?
-			{
-				continue;
-			}
+			if (pScene->DoesHit(lightRay)) continue;
 		}
 
 		switch (m_CurrentLightingMode)
