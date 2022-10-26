@@ -43,7 +43,7 @@ namespace dae
 		const std::vector<Material*> GetMaterials() const { return m_Materials; }
 
 	protected:
-		std::string	sceneName;
+		std::string	m_SceneName{};
 
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
@@ -143,7 +143,7 @@ namespace dae
 		void Update(Timer* pTimer) override;
 
 	private:
-		TriangleMesh* pMesh{ nullptr };
+		TriangleMesh* m_pMesh{ nullptr };
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
@@ -183,6 +183,6 @@ namespace dae
 		void Update(Timer* pTimer) override;
 
 	private:
-		TriangleMesh* pMesh{ nullptr };
+		TriangleMesh* m_pMesh{ nullptr };
 	};
 }

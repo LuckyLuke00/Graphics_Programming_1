@@ -68,6 +68,16 @@ namespace dae {
 		return v1 - (2.f * Vector3::Dot(v1, v2) * v2);
 	}
 
+	Vector3 Vector3::Max(const Vector3& v1, const Vector3& v2)
+	{
+		return { std::max(v1.x, v2.x), std::max(v1.y, v2.y), std::max(v1.z, v2.z) };
+	}
+
+	Vector3 Vector3::Min(const Vector3& v1, const Vector3& v2)
+	{
+		return { std::min(v1.x, v2.x), std::min(v1.y, v2.y), std::min(v1.z, v2.z) };
+	}
+
 	Vector4 Vector3::ToPoint4() const
 	{
 		return { x, y, z, 1 };

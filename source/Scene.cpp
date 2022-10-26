@@ -313,12 +313,14 @@ namespace dae {
 		//pMesh->UpdateTransforms();
 
 		//Triangle Mesh - Cube
-		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+		m_pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		Utils::ParseOBJ("Resources/simple_cube.obj", m_pMesh->positions, m_pMesh->normals, m_pMesh->indices);
 
-		pMesh->Scale({ .7f, .7f, .7f });
-		pMesh->Translate({ 0.f,1.f,0.f });
-		pMesh->UpdateTransforms();
+		m_pMesh->Scale({ .7f, .7f, .7f });
+		m_pMesh->Translate({ 0.f,1.f,0.f });
+
+		m_pMesh->UpdateAABB();
+		m_pMesh->UpdateTransforms();
 
 		//Light
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
@@ -331,15 +333,15 @@ namespace dae {
 		// Call base update
 		Scene::Update(pTimer);
 
-		pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
-		pMesh->UpdateTransforms();
+		m_pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
+		m_pMesh->UpdateTransforms();
 	}
 #pragma endregion
 
 #pragma region SCENE W4 REFERENCE SCENE
 	void Scene_W4_ReferenceScene::Initialize()
 	{
-		sceneName = "Reference Scene";
+		m_SceneName = "Reference Scene";
 		m_Camera.origin = { 0, 3, -9 };
 		m_Camera.fovAngle = 45.f;
 
@@ -377,16 +379,19 @@ namespace dae {
 		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		m_Meshes[0]->AppendTriangle(baseTriangle, true);
 		m_Meshes[0]->Translate({ -1.75f, 4.5f, .0f });
+		m_Meshes[0]->UpdateAABB();
 		m_Meshes[0]->UpdateTransforms();
 
 		m_Meshes[1] = AddTriangleMesh(TriangleCullMode::FrontFaceCulling, matLambert_White);
 		m_Meshes[1]->AppendTriangle(baseTriangle, true);
 		m_Meshes[1]->Translate({ .0f, 4.5f, .0f });
+		m_Meshes[1]->UpdateAABB();
 		m_Meshes[1]->UpdateTransforms();
 
 		m_Meshes[2] = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
 		m_Meshes[2]->AppendTriangle(baseTriangle, true);
 		m_Meshes[2]->Translate({ 1.75f, 4.5f, .0f });
+		m_Meshes[2]->UpdateAABB();
 		m_Meshes[2]->UpdateTransforms();
 
 		//Light
@@ -412,7 +417,7 @@ namespace dae {
 #pragma region SCENE W4 BUNNY SCENE
 	void Scene_W4_BunnyScene::Initialize()
 	{
-		sceneName = "Bunny Scene";
+		m_SceneName = "Bunny Scene";
 		m_Camera.origin = { 0.f,3.f,-9.f };
 		m_Camera.fovAngle = 45.f;
 
@@ -428,11 +433,12 @@ namespace dae {
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 		
 		//Triangle Mesh
-		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+		m_pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj", m_pMesh->positions, m_pMesh->normals, m_pMesh->indices);
 
-		pMesh->Scale({ 2.f, 2.f, 2.f });
-		pMesh->UpdateTransforms();
+		m_pMesh->Scale({ 2.f, 2.f, 2.f });
+		m_pMesh->UpdateAABB();
+		m_pMesh->UpdateTransforms();
 
 		//Light
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
@@ -445,8 +451,8 @@ namespace dae {
 		// Call base update
 		Scene::Update(pTimer);
 
-		pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
-		pMesh->UpdateTransforms();
+		m_pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
+		m_pMesh->UpdateTransforms();
 	}
 #pragma endregion
 }
