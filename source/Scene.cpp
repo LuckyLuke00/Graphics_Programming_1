@@ -291,34 +291,34 @@ namespace dae {
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
 
-		//Triangle Mesh - Test
-		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		pMesh->positions = {
-			{ -.75f, -1.f, .0f },
-			{ -.75f, 1.f, .0f },
-			{ .75f, 1.f, 1.f },
-			{ .75f, -1.f, 0.f }
-		};
-
-		pMesh->indices = {
-			0, 1, 2,
-			0, 2, 3
-		};
-
-		pMesh->CalculateNormals();
-
-		pMesh->Translate({ .0f, 1.5f, .0f });
-		pMesh->RotateY( 45.f);
-
-		pMesh->UpdateTransforms();
-
-		////Triangle Mesh - Cube
+		////Triangle Mesh - Test
 		//pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		//Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+		//pMesh->positions = {
+		//	{ -.75f, -1.f, .0f },
+		//	{ -.75f, 1.f, .0f },
+		//	{ .75f, 1.f, 1.f },
+		//	{ .75f, -1.f, 0.f }
+		//};
 
-		//pMesh->Scale({ .7f, .7f, .7f });
-		//pMesh->Translate({ 0.f,1.f,0.f });
+		//pMesh->indices = {
+		//	0, 1, 2,
+		//	0, 2, 3
+		//};
+
+		//pMesh->CalculateNormals();
+
+		//pMesh->Translate({ .0f, 1.5f, .0f });
+		//pMesh->RotateY( 45.f);
+
 		//pMesh->UpdateTransforms();
+
+		//Triangle Mesh - Cube
+		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		Utils::ParseOBJ("Resources/simple_cube.obj", pMesh->positions, pMesh->normals, pMesh->indices);
+
+		pMesh->Scale({ .7f, .7f, .7f });
+		pMesh->Translate({ 0.f,1.f,0.f });
+		pMesh->UpdateTransforms();
 
 		//Light
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
