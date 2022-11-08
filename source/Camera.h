@@ -132,9 +132,12 @@ namespace dae
 			// Move camera forward and backward when only the left mouse button is pressed
 			origin += forward * -static_cast<float>(mouseY) * (leftMousePressed && !rightMousePressed) * deltaTime;
 
-			// Yaw and pitch the camera when only the right mouse button is pressed
+			// Move the camera left and right when both mouse buttons are pressed
+			origin += right * static_cast<float>(mouseX) * (leftMousePressed && rightMousePressed) * deltaTime;
+
+			// Yaw the camera when the right or left mouse button is pressed
 			// Rotate camera left and right
-			totalYaw += turnSpeed * static_cast<float>(mouseX) * static_cast<float>(!leftMousePressed && rightMousePressed) * deltaTime;
+			totalYaw += turnSpeed * static_cast<float>(mouseX) * static_cast<float>((leftMousePressed && !rightMousePressed || !leftMousePressed && rightMousePressed)) * deltaTime;
 
 			// Rotate camera up and down
 			totalPitch += turnSpeed * static_cast<float>(mouseY) * static_cast<float>(!leftMousePressed && rightMousePressed) * deltaTime;
