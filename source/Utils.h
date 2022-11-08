@@ -32,7 +32,7 @@ namespace dae
 
 			const float t{ t1 < 0.f ? t0 : t1 };
 
-			if (t < ray.min || t > ray.max) return false;
+			if (t < 0.f || t > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
 
@@ -61,7 +61,7 @@ namespace dae
 
 			const float denominator{ Vector3::Dot(plane.normal, ray.direction) };
 
-			if (AreEqual(denominator, .0f)) return false;
+			if (AreEqual(denominator, 0.f)) return false;
 
 			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator };
 
@@ -95,7 +95,7 @@ namespace dae
 
 			const float denominator{ Vector3::Dot(normal, ray.direction) };
 
-			if (AreEqual(denominator, .0f)) return false;
+			if (AreEqual(denominator, 0.f)) return false;
 
 			//2. Check if triangle is visible
 			if (!ignoreHitRecord)
@@ -113,7 +113,7 @@ namespace dae
 			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
 			const float t{ Vector3::Dot(center - ray.origin, normal) / denominator };
 
-			if (t < ray.min || t > ray.max) return false;
+			if (t < 0.f || t > ray.max) return false;
 
 			const Vector3 hitPoint{ ray.origin + t * ray.direction };
 
@@ -151,20 +151,20 @@ namespace dae
 #pragma region TriangeMesh SlabTest
 		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
 		{
-			float tx1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
-			float tx2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
+			const float tx1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
+			const float tx2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
 
 			float tmin{ std::min(tx1, tx2) };
 			float tmax{ std::max(tx1, tx2) };
 
-			float ty1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
-			float ty2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
+			const float ty1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
+			const float ty2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
 
 			tmin = std::max(tmin, std::min(ty1, ty2));
 			tmax = std::min(tmax, std::max(ty1, ty2));
 
-			float tz1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
-			float tz2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
+			const float tz1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
+			const float tz2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
 
 			tmin = std::max(tmin, std::min(tz1, tz2));
 			tmax = std::min(tmax, std::max(tz1, tz2));
@@ -285,9 +285,9 @@ namespace dae
 			//Precompute normals
 			for (uint64_t index = 0; index < indices.size(); index += 3)
 			{
-				uint32_t i0 = indices[index];
-				uint32_t i1 = indices[index + 1];
-				uint32_t i2 = indices[index + 2];
+				const uint32_t i0 = indices[index];
+				const uint32_t i1 = indices[index + 1];
+				const uint32_t i2 = indices[index + 2];
 
 				Vector3 edgeV0V1 = positions[i1] - positions[i0];
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];

@@ -350,3 +350,4 @@ MigrationBackup/
 .ionide/
 
 !**lib/*/x64
+**source/benchmark.txt
