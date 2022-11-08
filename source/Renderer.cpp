@@ -11,7 +11,8 @@
 #include "Utils.h"
 
 // Standard includes
-#include <future> //Async
+#include <future>
+#include <iostream>
 #include <ppl.h> //Parallel_for
 
 //#define ASYNC
@@ -37,7 +38,9 @@ void Renderer::Render(Scene* pScene) const
 	const float fovAngle{ camera.fovAngle * TO_RADIANS };
 	const float fov{ tan(fovAngle / 2.f) };
 
-	const float aspectRatio{ m_Width / static_cast<float>(m_Height) };
+	// for some reason the line below is in the PDF, but as far as I can tell it's not needed because we already have m_AspectRatio
+	// Therefore I removed any reference to it in the code
+	//const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
 
 	auto& materials{ pScene->GetMaterials() };
 	auto& lights{ pScene->GetLights() };
@@ -71,7 +74,7 @@ void Renderer::Render(Scene* pScene) const
 				const uint32_t pixelIndexEnd{ currPixelIndex + taskSize };
 				for (uint32_t pixelIndex{ currPixelIndex }; pixelIndex < pixelIndexEnd; ++pixelIndex)
 				{
-					RenderPixel(pScene, pixelIndex, fov, aspectRatio, camera, lights, materials);
+					RenderPixel(pScene, pixelIndex, fov, camera, lights, materials);
 				}
 			}));
 
@@ -89,7 +92,7 @@ void Renderer::Render(Scene* pScene) const
 	//++++++++++++++++++
 	concurrency::parallel_for(0u, numPixels, [=, this](int i)
 		{
-			RenderPixel(pScene, i, fov, aspectRatio, camera, lights, materials);
+			RenderPixel(pScene, i, fov, camera, lights, materials);
 		});
 
 #else
@@ -107,23 +110,18 @@ void Renderer::Render(Scene* pScene) const
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const
+void Renderer::RenderPixel(const Scene* pScene, uint32_t pixelIndex, const float& fov, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const
 {
 	const int px{ static_cast<int>(pixelIndex % m_Width) };
 	const int py{ static_cast<int>(pixelIndex / m_Width) };
 
-	float rx{ px + .5f };
-	float ry{ py + .5f };
+	const float rx{ static_cast<float>(px) + .5f };
+	const float ry{ static_cast<float>(py) + .5f };
 
-	float cx{ (2.f * (rx / static_cast<float>(m_Width)) - 1.f) * aspectRatio * fov };
-	float cy{ (1.f - 2 * (ry / static_cast<float>(m_Height))) * fov };
+	const float cx{ (2.f * (rx / static_cast<float>(m_Width)) - 1.f) * m_AspectRatio * fov };
+	const float cy{ (1.f - 2.f * (ry / static_cast<float>(m_Height))) * fov };
 
-	Vector3 rayDirection
-	{
-		(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f) * m_AspectRatio * camera.fov,
-		(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * camera.fov,
-		1.f
-	};
+	Vector3 rayDirection{ cx,cy,1.f };
 
 	// Transform rayDirection with cameraToWorld
 	rayDirection = camera.cameraToWorld.TransformVector(rayDirection).Normalized();

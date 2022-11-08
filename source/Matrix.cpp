@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-#include "MathHelpers.h"
 #include <cmath>
 
 namespace dae {
