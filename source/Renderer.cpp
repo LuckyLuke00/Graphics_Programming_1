@@ -44,7 +44,6 @@ void Renderer::Render(Scene* pScene) const
 
 	const uint32_t numPixels{ static_cast<uint32_t>(m_Width * m_Height) };
 
-
 #if defined(ASYNC)
 	//Async Logic
 	//+++++++++++
@@ -124,7 +123,7 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 		(2.f * (static_cast<float>(px) + 0.5f) / static_cast<float>(m_Width) - 1.f) * m_AspectRatio * camera.fov,
 		(1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height)) * camera.fov,
 		1.f
-};
+	};
 
 	// Transform rayDirection with cameraToWorld
 	rayDirection = camera.cameraToWorld.TransformVector(rayDirection).Normalized();
