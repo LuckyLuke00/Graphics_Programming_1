@@ -156,7 +156,7 @@ namespace dae
 			Clampf(totalPitch, -maxPitch, maxPitch);
 
 			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
-			forward = finalRotation.TransformVector(Vector3::UnitZ);/*.Normalized();*/
+			forward = finalRotation.TransformVector(Vector3::UnitZ);
 		}
 	};
 }

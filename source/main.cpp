@@ -78,6 +78,8 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					pTimer->StartBenchmark();
 				break;
+			default:
+				break;
 			}
 		}
 
@@ -93,16 +95,16 @@ int main(int argc, char* args[])
 		if (printTimer >= 1.f)
 		{
 			printTimer = 0.f;
-			std::cout << "dFPS: " << pTimer->GetdFPS() << std::endl;
+			std::cout << "dFPS: " << pTimer->GetdFPS() << '\n';
 		}
 
 		//Save screenshot after full render
 		if (takeScreenshot)
 		{
 			if (!pRenderer->SaveBufferToImage())
-				std::cout << "Screenshot saved!" << std::endl;
+				std::cout << "Screenshot saved!\n";
 			else
-				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
+				std::cout << "Something went wrong. Screenshot not saved!\n";
 			takeScreenshot = false;
 		}
 	}
