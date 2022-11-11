@@ -356,17 +356,7 @@ namespace dae
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];
 				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if (isnan(normal.x))
-				{
-					int k = 0;
-				}
-
 				normal.Normalize();
-				if (isnan(normal.x))
-				{
-					int k = 0;
-				}
-
 				normals.push_back(normal);
 			}
 
