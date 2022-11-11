@@ -72,10 +72,10 @@ void Renderer::Render(Scene* pScene) const
 			{
 				//Render all pixels for this task (currPixelIndex > currPixelIndex + taskSize)
 				const uint32_t pixelIndexEnd{ currPixelIndex + taskSize };
-				for (uint32_t pixelIndex{ currPixelIndex }; pixelIndex < pixelIndexEnd; ++pixelIndex)
-				{
-					RenderPixel(pScene, pixelIndex, fov, camera, lights, materials);
-				}
+		for (uint32_t pixelIndex{ currPixelIndex }; pixelIndex < pixelIndexEnd; ++pixelIndex)
+		{
+			RenderPixel(pScene, pixelIndex, fov, camera, lights, materials);
+		}
 			}));
 
 		currPixelIndex += taskSize;

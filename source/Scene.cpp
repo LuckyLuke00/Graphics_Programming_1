@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "Utils.h"
 #include "Material.h"
+#include <algorithm>
 
 namespace dae {
 #pragma region Base Scene
@@ -60,32 +61,32 @@ namespace dae {
 	{
 		// this function should return true on the first hit for the given ray,
 		// otherwise false. (No need to check for the closest hit, or filling in the HitRecord...)
-
-		for (const Sphere& sphere : m_SphereGeometries)
+		return
 		{
-			if (GeometryUtils::HitTest_Sphere(sphere, ray))
-			{
-				return true;
-			}
-		}
-
-		for (const Plane& plane : m_PlaneGeometries)
-		{
-			if (GeometryUtils::HitTest_Plane(plane, ray))
-			{
-				return true;
-			}
-		}
-
-		for (const TriangleMesh& mesh : m_TriangleMeshGeometries)
-		{
-			if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
-			{
-				return true;
-			}
-		}
-
-		return false;
+			// Check if any of the spheres, planes or triangles are hit by the ray
+			// this is a one big expression, so we can return it directly
+			std::ranges::any_of
+			(
+				m_PlaneGeometries, [&ray](const Plane& plane)
+				{
+					return GeometryUtils::HitTest_Plane(plane, ray);
+				}
+			)
+			|| std::ranges::any_of
+			(
+				m_SphereGeometries, [&ray](const Sphere& sphere)
+				{
+					return GeometryUtils::HitTest_Sphere(sphere, ray);
+				}
+			)
+			|| std::ranges::any_of
+			(
+				m_TriangleMeshGeometries, [&ray](const TriangleMesh& mesh)
+				{
+					return GeometryUtils::HitTest_TriangleMesh(mesh, ray);
+				}
+			)
+		};
 	}
 
 #pragma region Scene Helpers
@@ -290,27 +291,6 @@ namespace dae {
 		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
-		////Triangle Mesh - Test
-		//pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		//pMesh->positions = {
-		//	{ -.75f, -1.f, .0f },
-		//	{ -.75f, 1.f, .0f },
-		//	{ .75f, 1.f, 1.f },
-		//	{ .75f, -1.f, 0.f }
-		//};
-
-		//pMesh->indices = {
-		//	0, 1, 2,
-		//	0, 2, 3
-		//};
-
-		//pMesh->CalculateNormals();
-
-		//pMesh->Translate({ .0f, 1.5f, .0f });
-		//pMesh->RotateY( 45.f);
-
-		//pMesh->UpdateTransforms();
-
 		//Triangle Mesh - Cube
 		m_pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/simple_cube.obj", m_pMesh->positions, m_pMesh->normals, m_pMesh->indices);
@@ -404,7 +384,7 @@ namespace dae {
 		// Call base update
 		Scene::Update(pTimer);
 
-		const auto yawAngle{ (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2 };
+		const auto yawAngle{ (cosf(pTimer->GetTotal()) + 1.f) / 2.f * PI_2 };
 		for (const auto& m : m_Meshes)
 		{
 			m->RotateY(yawAngle);
@@ -450,7 +430,7 @@ namespace dae {
 		// Call base update
 		Scene::Update(pTimer);
 
-		m_pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
+		m_pMesh->RotateY((cosf(pTimer->GetTotal()) + 1.f) / 2.f * PI_2);
 		m_pMesh->UpdateTransforms();
 	}
 #pragma endregion
