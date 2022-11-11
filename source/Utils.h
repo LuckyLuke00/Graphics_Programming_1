@@ -25,7 +25,6 @@ namespace dae
 			const float thc{ sqrtf(r2 - d2) };
 
 			float t0{ tca - thc };
-			float t1{ tca + thc };
 #pragma endregion
 #pragma region Analytic Solution
 			//const Vector3 l{ ray.origin - sphere.origin };
@@ -46,9 +45,6 @@ namespace dae
 			//}
 			//if (t0 > t1) std::swap(t0, t1);
 #pragma endregion
-
-			if (t0 > t1) std::swap(t0, t1);
-			if (t0 < 0.f) t0 = t1;
 			if (t0 < 0.f || t0 > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
@@ -60,32 +56,6 @@ namespace dae
 			hitRecord.t = t0;
 
 			return true;
-
-			//const Vector3 sphereToRay{ ray.origin - sphere.origin };
-			//const float a{ -Vector3::Dot(ray.direction, sphereToRay) };
-			//const float od2{ Vector3::Reject(sphereToRay, ray.direction).SqrMagnitude() };
-			//const float r2{ sphere.radius * sphere.radius };
-
-			//if (od2 > r2) return false;
-
-			//const float d{ sqrtf(r2 - od2) };
-
-			//const float t0{ a + d };
-			//const float t1{ a - d }; // Will always be smaller than t0
-
-			//const float t{ t1 < 0.f ? t0 : t1 };
-
-			//if (t < 0.f || t > ray.max) return false;
-
-			//if (ignoreHitRecord) return true;
-
-			//hitRecord.didHit = true;
-			//hitRecord.materialIndex = sphere.materialIndex;
-			//hitRecord.origin = ray.origin + ray.direction * t;
-			//hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
-			//hitRecord.t = t;
-
-			//return true;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -104,7 +74,7 @@ namespace dae
 
 			const float denominator{ Vector3::Dot(plane.normal, ray.direction) };
 
-			if (AreEqual(denominator, 0.f)) return false;
+			if (denominator > -ray.min && denominator < ray.min) return false;
 
 			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator };
 
