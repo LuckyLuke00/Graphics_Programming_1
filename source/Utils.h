@@ -11,38 +11,81 @@ namespace dae
 		//SPHERE HIT-TESTS
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			// Check sphere intersection with ray
-			// If intersection, return true and update hitRecord
-			// If no intersection, return false and keep hitRecord unchanged
+#pragma region Geometric Solution
+			const Vector3 l{ sphere.origin - ray.origin };
+			const float tca{ Vector3::Dot(l, ray.direction) };
 
-			const Vector3 sphereToRay{ ray.origin - sphere.origin };
+			//if (tca < 0.f) return false; // Faster if we leave this out
+			const float d2{ Vector3::Dot(l, l) - tca * tca };
 
-			const float a{ Vector3::Dot(ray.direction, ray.direction) };
-			const float b{ 2.f * Vector3::Dot(sphereToRay, ray.direction) };
-			const float c{ Vector3::Dot(sphereToRay, sphereToRay) - sphere.radius * sphere.radius };
+			const float r2{ sphere.radius * sphere.radius };
 
-			float discriminant{ b * b - 4.f * a * c };
+			if (d2 > r2) return false;
 
-			if (discriminant < 0.f) return false;
+			const float thc{ sqrtf(r2 - d2) };
 
-			discriminant = sqrtf(discriminant);
+			float t0{ tca - thc };
+			float t1{ tca + thc };
+#pragma endregion
+#pragma region Analytic Solution
+			//const Vector3 l{ ray.origin - sphere.origin };
+			//const float a{ Vector3::Dot(ray.direction, ray.direction) };
+			//const float b{ 2.f * Vector3::Dot(ray.direction, l) };
+			//const float c{ Vector3::Dot(l, l) - sphere.radius * sphere.radius };
 
-			const float t0{ (-b + discriminant) / (2.f * a) };
-			const float t1{ (-b - discriminant) / (2.f * a) }; // Will always be smaller than t0
+			//float t0{};
+			//float t1{};
+			//const float discr{ b * b - 4.f * a * c };
+			//if (discr < 0.f) return false;
+			//else if (discr == 0.f) t0 = t1 = -.5f * b / a;
+			//else
+			//{
+			//	const float q{ (b > 0.f) ? -.5f * (b + sqrt(discr)) : -.5f * (b - sqrt(discr)) };
+			//	t0 = q / a;
+			//	t1 = c / q;
+			//}
+			//if (t0 > t1) std::swap(t0, t1);
+#pragma endregion
 
-			const float t{ t1 < 0.f ? t0 : t1 };
-
-			if (t < 0.f || t > ray.max) return false;
+			if (t0 > t1) std::swap(t0, t1);
+			if (t0 < 0.f) t0 = t1;
+			if (t0 < 0.f || t0 > ray.max) return false;
 
 			if (ignoreHitRecord) return true;
 
 			hitRecord.didHit = true;
 			hitRecord.materialIndex = sphere.materialIndex;
-			hitRecord.origin = ray.origin + ray.direction * t;
+			hitRecord.origin = ray.origin + ray.direction * t0;
 			hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
-			hitRecord.t = t;
+			hitRecord.t = t0;
 
 			return true;
+
+			//const Vector3 sphereToRay{ ray.origin - sphere.origin };
+			//const float a{ -Vector3::Dot(ray.direction, sphereToRay) };
+			//const float od2{ Vector3::Reject(sphereToRay, ray.direction).SqrMagnitude() };
+			//const float r2{ sphere.radius * sphere.radius };
+
+			//if (od2 > r2) return false;
+
+			//const float d{ sqrtf(r2 - od2) };
+
+			//const float t0{ a + d };
+			//const float t1{ a - d }; // Will always be smaller than t0
+
+			//const float t{ t1 < 0.f ? t0 : t1 };
+
+			//if (t < 0.f || t > ray.max) return false;
+
+			//if (ignoreHitRecord) return true;
+
+			//hitRecord.didHit = true;
+			//hitRecord.materialIndex = sphere.materialIndex;
+			//hitRecord.origin = ray.origin + ray.direction * t;
+			//hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
+			//hitRecord.t = t;
+
+			//return true;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -121,7 +164,7 @@ namespace dae
 
 			const float t{ f * Vector3::Dot(edge2, q) };
 
-			if (t > ray.min && t < ray.max)
+			if (t > 0.f && t < ray.max)
 			{
 				if (ignoreHitRecord) return true;
 
@@ -149,13 +192,13 @@ namespace dae
 			////2. Check if triangle is visible
 			//if (!ignoreHitRecord)
 			//{
-			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > 0) return false;
-			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < 0) return false;
+			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > ray.min) return false;
+			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < ray.min) return false;
 			//}
 			//else
 			//{
-			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
-			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
+			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < ray.min) return false;
+			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > ray.min) return false;
 			//}
 
 			////3. Ray-Plane test (plane defined by Triangle) + T range check
@@ -169,15 +212,15 @@ namespace dae
 			////4. Check if hitpoint is inside the Triangle
 			//const Vector3 edgeA{ triangle.v1 - triangle.v0 };
 			//Vector3 pointToSide{ hitPoint - triangle.v0 };
-			//if (Vector3::Dot(normal, Vector3::Cross(edgeA, pointToSide)) < 0.f) return false;
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeA, pointToSide)) < ray.min) return false;
 
 			//const Vector3 edgeB{ triangle.v2 - triangle.v1 };
 			//pointToSide = hitPoint - triangle.v1;
-			//if (Vector3::Dot(normal, Vector3::Cross(edgeB, pointToSide)) < 0.f) return false;
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeB, pointToSide)) < ray.min) return false;
 
 			//const Vector3 edgeC{ triangle.v0 - triangle.v2 };
 			//pointToSide = hitPoint - triangle.v2;
-			//if (Vector3::Dot(normal, Vector3::Cross(edgeC, pointToSide)) < 0.f) return false;
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeC, pointToSide)) < ray.min) return false;
 
 			////5. Fill-in HitRecord (if required)
 			//if (ignoreHitRecord) return true;
