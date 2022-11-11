@@ -1,5 +1,8 @@
 //External includes
+#include "vld.h"
 #include "SDL.h"
+#include "SDL_surface.h"
+#undef main
 
 //Standard includes
 #include <iostream>
@@ -30,7 +33,7 @@ int main(int argc, char* args[])
 	constexpr uint32_t height = 480;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"RayTracer - Lucas Kinoo",
+		"RayTracer - **Lucas Kinoo (2DAE15)**",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
