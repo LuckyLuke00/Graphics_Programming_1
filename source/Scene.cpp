@@ -312,7 +312,7 @@ namespace dae {
 		//pMesh->UpdateTransforms();
 
 		//Triangle Mesh - Cube
-		m_pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		m_pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/simple_cube.obj", m_pMesh->positions, m_pMesh->normals, m_pMesh->indices);
 
 		m_pMesh->Scale({ .7f, .7f, .7f });
@@ -432,7 +432,7 @@ namespace dae {
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
 		//Triangle Mesh
-		m_pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		m_pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj", m_pMesh->positions, m_pMesh->normals, m_pMesh->indices);
 
 		m_pMesh->Scale({ 2.f, 2.f, 2.f });

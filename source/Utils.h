@@ -88,58 +88,108 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//1. Check if ray is perpendicular to triangle
-			const Vector3 a{ triangle.v1 - triangle.v0 };
-			const Vector3 b{ triangle.v2 - triangle.v0 };
-			const Vector3 normal{ Vector3::Cross(a, b).Normalized() };
+#pragma region Moller-Trumbore
+			const Vector3 edge1{ triangle.v1 - triangle.v0 };
+			const Vector3 edge2{ triangle.v2 - triangle.v0 };
 
-			const float denominator{ Vector3::Dot(normal, ray.direction) };
+			const Vector3 h{ Vector3::Cross(ray.direction, edge2) };
+			const float a{ Vector3::Dot(edge1, h) };
 
-			if (AreEqual(denominator, 0.f)) return false;
+			if (a > -ray.min && a < ray.min) return false;
 
-			//2. Check if triangle is visible
 			if (!ignoreHitRecord)
 			{
-				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < 0) return false;
-				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > 0) return false;
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && a < ray.min) return false;
+				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && a > ray.min) return false;
 			}
 			else
 			{
-				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
-				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && a > ray.min) return false;
+				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && a < ray.min) return false;
 			}
 
-			//3. Ray-Plane test (plane defined by Triangle) + T range check
-			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
-			const float t{ Vector3::Dot(center - ray.origin, normal) / denominator };
+			const float f{ 1.f / a };
+			const Vector3 s{ ray.origin - triangle.v0 };
+			const float u{ f * Vector3::Dot(s, h) };
 
-			if (t < 0.f || t > ray.max) return false;
+			if (u < 0.f || u > 1.f) return false;
 
-			const Vector3 hitPoint{ ray.origin + t * ray.direction };
+			const Vector3 q{ Vector3::Cross(s, edge1) };
+			const float v{ f * Vector3::Dot(ray.direction, q) };
 
-			//4. Check if hitpoint is inside the Triangle
-			const Vector3 edgeA{ triangle.v1 - triangle.v0 };
-			Vector3 pointToSide{ hitPoint - triangle.v0 };
-			if (Vector3::Dot(normal, Vector3::Cross(edgeA, pointToSide)) < 0.f) return false;
+			if (v < 0.f || u + v > 1.f) return false;
 
-			const Vector3 edgeB{ triangle.v2 - triangle.v1 };
-			pointToSide = hitPoint - triangle.v1;
-			if (Vector3::Dot(normal, Vector3::Cross(edgeB, pointToSide)) < 0.f) return false;
+			const float t{ f * Vector3::Dot(edge2, q) };
 
-			const Vector3 edgeC{ triangle.v0 - triangle.v2 };
-			pointToSide = hitPoint - triangle.v2;
-			if (Vector3::Dot(normal, Vector3::Cross(edgeC, pointToSide)) < 0.f) return false;
+			if (t > ray.min && t < ray.max)
+			{
+				if (ignoreHitRecord) return true;
 
-			//5. Fill-in HitRecord (if required)
-			if (ignoreHitRecord) return true;
+				hitRecord.didHit = true;
+				hitRecord.materialIndex = triangle.materialIndex;
+				hitRecord.origin = ray.origin + ray.direction * t;
+				hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
+				hitRecord.t = t;
 
-			hitRecord.didHit = true;
-			hitRecord.materialIndex = triangle.materialIndex;
-			hitRecord.origin = hitPoint;
-			hitRecord.normal = normal;
-			hitRecord.t = t;
+				return true;
+			}
 
-			return true;
+			return false;
+#pragma endregion
+#pragma region Old Triangle HitTest
+			////1. Check if ray is perpendicular to triangle
+			//const Vector3 a{ triangle.v1 - triangle.v0 };
+			//const Vector3 b{ triangle.v2 - triangle.v0 };
+			//const Vector3 normal{ Vector3::Cross(a, b).Normalized() };
+
+			//const float denominator{ Vector3::Dot(normal, ray.direction) };
+
+			//if (AreEqual(denominator, 0.f)) return false;
+
+			////2. Check if triangle is visible
+			//if (!ignoreHitRecord)
+			//{
+			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator > 0) return false;
+			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator < 0) return false;
+			//}
+			//else
+			//{
+			//	if (triangle.cullMode == TriangleCullMode::BackFaceCulling && denominator < 0) return false;
+			//	if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && denominator > 0) return false;
+			//}
+
+			////3. Ray-Plane test (plane defined by Triangle) + T range check
+			//const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
+			//const float t{ Vector3::Dot(center - ray.origin, normal) / denominator };
+
+			//if (t < 0.f || t > ray.max) return false;
+
+			//const Vector3 hitPoint{ ray.origin + t * ray.direction };
+
+			////4. Check if hitpoint is inside the Triangle
+			//const Vector3 edgeA{ triangle.v1 - triangle.v0 };
+			//Vector3 pointToSide{ hitPoint - triangle.v0 };
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeA, pointToSide)) < 0.f) return false;
+
+			//const Vector3 edgeB{ triangle.v2 - triangle.v1 };
+			//pointToSide = hitPoint - triangle.v1;
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeB, pointToSide)) < 0.f) return false;
+
+			//const Vector3 edgeC{ triangle.v0 - triangle.v2 };
+			//pointToSide = hitPoint - triangle.v2;
+			//if (Vector3::Dot(normal, Vector3::Cross(edgeC, pointToSide)) < 0.f) return false;
+
+			////5. Fill-in HitRecord (if required)
+			//if (ignoreHitRecord) return true;
+
+			//hitRecord.didHit = true;
+			//hitRecord.materialIndex = triangle.materialIndex;
+			//hitRecord.origin = hitPoint;
+			//hitRecord.normal = normal;
+			//hitRecord.t = t;
+
+			//return true;
+#pragma endregion
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
