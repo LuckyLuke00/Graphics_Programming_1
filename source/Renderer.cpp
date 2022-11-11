@@ -16,7 +16,7 @@
 #include <ppl.h> //Parallel_for
 
 //#define ASYNC
-#define PARALLEL_FOR
+//#define PARALLEL_FOR
 
 using namespace dae;
 
@@ -100,7 +100,7 @@ void Renderer::Render(Scene* pScene) const
 	//++++++++++++++++++++++++++++++++
 	for (uint32_t i{ 0 }; i < numPixels; ++i)
 	{
-		RenderPixel(pScene, i, fov, aspectRatio, pScene->GetCamera(), lights, materials);
+		RenderPixel(pScene, i, fov, pScene->GetCamera(), lights, materials);
 	}
 
 #endif
