@@ -16,7 +16,7 @@
 #include <ppl.h> //Parallel_for
 
 //#define ASYNC
-//#define PARALLEL_FOR
+#define PARALLEL_FOR
 
 using namespace dae;
 

@@ -53,14 +53,14 @@ namespace dae
 			//Calculate the right & up vector using the forward camera vector
 			//Combine to a matrix (also include origin) and return
 
-			//Get the right vector
-			right = Vector3::Cross(up, forward).Normalized();
+			//Get the right vector (use Vector3::UnitY to prevent camera roll)
+			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
 
 			//Get the up vector
 			up = Vector3::Cross(forward, right).Normalized();
 
 			//Make the matrix
-			return cameraToWorld = Matrix{ right,up,forward,origin };
+			return cameraToWorld = Matrix{ right, up, forward, origin };
 		}
 
 		void Update(Timer* pTimer)
@@ -142,11 +142,21 @@ namespace dae
 			// Rotate camera up and down
 			totalPitch += turnSpeed * static_cast<float>(mouseY) * static_cast<float>(!leftMousePressed && rightMousePressed) * deltaTime;
 
-			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
-			forward = finalRotation.TransformVector(Vector3::UnitZ).Normalized();
+			// Clamp
+			static constexpr float maxRotation{ 6.5f };
 
-			// Prevent the camera from rolling, it can only pitch and yaw
-			up = Vector3::UnitY;
+			if (totalYaw > maxRotation) totalYaw -= maxRotation;
+			else if (totalYaw < -maxRotation) totalYaw += maxRotation;
+
+			if (totalPitch > maxRotation) totalPitch -= maxRotation;
+			else if (totalPitch < -maxRotation) totalPitch += maxRotation;
+
+			// Prevent camera from inverting controls
+			static constexpr float maxPitch{ 1.5f };
+			Clampf(totalPitch, -maxPitch, maxPitch);
+
+			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
+			forward = finalRotation.TransformVector(Vector3::UnitZ);/*.Normalized();*/
 		}
 	};
 }
