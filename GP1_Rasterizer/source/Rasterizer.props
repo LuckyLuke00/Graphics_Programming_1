@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
+    <IntDir>TempFiles\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>../include/vld;../include/sdl2-2.0.9;../include/sdl2_image-2.0.5;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>../lib/vld/x64;../lib/sdl2-2.0.9/x64;../lib/sdl2_image-2.0.5/x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;vld.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)..\lib\sdl2-2.0.9\x64\SDL2.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\sdl2_image-2.0.5\x64\SDL2_image.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\sdl2_image-2.0.5\x64\zlib1.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\sdl2_image-2.0.5\x64\libpng16-16.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\vld\x64\vld_x64.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\vld\x64\dbghelp.dll" "$(OutDir)" /y /D
+xcopy "$(SolutionDir)..\lib\vld\x64\Microsoft.DTfW.DHL.manifest" "$(OutDir)" /y /D</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
