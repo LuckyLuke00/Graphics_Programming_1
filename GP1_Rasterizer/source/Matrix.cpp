@@ -146,7 +146,18 @@ namespace dae {
 	{
 		//TODO W1
 
-		return {};
+		// DirectX implementation
+		const Vector3 zAxis{ forward };
+		const Vector3 xAxis{ (Vector3::Cross(up, zAxis)).Normalized() };
+		const Vector3 yAxis{ Vector3::Cross(zAxis, xAxis) };
+		
+		return
+		{
+			{ xAxis.x, yAxis.x, zAxis.x, 0.f },
+			{ xAxis.y, yAxis.y, zAxis.y, 0.f },
+			{ xAxis.z, yAxis.z, zAxis.z, 0.f },
+			{ -Vector3::Dot(xAxis, origin), -Vector3::Dot(yAxis, origin), -Vector3::Dot(zAxis, origin), 1.f }
+		};
 	}
 
 	Matrix Matrix::CreatePerspectiveFovLH(float fov, float aspect, float zn, float zf)

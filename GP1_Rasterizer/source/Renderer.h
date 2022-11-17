@@ -32,6 +32,7 @@ namespace dae
 		void Render();
 
 		void Render_W1_Part1(); //Rasterizer Stage Only
+		void Render_W1_Part2(); //Projection Stage (Camera)
 
 		bool SaveBufferToImage() const;
 
@@ -54,5 +55,6 @@ namespace dae
 
 		// Triangle Intersection Test
 		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vector3>& vertices) const;
+		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices) const;
 	};
 }
