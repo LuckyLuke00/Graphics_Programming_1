@@ -126,7 +126,6 @@ void dae::Renderer::Render_W1_Part2()
 				finalColor = colors::White;
 			}
 
-
 			//Update Color in Buffer
 			finalColor.MaxToOne();
 
@@ -140,6 +139,10 @@ void dae::Renderer::Render_W1_Part2()
 
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
+	// Optimize vertices_out
+	vertices_out.clear();
+	vertices_out.reserve(vertices_in.size());
+
 	for (const Vertex& vertex : vertices_in)
 	{
 		//transform vertex from world space to view space

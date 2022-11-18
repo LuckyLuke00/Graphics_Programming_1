@@ -22,10 +22,11 @@ namespace dae
 
 		static float Dot(const Vector3& v1, const Vector3& v2);
 		static Vector3 Cross(const Vector3& v1, const Vector3& v2);
-		static Vector3 Project(const Vector3& v1, const Vector3& v2);
-		static Vector3 Reject(const Vector3& v1, const Vector3& v2);
-		static Vector3 Reflect(const Vector3& v1, const Vector3& v2);
+		static Vector3 Lerp(const Vector3& v1, const Vector3& v2, float t);
 		static Vector3 Lico(float f1, const Vector3& v1, float f2, const Vector3& v2, float f3, const Vector3& v3);
+		static Vector3 Project(const Vector3& v1, const Vector3& v2);
+		static Vector3 Reflect(const Vector3& v1, const Vector3& v2);
+		static Vector3 Reject(const Vector3& v1, const Vector3& v2);
 
 		Vector4 ToPoint4() const;
 		Vector4 ToVector4() const;

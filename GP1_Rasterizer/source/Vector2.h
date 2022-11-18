@@ -16,8 +16,8 @@ namespace dae
 		float Normalize();
 		Vector2 Normalized() const;
 
-		static float Dot(const Vector2& v1, const Vector2& v2);
 		static float Cross(const Vector2& v1, const Vector2& v2);
+		static float Dot(const Vector2& v1, const Vector2& v2);
 
 		//Member Operators
 		Vector2 operator*(float scale) const;

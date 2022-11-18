@@ -59,6 +59,11 @@ namespace dae {
 		};
 	}
 
+	Vector3 Vector3::Lerp(const Vector3& v1, const Vector3& v2, float t)
+	{
+		return v1 + (v2 - v1) * t;
+	}
+
 	Vector3 Vector3::Project(const Vector3& v1, const Vector3& v2)
 	{
 		return (v2 * (Dot(v1, v2) / Dot(v2, v2)));
