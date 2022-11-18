@@ -111,14 +111,14 @@ namespace dae
 
 	namespace colors
 	{
-		static ColorRGB Red{ 1,0,0 };
-		static ColorRGB Blue{ 0,0,1 };
-		static ColorRGB Green{ 0,1,0 };
-		static ColorRGB Yellow{ 1,1,0 };
-		static ColorRGB Cyan{ 0,1,1 };
-		static ColorRGB Magenta{ 1,0,1 };
-		static ColorRGB White{ 1,1,1 };
-		static ColorRGB Black{ 0,0,0 };
-		static ColorRGB Gray{ 0.5f,0.5f,0.5f };
+		const static ColorRGB Red{ 1,0,0 };
+		const static ColorRGB Blue{ 0,0,1 };
+		const static ColorRGB Green{ 0,1,0 };
+		const static ColorRGB Yellow{ 1,1,0 };
+		const static ColorRGB Cyan{ 0,1,1 };
+		const static ColorRGB Magenta{ 1,0,1 };
+		const static ColorRGB White{ 1,1,1 };
+		const static ColorRGB Black{ 0,0,0 };
+		const static ColorRGB Gray{ 0.5f,0.5f,0.5f };
 	}
 }

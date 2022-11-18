@@ -105,11 +105,11 @@ namespace dae
 			if (!canMove && velocity.SqrMagnitude() < 0.01f) return;
 
 			// Use WASD to move the camera if CanMove() is false (no mouse buttons pressed) the value will be 0.f
-			const float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
-			const float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
+			float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
+			float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
 
 			// Lerp the velocity to the desired direction
-			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed };
+			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed * canMove };
 			velocity = Vector3::Lerp(velocity, desiredVelocity, dt * 10.f);
 
 			// Add the velocity to the origin

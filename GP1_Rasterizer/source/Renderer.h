@@ -11,11 +11,12 @@ struct SDL_Surface;
 
 namespace dae
 {
+	//Forward Declarations
+	class Scene;
 	class Texture;
+	class Timer;
 	struct Mesh;
 	struct Vertex;
-	class Timer;
-	class Scene;
 
 	class Renderer final
 	{
@@ -33,6 +34,7 @@ namespace dae
 
 		void Render_W1_Part1(); //Rasterizer Stage Only
 		void Render_W1_Part2(); //Projection Stage (Camera)
+		void Render_W1_Part3(); //Barycentric Coordinates
 
 		bool SaveBufferToImage() const;
 
@@ -54,7 +56,6 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const; //W1 Version
 
 		// Triangle Intersection Test
-		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vector3>& vertices) const;
-		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices) const;
+		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices, ColorRGB& pixelColor) const;
 	};
 }

@@ -46,7 +46,8 @@ void Renderer::Render()
 	SDL_LockSurface(m_pBackBuffer);
 
 	//Render_W1_Part1(); //Rasterizer Stage Only
-	Render_W1_Part2(); //Projection Stage (Camera)
+	//Render_W1_Part2(); //Projection Stage (Camera)
+	Render_W1_Part3(); //Barycentric Coordinates
 
 	//@END
 	//Update SDL Surface
@@ -58,11 +59,11 @@ void Renderer::Render()
 void dae::Renderer::Render_W1_Part1()
 {
 	// Define Triangle - Vertices in NDC space
-	static const std::vector<Vector3> vertices_ndc
+	static const std::vector<Vertex> vertices_ndc
 	{
-		{ .0f, .5f, 1.f },
-		{ .5f, -.5f, 1.f },
-		{ -.5f, -.5f, 1.f },
+		{{ .0f, .5f, 1.f }},
+		{{ .5f, -.5f, 1.f }},
+		{{ -.5f, -.5f, 1.f }},
 	};
 
 	// Half screen size (for NDC to SCREEN space conversion)
@@ -70,11 +71,11 @@ void dae::Renderer::Render_W1_Part1()
 	static const float halfHeight{ m_Height * .5f };
 
 	// Define Triangle - Vertices in SCREEN space
-	static const std::vector<Vector3> vertices_screenSpace
+	static const std::vector<Vertex> vertices_screenSpace
 	{
-		{ (vertices_ndc[0].x + 1.f) * halfWidth, (1.f - vertices_ndc[0].y) * halfHeight, vertices_ndc[0].z },
-		{ (vertices_ndc[1].x + 1.f) * halfWidth, (1.f - vertices_ndc[1].y) * halfHeight, vertices_ndc[1].z },
-		{ (vertices_ndc[2].x + 1.f) * halfWidth, (1.f - vertices_ndc[2].y) * halfHeight, vertices_ndc[2].z }
+		{{ (vertices_ndc[0].position.x + 1.f) * halfWidth, (1.f - vertices_ndc[0].position.y) * halfHeight, vertices_ndc[0].position.z }},
+		{{ (vertices_ndc[1].position.x + 1.f) * halfWidth, (1.f - vertices_ndc[1].position.y) * halfHeight, vertices_ndc[1].position.z }},
+		{{ (vertices_ndc[2].position.x + 1.f) * halfWidth, (1.f - vertices_ndc[2].position.y) * halfHeight, vertices_ndc[2].position.z }},
 	};
 
 	//RENDER LOGIC
@@ -85,10 +86,7 @@ void dae::Renderer::Render_W1_Part1()
 			ColorRGB finalColor{};
 
 			//Define Triangle Edges
-			if (IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screenSpace))
-			{
-				finalColor = colors::White;
-			}
+			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screenSpace, finalColor);
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
@@ -121,10 +119,40 @@ void dae::Renderer::Render_W1_Part2()
 		{
 			ColorRGB finalColor{};
 
-			if (IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen))
-			{
-				finalColor = colors::White;
-			}
+			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen, finalColor);
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
+	}
+}
+
+void dae::Renderer::Render_W1_Part3()
+{
+	// Define Triangle - Vertices in WORLD space
+	static const std::vector<Vertex> vertices_world
+	{
+		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
+		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
+		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
+	};
+
+	static std::vector<Vertex> vertices_screen;
+	VertexTransformationFunction(vertices_world, vertices_screen);
+
+	//RENDER LOGIC
+	for (int px{}; px < m_Width; ++px)
+	{
+		for (int py{}; py < m_Height; ++py)
+		{
+			ColorRGB finalColor{};
+
+			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen, finalColor);
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
@@ -149,53 +177,43 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 		Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(vertex.position) };
 
 		//perspective divide
-		Vertex projectedVertex{};
-		projectedVertex.position.x = viewSpacePos.x / viewSpacePos.z;
-		projectedVertex.position.y = viewSpacePos.y / viewSpacePos.z;
-		projectedVertex.position.z = viewSpacePos.z;
-
-		//take camera settings into account
-		projectedVertex.position.x /= (m_Width / static_cast<float>(m_Height) * m_Camera.fov);
-		projectedVertex.position.y /= m_Camera.fov;
-
-		//transform vertex to screen space
-		projectedVertex.position.x = (projectedVertex.position.x + 1) / 2.f * m_Width;
-		projectedVertex.position.y = (1 - projectedVertex.position.y) / 2.f * m_Height;
-
-		//set color of the vertex
-		projectedVertex.color = vertex.color;
+		const Vertex projectedVertex
+		{
+			{
+				(viewSpacePos.x / viewSpacePos.z / (static_cast<float>(m_Width) / static_cast<float>(m_Height) * m_Camera.fov) + 1.f) * (m_Width * .5f),
+				(1.f - viewSpacePos.y / viewSpacePos.z / m_Camera.fov) * (m_Height * .5f),
+				viewSpacePos.z
+			},
+			vertex.color
+		};
 
 		//add the vertex to vertices_out
 		vertices_out.emplace_back(projectedVertex);
 	}
 }
 
-bool dae::Renderer::IsInsideTriangle(const Vector2& pixel, const std::vector<Vector3>& vertices) const
+bool dae::Renderer::IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices, ColorRGB& pixelColor) const
 {
-	const Vector2 v0ToPixel{ pixel.x - vertices[0].x, pixel.y - vertices[0].y };
-	const Vector2 v1ToPixel{ pixel.x - vertices[1].x, pixel.y - vertices[1].y };
-	const Vector2 v2ToPixel{ pixel.x - vertices[2].x, pixel.y - vertices[2].y };
+	// Convert Vector3 to Vector2
+	const Vector2 v0{ vertices[0].position.x, vertices[0].position.y };
+	const Vector2 v1{ vertices[1].position.x, vertices[1].position.y };
+	const Vector2 v2{ vertices[2].position.x, vertices[2].position.y };
 
-	const bool sign1{ Vector2::Cross(v0ToPixel, v1ToPixel) < 0.f };
-	const bool sign2{ Vector2::Cross(v1ToPixel, v2ToPixel) < 0.f };
-	const bool sign3{ Vector2::Cross(v2ToPixel, v0ToPixel) < 0.f };
+	// Calculate the area of the total parallelogram
+	const float totalArea{ Vector2::Cross(v1 - v0, v2 - v0) };
 
-	// Check if all signs are the same
-	return (sign1 == sign2) && (sign2 == sign3);
-}
+	// Calculate the weights
+	const float weight0{ Vector2::Cross(v1 - pixel, v2 - pixel) / totalArea };
+	if (weight0 < .0f) return false;
 
-bool dae::Renderer::IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices) const
-{
-	const Vector2 v0ToPixel{ pixel.x - vertices[0].position.x, pixel.y - vertices[0].position.y };
-	const Vector2 v1ToPixel{ pixel.x - vertices[1].position.x, pixel.y - vertices[1].position.y };
-	const Vector2 v2ToPixel{ pixel.x - vertices[2].position.x, pixel.y - vertices[2].position.y };
+	const float weight1{ Vector2::Cross(v2 - pixel, v0 - pixel) / totalArea };
+	if (weight1 < .0f) return false;
 
-	const bool sign1{ Vector2::Cross(v0ToPixel, v1ToPixel) < 0.f };
-	const bool sign2{ Vector2::Cross(v1ToPixel, v2ToPixel) < 0.f };
-	const bool sign3{ Vector2::Cross(v2ToPixel, v0ToPixel) < 0.f };
+	const float weight2{ Vector2::Cross(v0 - pixel, v1 - pixel) / totalArea };
+	if (weight2 < .0f) return false;
 
-	// Check if all signs are the same
-	return (sign1 == sign2) && (sign2 == sign3);
+	pixelColor = vertices[0].color * weight0 + vertices[1].color * weight1 + vertices[2].color * weight2;
+	return true;
 }
 
 bool Renderer::SaveBufferToImage() const
