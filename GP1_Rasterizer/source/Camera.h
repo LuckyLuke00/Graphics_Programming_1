@@ -80,6 +80,7 @@ namespace dae
 
 			HandleKeyboardMovement(deltaTime);
 			HandleMouseMovement(deltaTime);
+			UpdateVectors();
 
 			//Update Matrices
 			CalculateViewMatrix();
@@ -95,24 +96,24 @@ namespace dae
 				mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) ||
 				mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
 
-			// Hide or show the mouse cursor if the user can move the camera
+			//Hide or show the mouse cursor if the user can move the camera
 			SDL_SetRelativeMouseMode(canMove ? SDL_TRUE : SDL_FALSE);
 		}
 
 		void HandleKeyboardMovement(const float& dt)
 		{
-			// Prevent floating point accumulation and allow for smooth movement
+			//Prevent floating point accumulation and allow for smooth movement
 			if (!canMove && velocity.SqrMagnitude() < 0.01f) return;
 
-			// Use WASD to move the camera if CanMove() is false (no mouse buttons pressed) the value will be 0.f
+			//Use WASD to move the camera if CanMove() is false (no mouse buttons pressed) the value will be 0.f
 			float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
 			float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
 
-			// Lerp the velocity to the desired direction
+			//Lerp the velocity to the desired direction
 			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed * canMove };
 			velocity = Vector3::Lerp(velocity, desiredVelocity, dt * 10.f);
 
-			// Add the velocity to the origin
+			//Add the velocity to the origin
 			origin += velocity * dt;
 		}
 
@@ -120,30 +121,45 @@ namespace dae
 		{
 			if (!canMove) return;
 
-			// Type cast mouse x and y to float
+			//Type cast mouse x and y to float
 			const float x{ static_cast<float>(mouseX) };
 			const float y{ -static_cast<float>(mouseY) };
 
-			// Use bitmasks to check if the mouse buttons are pressed
+			//Store mouse button states
 			const uint32_t& leftMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) };
 			const uint32_t& rightMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) };
 			const uint32_t& middleMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE) };
 
-			// Move camera up and down if the middle mouse button is pressed or the left and right mouse buttons are pressed
+			//Camera movement
+			//Move the camera up, down, left and right
+			//When both left and right or middle mouse buttons are pressed
 			origin += (up * y + right * x) * dt * (middleMouse || (leftMouse && rightMouse));
 
-			// move the camera forward and backward if only the left mouse button is pressed
+			//Move the camera forward and backward
+			//When only the left mouse button is pressed
 			origin += forward * y * dt * (leftMouse && !rightMouse);
 
-			// pitch the camera if only the right mouse button is pressed
+			//Camera rotation
+			//Pitch the camera up and down
+			//When only the right mouse button is pressed
 			totalPitch += y * dt * static_cast<float>(!leftMouse && rightMouse);
 
-			// yaw the camera if only the right is pressed and not the left mouse button
-			// or only if the left mouse button is pressed and not the right mouse button
+			//Yaw the camera left and right
+			//When only the right mouse button or only the left mouse button is pressed
 			totalYaw += x * dt * static_cast<float>(rightMouse && !leftMouse || leftMouse && !rightMouse);
+		}
 
-			// Calculate the forward vector
+		//Function that updates forward, up and right vectors
+		void UpdateVectors()
+		{
+			//Calculate the forward vector
 			forward = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitZ);
+
+			//Calculate the right vector
+			right = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitX);
+
+			//Calculate the up vector
+			up = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitY);
 		}
 	};
 }

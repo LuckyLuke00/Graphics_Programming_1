@@ -67,9 +67,9 @@ namespace dae {
 			{0,0,0,1}  //T
 		};
 
-		// v0x v0y v0z v0w
-		// v1x v1y v1z v1w
-		// v2x v2y v2z v2w
-		// v3x v3y v3z v3w
+		//v0x v0y v0z v0w
+		//v1x v1y v1z v1w
+		//v2x v2y v2z v2w
+		//v3x v3y v3z v3w
 	};
 }

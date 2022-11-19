@@ -58,7 +58,7 @@ void Renderer::Render()
 
 void dae::Renderer::Render_W1_Part1()
 {
-	// Define Triangle - Vertices in NDC space
+	//Define Triangle - Vertices in NDC space
 	static const std::vector<Vertex> vertices_ndc
 	{
 		{{ .0f, .5f, 1.f }},
@@ -66,11 +66,11 @@ void dae::Renderer::Render_W1_Part1()
 		{{ -.5f, -.5f, 1.f }},
 	};
 
-	// Half screen size (for NDC to SCREEN space conversion)
+	//Half screen size (for NDC to SCREEN space conversion)
 	static const float halfWidth{ m_Width * .5f };
 	static const float halfHeight{ m_Height * .5f };
 
-	// Define Triangle - Vertices in SCREEN space
+	//Define Triangle - Vertices in SCREEN space
 	static const std::vector<Vertex> vertices_screenSpace
 	{
 		{{ (vertices_ndc[0].position.x + 1.f) * halfWidth, (1.f - vertices_ndc[0].position.y) * halfHeight, vertices_ndc[0].position.z }},
@@ -101,7 +101,7 @@ void dae::Renderer::Render_W1_Part1()
 
 void dae::Renderer::Render_W1_Part2()
 {
-	// Define Triangle - Vertices in WORLD space
+	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
 	{
 		{{ .0f, 2.f, .0f }},
@@ -134,7 +134,7 @@ void dae::Renderer::Render_W1_Part2()
 
 void dae::Renderer::Render_W1_Part3()
 {
-	// Define Triangle - Vertices in WORLD space
+	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
 	{
 		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
@@ -167,7 +167,7 @@ void dae::Renderer::Render_W1_Part3()
 
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
-	// Optimize vertices_out
+	//Optimize vertices_out
 	vertices_out.clear();
 	vertices_out.reserve(vertices_in.size());
 
@@ -194,15 +194,15 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 
 bool dae::Renderer::IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices, ColorRGB& pixelColor) const
 {
-	// Convert Vector3 to Vector2
+	//Convert Vector3 to Vector2
 	const Vector2 v0{ vertices[0].position.x, vertices[0].position.y };
 	const Vector2 v1{ vertices[1].position.x, vertices[1].position.y };
 	const Vector2 v2{ vertices[2].position.x, vertices[2].position.y };
 
-	// Calculate the area of the total parallelogram
+	//Calculate the area of the total parallelogram
 	const float totalArea{ Vector2::Cross(v1 - v0, v2 - v0) };
 
-	// Calculate the weights
+	//Calculate the weights
 	const float weight0{ Vector2::Cross(v1 - pixel, v2 - pixel) / totalArea };
 	if (weight0 < .0f) return false;
 

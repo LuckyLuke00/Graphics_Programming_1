@@ -25,7 +25,7 @@ namespace dae
 
 		static float Dot(const Vector4& v1, const Vector4& v2);
 
-		// operator overloading
+		//operator overloading
 		Vector4 operator*(float scale) const;
 		Vector4 operator+(const Vector4& v) const;
 		Vector4 operator-(const Vector4& v) const;

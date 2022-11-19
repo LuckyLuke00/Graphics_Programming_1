@@ -18,7 +18,7 @@ namespace dae
 #ifdef DISABLE_OBJ
 
 			//TODO: Enable the code below after uncommenting all the vertex attributes of DataTypes::Vertex
-			// >> Comment/Remove '#define DISABLE_OBJ'
+			//>> Comment/Remove '#define DISABLE_OBJ'
 			assert(false && "OBJ PARSER not enabled! Check the comments in Utils::ParseOBJ");
 
 #else
@@ -35,7 +35,7 @@ namespace dae
 			indices.clear();
 
 			std::string sCommand;
-			// start a while iteration ending when the end of file is reached (ios::eof)
+			//start a while iteration ending when the end of file is reached (ios::eof)
 			while (!file.eof())
 			{
 				//read the first word of the string, use the >> operator (istream::operator>>)
@@ -43,7 +43,7 @@ namespace dae
 				//use conditional statements to process the different commands
 				if (sCommand == "#")
 				{
-					// Ignore Comment
+					//Ignore Comment
 				}
 				else if (sCommand == "v")
 				{
@@ -55,14 +55,14 @@ namespace dae
 				}
 				else if (sCommand == "vt")
 				{
-					// Vertex TexCoord
+					//Vertex TexCoord
 					float u, v;
 					file >> u >> v;
 					UVs.emplace_back(u, 1 - v);
 				}
 				else if (sCommand == "vn")
 				{
-					// Vertex Normal
+					//Vertex Normal
 					float x, y, z;
 					file >> x >> y >> z;
 
@@ -75,14 +75,14 @@ namespace dae
 					//add three indices to the index array
 					//add the material index as attibute to the attribute array
 					//
-					// Faces or triangles
+					//Faces or triangles
 					Vertex vertex{};
 					size_t iPosition, iTexCoord, iNormal;
 
 					uint32_t tempIndices[3];
 					for (size_t iFace = 0; iFace < 3; iFace++)
 					{
-						// OBJ format uses 1-based arrays
+						//OBJ format uses 1-based arrays
 						file >> iPosition;
 						vertex.position = positions[iPosition - 1];
 
@@ -92,7 +92,7 @@ namespace dae
 
 							if ('/' != file.peek())
 							{
-								// Optional texture coordinate
+								//Optional texture coordinate
 								file >> iTexCoord;
 								vertex.uv = UVs[iTexCoord - 1];
 							}
@@ -101,7 +101,7 @@ namespace dae
 							{
 								file.ignore();
 
-								// Optional vertex normal
+								//Optional vertex normal
 								file >> iNormal;
 								vertex.normal = normals[iNormal - 1];
 							}

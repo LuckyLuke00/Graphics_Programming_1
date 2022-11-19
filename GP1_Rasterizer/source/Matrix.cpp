@@ -146,7 +146,7 @@ namespace dae {
 	{
 		//TODO W1
 
-		// DirectX implementation
+		//DirectX implementation
 		const Vector3 zAxis{ forward };
 		const Vector3 xAxis{ (Vector3::Cross(up, zAxis)).Normalized() };
 		const Vector3 yAxis{ Vector3::Cross(zAxis, xAxis) };
