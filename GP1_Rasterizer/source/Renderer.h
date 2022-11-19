@@ -35,15 +35,17 @@ namespace dae
 		void Render_W1_Part1(); //Rasterizer Stage Only
 		void Render_W1_Part2(); //Projection Stage (Camera)
 		void Render_W1_Part3(); //Barycentric Coordinates
+		void Render_W1_Part4(); //Depth Buffer
+		void Render_W1_Part5(); //BoundingBox Optimization
 
 		bool SaveBufferToImage() const;
 
 	private:
-		SDL_Window* m_pWindow{};
+		SDL_Window* m_pWindow{ nullptr };
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
-		uint32_t* m_pBackBufferPixels{};
+		uint32_t* m_pBackBufferPixels{ nullptr };
 
 		//float* m_pDepthBufferPixels{};
 

@@ -43,8 +43,8 @@ namespace dae
 		Vector3 up{ Vector3::UnitY };
 		Vector3 right{ Vector3::UnitX };
 
-		float totalPitch{ 0.f };
-		float totalYaw{ 0.f };
+		float totalPitch{ .0f };
+		float totalYaw{ .0f };
 
 		Matrix invViewMatrix{};
 		Matrix viewMatrix{};

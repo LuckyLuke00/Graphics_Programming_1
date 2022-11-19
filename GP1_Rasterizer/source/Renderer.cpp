@@ -47,7 +47,9 @@ void Renderer::Render()
 
 	//Render_W1_Part1(); //Rasterizer Stage Only
 	//Render_W1_Part2(); //Projection Stage (Camera)
-	Render_W1_Part3(); //Barycentric Coordinates
+	//Render_W1_Part3(); //Barycentric Coordinates
+	Render_W1_Part4(); //Depth Buffer
+	//Render_W1_Part5(); //BoundingBox Optimization
 
 	//@END
 	//Update SDL Surface
@@ -137,6 +139,84 @@ void dae::Renderer::Render_W1_Part3()
 	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
 	{
+		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
+		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
+		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
+	};
+
+	static std::vector<Vertex> vertices_screen;
+	VertexTransformationFunction(vertices_world, vertices_screen);
+
+	//RENDER LOGIC
+	for (int px{}; px < m_Width; ++px)
+	{
+		for (int py{}; py < m_Height; ++py)
+		{
+			ColorRGB finalColor{};
+
+			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen, finalColor);
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
+	}
+}
+
+void dae::Renderer::Render_W1_Part4()
+{
+	//Define Triangle - Vertices in WORLD space
+	static const std::vector<Vertex> vertices_world
+	{
+		//Triangle 0
+		{{ .0f, 2.f, .0f }, { 1.f, .0f, .0f }},
+		{{ 1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+		{{ -1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+
+		//Triangle 1
+		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
+		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
+		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
+	};
+
+	static std::vector<Vertex> vertices_screen;
+	VertexTransformationFunction(vertices_world, vertices_screen);
+
+	//RENDER LOGIC
+	for (int px{}; px < m_Width; ++px)
+	{
+		for (int py{}; py < m_Height; ++py)
+		{
+			ColorRGB finalColor{};
+
+			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen, finalColor);
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
+	}
+}
+
+void dae::Renderer::Render_W1_Part5()
+{
+	//Define Triangle - Vertices in WORLD space
+	static const std::vector<Vertex> vertices_world
+	{
+		//Triangle 0
+		{{ .0f, 2.f, .0f }, { 1.f, .0f, .0f }},
+		{{ 1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+		{{ -1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+
+		//Triangle 1
 		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
 		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
 		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
