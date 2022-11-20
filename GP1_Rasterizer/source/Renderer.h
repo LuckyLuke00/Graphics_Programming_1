@@ -38,6 +38,8 @@ namespace dae
 		void Render_W1_Part4(); //Depth Buffer
 		void Render_W1_Part5(); //BoundingBox Optimization
 
+		void Render_W2(); //Textures
+
 		bool SaveBufferToImage() const;
 
 	private:
@@ -56,8 +58,6 @@ namespace dae
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const; //W1 Version
-
-		//Triangle Intersection Test
-		bool IsInsideTriangle(const Vector2& pixel, const std::vector<Vertex>& vertices, ColorRGB& pixelColor) const;
+		void VertexTransformationFunction(const std::vector<Mesh>& meshes_in, std::vector<Mesh>& meshes_out) const; //W2 Version
 	};
 }

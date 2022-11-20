@@ -26,7 +26,7 @@ namespace dae
 
 	enum class PrimitiveTopology
 	{
-		TriangeList,
+		TriangleList,
 		TriangleStrip
 	};
 

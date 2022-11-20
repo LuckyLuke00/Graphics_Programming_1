@@ -49,7 +49,9 @@ void Renderer::Render()
 	//Render_W1_Part2(); //Projection Stage (Camera)
 	//Render_W1_Part3(); //Barycentric Coordinates
 	//Render_W1_Part4(); //Depth Buffer
-	Render_W1_Part5(); //BoundingBox Optimization
+	//Render_W1_Part5(); //BoundingBox Optimization
+
+	Render_W2(); //Textures
 
 	//@END
 	//Update SDL Surface
@@ -205,11 +207,7 @@ void dae::Renderer::Render_W1_Part3()
 			};
 			if (w1 < .0f) continue;
 
-			float w2
-			{ Vector2::Cross(
-				{ pixel.x - vertices_screen[2].position.x, pixel.y - vertices_screen[2].position.y },
-				{ pixel.x - vertices_screen[0].position.x, pixel.y - vertices_screen[0].position.y })
-			};
+			float w2{ area - w0 - w1 };
 			if (w2 < .0f) continue;
 
 			w0 /= area;
@@ -285,11 +283,7 @@ void dae::Renderer::Render_W1_Part4()
 				};
 				if (w1 < .0f) continue;
 
-				float w2
-				{ Vector2::Cross(
-					{ pixel.x - vertices_screen[i + 2].position.x, pixel.y - vertices_screen[i + 2].position.y },
-					{ pixel.x - vertices_screen[i + 0].position.x, pixel.y - vertices_screen[i + 0].position.y })
-				};
+				float w2{ area - w0 - w1 };
 				if (w2 < .0f) continue;
 
 				w0 /= area;
@@ -393,11 +387,7 @@ void dae::Renderer::Render_W1_Part5()
 				};
 				if (w1 < .0f) continue;
 
-				float w2
-				{ Vector2::Cross(
-					{ pixel.x - vertices_screen[i + 2].position.x, pixel.y - vertices_screen[i + 2].position.y },
-					{ pixel.x - vertices_screen[i + 0].position.x, pixel.y - vertices_screen[i + 0].position.y })
-				};
+				float w2{ area - w0 - w1 };
 				if (w2 < .0f) continue;
 
 				w0 /= area;
@@ -432,6 +422,158 @@ void dae::Renderer::Render_W1_Part5()
 	}
 }
 
+void dae::Renderer::Render_W2()
+{
+	//Define Mesh - Triangle List
+	static std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+		{
+			Vertex{ { -3,  3, -2 } },
+			Vertex{ {  0,  3, -2 } },
+			Vertex{ {  3,  3, -2 } },
+			Vertex{ { -3,  0, -2 } },
+			Vertex{ {  0,  0, -2 } },
+			Vertex{ {  3,  0, -2 } },
+			Vertex{ { -3, -3, -2 } },
+			Vertex{ {  0, -3, -2 } },
+			Vertex{ {  3, -3, -2 } },
+		},
+		{
+			3, 0, 1,	1, 4, 3,	4, 1, 2,
+			2, 5, 4,	6, 3, 4,	4, 7, 6,
+			7, 4, 5,	5, 8, 7
+		},
+			PrimitiveTopology::TriangleList
+		}
+	};
+
+	////Define Mesh - Triangle Strip
+	//static std::vector<Mesh> meshes_world
+	//{
+	//	Mesh
+	//	{
+	//		{
+	//			Vertex{ { -3,  3, -2 } },
+	//			Vertex{ {  0,  3, -2 } },
+	//			Vertex{ {  3,  3, -2 } },
+	//			Vertex{ { -3,  0, -2 } },
+	//			Vertex{ {  0,  0, -2 } },
+	//			Vertex{ {  3,  0, -2 } },
+	//			Vertex{ { -3, -3, -2 } },
+	//			Vertex{ {  0, -3, -2 } },
+	//			Vertex{ {  3, -3, -2 } },
+	//		},
+	//		{
+	//			3, 0, 4, 1, 5, 2,
+	//			2, 6,
+	//			6, 3, 7, 4, 8, 5
+	//		},
+	//	PrimitiveTopology::TriangleStrip
+	//	}
+	//};
+
+	static std::vector<Mesh> meshes_screen;
+	VertexTransformationFunction(meshes_world, meshes_screen);
+
+	// Initialize the depth buffer to float max
+	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
+
+	// Also clear the BackBuffer (SDL_FillRect, clearColor = {100,100,100}
+	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+
+	// According to the PrimitiveTopology, use a different index loop
+	for (const Mesh& mesh : meshes_screen)
+	{
+		switch (mesh.primitiveTopology)
+		{
+		case PrimitiveTopology::TriangleList:
+		{
+			for (size_t i{ 0 }; i < mesh.indices.size(); i += 3)
+			{
+				const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
+				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
+				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
+
+				// Calculate the bounding box (Add small offset to prevent rounding errors)
+				static constexpr float offset{ 0.5f };
+				const int minX{ static_cast<int>(std::min(v0.position.x, std::min(v1.position.x, v2.position.x)) - offset) };
+				const int maxX{ static_cast<int>(std::max(v0.position.x, std::max(v1.position.x, v2.position.x)) + offset) };
+				const int minY{ static_cast<int>(std::min(v0.position.y, std::min(v1.position.y, v2.position.y)) - offset) };
+				const int maxY{ static_cast<int>(std::max(v0.position.y, std::max(v1.position.y, v2.position.y)) + offset) };
+
+				// If the triangle is outside the screen, skip it
+				if (minX > m_Width - 1 || maxX < 0 || minY > m_Height - 1 || maxY < 0) continue;
+
+				const int startX{ std::max(minX, 0) };
+				const int endX{ std::min(maxX, m_Width - 1) };
+				const int startY{ std::max(minY, 0) };
+				const int endY{ std::min(maxY, m_Height - 1) };
+
+				const float area
+				{ Vector2::Cross(
+					{ v1.position.x - v0.position.x, v1.position.y - v0.position.y },
+					{ v2.position.x - v0.position.x, v2.position.y - v0.position.y })
+				};
+
+				// Loop over the bounding box
+				for (int py{ startY }; py < endY; ++py)
+				{
+					for (int px{ startX }; px < endX; ++px)
+					{
+						// Check if the pixel is inside the triangle
+						// If so, draw the pixel
+						const Vector2 pixel{ px + .5f, py + .5f };
+
+						float w0
+						{ Vector2::Cross(
+							{ pixel.x - v1.position.x, pixel.y - v1.position.y },
+							{ pixel.x - v2.position.x, pixel.y - v2.position.y })
+						};
+						if (w0 < 0) continue;
+
+						float w1
+						{ Vector2::Cross(
+							{ pixel.x - v2.position.x, pixel.y - v2.position.y },
+							{ pixel.x - v0.position.x, pixel.y - v0.position.y })
+						};
+						if (w1 < 0) continue;
+
+						float w2{ area - w0 - w1 };
+						if (w2 < 0) continue;
+
+						// Calculate the depth
+						const float z{ v0.position.z * w0 + v1.position.z * w1 + v2.position.z * w2 };
+
+						//Check if pixel is in front of the current pixel in the depth buffer
+						// Calculate buffer index
+						const int bufferIdx{ px + (py * m_Width) };
+
+						if (z > m_pDepthBufferPixels[bufferIdx])
+							continue;
+
+						//Update depth buffer
+						m_pDepthBufferPixels[bufferIdx] = z;
+
+						//Interpolate color
+						ColorRGB finalColor{ (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
+
+						//Update Color in Buffer
+						finalColor.MaxToOne();
+
+						m_pBackBufferPixels[bufferIdx] = SDL_MapRGB(m_pBackBuffer->format,
+							static_cast<uint8_t>(finalColor.r * 255),
+							static_cast<uint8_t>(finalColor.g * 255),
+							static_cast<uint8_t>(finalColor.b * 255));
+					}
+				}
+			}
+		}
+		}
+	}
+}
+
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
 	//Optimize vertices_out
@@ -458,6 +600,46 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 
 		//add the vertex to vertices_out
 		vertices_out.emplace_back(projectedVertex);
+	}
+}
+void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, std::vector<Mesh>& meshes_out) const //W2 Version
+{
+	//Optimize vertices_out
+	meshes_out.clear();
+	meshes_out.reserve(meshes_in.size() * 3);
+
+	const float aspectRatioFov{ static_cast<float>(m_Width) / static_cast<float>(m_Height) * m_Camera.fov };
+	const float fovReciprocal{ 1.f / m_Camera.fov };
+
+	// For every mesh in meshes_in
+	// Only transform the vertices, not the indices
+	// Add the transformed vertices to meshes_out
+	// and copy the indices and topology from meshes_in
+	for (const Mesh& mesh : meshes_in)
+	{
+		Mesh transformedMesh{ mesh };
+		transformedMesh.vertices.clear();
+		transformedMesh.vertices.reserve(mesh.vertices.size());
+
+		for (const Vertex& vertex : mesh.vertices)
+		{
+			//transform vertex from world space to view space
+			Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(vertex.position) };
+
+			const Vertex projectedVertex
+			{
+				{
+					(viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (m_Width * .5f),
+					(1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (m_Height * .5f),
+					viewSpacePos.z
+				},
+				vertex.color
+			};
+
+			//add the vertex to vertices_out
+			transformedMesh.vertices.emplace_back(projectedVertex);
+		}
+		meshes_out.emplace_back(transformedMesh);
 	}
 }
 
