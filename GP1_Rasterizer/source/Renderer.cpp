@@ -48,8 +48,8 @@ void Renderer::Render()
 	//Render_W1_Part1(); //Rasterizer Stage Only
 	//Render_W1_Part2(); //Projection Stage (Camera)
 	//Render_W1_Part3(); //Barycentric Coordinates
-	Render_W1_Part4(); //Depth Buffer
-	//Render_W1_Part5(); //BoundingBox Optimization
+	//Render_W1_Part4(); //Depth Buffer
+	Render_W1_Part5(); //BoundingBox Optimization
 
 	//@END
 	//Update SDL Surface
@@ -324,44 +324,113 @@ void dae::Renderer::Render_W1_Part4()
 	}
 }
 
-//void dae::Renderer::Render_W1_Part5()
-//{
-//	//Define Triangle - Vertices in WORLD space
-//	static const std::vector<Vertex> vertices_world
-//	{
-//		//Triangle 0
-//		{{ .0f, 2.f, .0f }, { 1.f, .0f, .0f }},
-//		{{ 1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
-//		{{ -1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
-//
-//		//Triangle 1
-//		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
-//		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
-//		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
-//	};
-//
-//	static std::vector<Vertex> vertices_screen;
-//	VertexTransformationFunction(vertices_world, vertices_screen);
-//
-//	//RENDER LOGIC
-//	for (int px{}; px < m_Width; ++px)
-//	{
-//		for (int py{}; py < m_Height; ++py)
-//		{
-//			ColorRGB finalColor{};
-//
-//			IsInsideTriangle({ static_cast<float>(px), static_cast<float>(py) }, vertices_screen, finalColor);
-//
-//			//Update Color in Buffer
-//			finalColor.MaxToOne();
-//
-//			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
-//				static_cast<uint8_t>(finalColor.r * 255),
-//				static_cast<uint8_t>(finalColor.g * 255),
-//				static_cast<uint8_t>(finalColor.b * 255));
-//		}
-//	}
-//}
+void dae::Renderer::Render_W1_Part5()
+{
+	//Define Triangle - Vertices in WORLD space
+	static const std::vector<Vertex> vertices_world
+	{
+		//Triangle 0
+		{{ .0f, 2.f, .0f }, { 1.f, .0f, .0f }},
+		{{ 1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+		{{ -1.5f, -1.f, .0f }, { 1.f, .0f, .0f }},
+
+		//Triangle 1
+		{{ .0f, 4.f, 2.f }, { 1.f, .0f, .0f }},
+		{{ 3.f, -2.f, 2.f }, { .0f, 1.f, .0f }},
+		{{ -3.f, -2.f, 2.f }, { .0f, .0f, 1.f }},
+	};
+
+	static std::vector<Vertex> vertices_screen;
+	VertexTransformationFunction(vertices_world, vertices_screen);
+
+	// Initialize the depth buffer to float max
+	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
+
+	// Also clear the BackBuffer (SDL_FillRect, clearColor = {100,100,100}
+	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+
+	//RENDER LOGIC
+	// For every triangle
+	for (size_t i{}; i < vertices_screen.size(); i += 3)
+	{
+		// Find max and min of the triangle
+		const float minX{ std::min(vertices_screen[i].position.x, std::min(vertices_screen[i + 1].position.x, vertices_screen[i + 2].position.x)) };
+		const float maxX{ std::max(vertices_screen[i].position.x, std::max(vertices_screen[i + 1].position.x, vertices_screen[i + 2].position.x)) };
+		const float minY{ std::min(vertices_screen[i].position.y, std::min(vertices_screen[i + 1].position.y, vertices_screen[i + 2].position.y)) };
+		const float maxY{ std::max(vertices_screen[i].position.y, std::max(vertices_screen[i + 1].position.y, vertices_screen[i + 2].position.y)) };
+
+		// If the triangle is outside the screen, skip it
+		if (minX > m_Width - 1 || maxX < 0 || minY > m_Height - 1 || maxY < 0) continue;
+
+		const int startX{ static_cast<int>(std::max(minX, .0f)) };
+		const int endX{ static_cast<int>(std::min(maxX, static_cast<float>(m_Width - 1))) };
+		const int startY{ static_cast<int>(std::max(minY, .0f)) };
+		const int endY{ static_cast<int>(std::min(maxY, static_cast<float>(m_Height - 1))) };
+
+		const float area
+		{ Vector2::Cross(
+			{ vertices_screen[i + 1].position.x - vertices_screen[i + 0].position.x, vertices_screen[i + 1].position.y - vertices_screen[i + 0].position.y },
+			{ vertices_screen[i + 2].position.x - vertices_screen[i + 0].position.x, vertices_screen[i + 2].position.y - vertices_screen[i + 0].position.y })
+		};
+
+		for (int px{ startX }; px < endX; ++px)
+		{
+			for (int py{ startY }; py < endY; ++py)
+			{
+				const Vector2 pixel{ px + .5f, py + .5f };
+
+				float w0
+				{ Vector2::Cross(
+					{ pixel.x - vertices_screen[i + 0].position.x, pixel.y - vertices_screen[i + 0].position.y },
+					{ pixel.x - vertices_screen[i + 1].position.x, pixel.y - vertices_screen[i + 1].position.y })
+				};
+				if (w0 < .0f) continue;
+
+				float w1
+				{ Vector2::Cross(
+					{ pixel.x - vertices_screen[i + 1].position.x, pixel.y - vertices_screen[i + 1].position.y },
+					{ pixel.x - vertices_screen[i + 2].position.x, pixel.y - vertices_screen[i + 2].position.y })
+				};
+				if (w1 < .0f) continue;
+
+				float w2
+				{ Vector2::Cross(
+					{ pixel.x - vertices_screen[i + 2].position.x, pixel.y - vertices_screen[i + 2].position.y },
+					{ pixel.x - vertices_screen[i + 0].position.x, pixel.y - vertices_screen[i + 0].position.y })
+				};
+				if (w2 < .0f) continue;
+
+				w0 /= area;
+				w1 /= area;
+				w2 /= area;
+
+				//Interpolate z
+				const float z{ (vertices_screen[i + 0].position.z * w0) + (vertices_screen[i + 1].position.z * w1) + (vertices_screen[i + 2].position.z * w2) };
+
+				//Check if pixel is in front of the current pixel in the depth buffer
+				// Calculate buffer index
+				const int bufferIdx{ px + (py * m_Width) };
+
+				if (z > m_pDepthBufferPixels[bufferIdx])
+					continue;
+
+				//Update depth buffer
+				m_pDepthBufferPixels[bufferIdx] = z;
+
+				//Interpolate color
+				ColorRGB finalColor{ (vertices_screen[i + 0].color * w0) + (vertices_screen[i + 1].color * w1) + (vertices_screen[i + 2].color * w2) };
+
+				//Update Color in Buffer
+				finalColor.MaxToOne();
+
+				m_pBackBufferPixels[bufferIdx] = SDL_MapRGB(m_pBackBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
+			}
+		}
+	}
+}
 
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
