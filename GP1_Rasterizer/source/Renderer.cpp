@@ -425,32 +425,7 @@ void dae::Renderer::Render_W1_Part5()
 void dae::Renderer::Render_W2()
 {
 	//Define Mesh - Triangle List
-	static std::vector<Mesh> meshes_world
-	{
-		Mesh
-		{
-		{
-			Vertex{ { -3,  3, -2 } },
-			Vertex{ {  0,  3, -2 } },
-			Vertex{ {  3,  3, -2 } },
-			Vertex{ { -3,  0, -2 } },
-			Vertex{ {  0,  0, -2 } },
-			Vertex{ {  3,  0, -2 } },
-			Vertex{ { -3, -3, -2 } },
-			Vertex{ {  0, -3, -2 } },
-			Vertex{ {  3, -3, -2 } },
-		},
-		{
-			3, 0, 1,	1, 4, 3,	4, 1, 2,
-			2, 5, 4,	6, 3, 4,	4, 7, 6,
-			7, 4, 5,	5, 8, 7
-		},
-			PrimitiveTopology::TriangleList
-		}
-	};
-
-	////Define Mesh - Triangle Strip
-	//static std::vector<Mesh> meshes_world
+	//const static std::vector<Mesh> meshes_world
 	//{
 	//	Mesh
 	//	{
@@ -466,13 +441,38 @@ void dae::Renderer::Render_W2()
 	//			Vertex{ {  3, -3, -2 } },
 	//		},
 	//		{
-	//			3, 0, 4, 1, 5, 2,
-	//			2, 6,
-	//			6, 3, 7, 4, 8, 5
+	//			3, 0, 1,	1, 4, 3,	4, 1, 2,
+	//			2, 5, 4,	6, 3, 4,	4, 7, 6,
+	//			7, 4, 5,	5, 8, 7
 	//		},
-	//	PrimitiveTopology::TriangleStrip
+	//			PrimitiveTopology::TriangleList
 	//	}
 	//};
+
+	//Define Mesh - Triangle Strip
+	const static std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+			{
+				Vertex{ { -3,  3, -2 } },
+				Vertex{ {  0,  3, -2 } },
+				Vertex{ {  3,  3, -2 } },
+				Vertex{ { -3,  0, -2 } },
+				Vertex{ {  0,  0, -2 } },
+				Vertex{ {  3,  0, -2 } },
+				Vertex{ { -3, -3, -2 } },
+				Vertex{ {  0, -3, -2 } },
+				Vertex{ {  3, -3, -2 } },
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+		PrimitiveTopology::TriangleStrip
+		}
+	};
 
 	static std::vector<Mesh> meshes_screen;
 	VertexTransformationFunction(meshes_world, meshes_screen);
@@ -496,78 +496,29 @@ void dae::Renderer::Render_W2()
 				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
 				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
 
-				// Calculate the bounding box (Add small offset to prevent rounding errors)
-				static constexpr float offset{ 0.5f };
-				const int minX{ static_cast<int>(std::min(v0.position.x, std::min(v1.position.x, v2.position.x)) - offset) };
-				const int maxX{ static_cast<int>(std::max(v0.position.x, std::max(v1.position.x, v2.position.x)) + offset) };
-				const int minY{ static_cast<int>(std::min(v0.position.y, std::min(v1.position.y, v2.position.y)) - offset) };
-				const int maxY{ static_cast<int>(std::max(v0.position.y, std::max(v1.position.y, v2.position.y)) + offset) };
+				RenderTriangle(v0, v1, v2);
+			}
+		}
+		case PrimitiveTopology::TriangleStrip:
+		{
+			// Change your index loop accordingly(not pixel loop!). Considering if it’s an odd or even triangle if
+			// using the triangle strip technique.Hint: odd or even ? -> modulo or bit masking
 
-				// If the triangle is outside the screen, skip it
-				if (minX > m_Width - 1 || maxX < 0 || minY > m_Height - 1 || maxY < 0) continue;
+			for (size_t i{ 0 }; i < mesh.indices.size() - 2; ++i)
+			{
+				const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
+				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
+				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
 
-				const int startX{ std::max(minX, 0) };
-				const int endX{ std::min(maxX, m_Width - 1) };
-				const int startY{ std::max(minY, 0) };
-				const int endY{ std::min(maxY, m_Height - 1) };
+				if (i + 2 > mesh.indices.size()) break;
 
-				const float area
-				{ Vector2::Cross(
-					{ v1.position.x - v0.position.x, v1.position.y - v0.position.y },
-					{ v2.position.x - v0.position.x, v2.position.y - v0.position.y })
-				};
-
-				// Loop over the bounding box
-				for (int py{ startY }; py < endY; ++py)
+				if (i % 2 == 0)
 				{
-					for (int px{ startX }; px < endX; ++px)
-					{
-						// Check if the pixel is inside the triangle
-						// If so, draw the pixel
-						const Vector2 pixel{ px + .5f, py + .5f };
-
-						float w0
-						{ Vector2::Cross(
-							{ pixel.x - v1.position.x, pixel.y - v1.position.y },
-							{ pixel.x - v2.position.x, pixel.y - v2.position.y })
-						};
-						if (w0 < 0) continue;
-
-						float w1
-						{ Vector2::Cross(
-							{ pixel.x - v2.position.x, pixel.y - v2.position.y },
-							{ pixel.x - v0.position.x, pixel.y - v0.position.y })
-						};
-						if (w1 < 0) continue;
-
-						float w2{ area - w0 - w1 };
-						if (w2 < 0) continue;
-
-						// Calculate the depth
-						const float z{ v0.position.z * w0 + v1.position.z * w1 + v2.position.z * w2 };
-
-						//Check if pixel is in front of the current pixel in the depth buffer
-						// Calculate buffer index
-						const int bufferIdx{ px + (py * m_Width) };
-
-						if (z > m_pDepthBufferPixels[bufferIdx])
-							continue;
-
-						//Update depth buffer
-						m_pDepthBufferPixels[bufferIdx] = z;
-
-						//Interpolate color
-						ColorRGB finalColor{ (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
-
-						//Update Color in Buffer
-						finalColor.MaxToOne();
-
-						m_pBackBufferPixels[bufferIdx] = SDL_MapRGB(m_pBackBuffer->format,
-							static_cast<uint8_t>(finalColor.r * 255),
-							static_cast<uint8_t>(finalColor.g * 255),
-							static_cast<uint8_t>(finalColor.b * 255));
-					}
+					RenderTriangle(v0, v1, v2);
+					continue;
 				}
+
+				RenderTriangle(v0, v2, v1);
 			}
 		}
 		}
@@ -640,6 +591,86 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 			transformedMesh.vertices.emplace_back(projectedVertex);
 		}
 		meshes_out.emplace_back(transformedMesh);
+	}
+}
+
+void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const
+{
+	// Calculate the bounding box (Add small offset to prevent rounding errors)
+	static constexpr float offset{ .5f };
+
+	const int minX{ static_cast<int>(std::min(v0.position.x, std::min(v1.position.x, v2.position.x)) - offset) };
+	const int maxX{ static_cast<int>(std::max(v0.position.x, std::max(v1.position.x, v2.position.x)) + offset) };
+	const int minY{ static_cast<int>(std::min(v0.position.y, std::min(v1.position.y, v2.position.y)) - offset) };
+	const int maxY{ static_cast<int>(std::max(v0.position.y, std::max(v1.position.y, v2.position.y)) + offset) };
+
+	// If the triangle is outside the screen, skip it
+	if (minX > m_Width - 1 || maxX < 0 || minY > m_Height - 1 || maxY < 0) return;
+
+	const int startX{ std::max(minX, 0) };
+	const int endX{ std::min(maxX, m_Width - 1) };
+	const int startY{ std::max(minY, 0) };
+	const int endY{ std::min(maxY, m_Height - 1) };
+
+	const float area
+	{ Vector2::Cross(
+		{ v1.position.x - v0.position.x, v1.position.y - v0.position.y },
+		{ v2.position.x - v0.position.x, v2.position.y - v0.position.y })
+	};
+
+	// Float safe check for area == 0
+	if (area == 0.f) return;
+
+	// Loop over the bounding box
+	for (int py{ startY }; py < endY; ++py)
+	{
+		for (int px{ startX }; px < endX; ++px)
+		{
+			// Check if the pixel is inside the triangle
+			// If so, draw the pixel
+			const Vector2 pixel{ px + .5f, py + .5f };
+
+			float w0
+			{ Vector2::Cross(
+				{ pixel.x - v1.position.x, pixel.y - v1.position.y },
+				{ pixel.x - v2.position.x, pixel.y - v2.position.y })
+			};
+			if (w0 < 0) continue;
+
+			float w1
+			{ Vector2::Cross(
+				{ pixel.x - v2.position.x, pixel.y - v2.position.y },
+				{ pixel.x - v0.position.x, pixel.y - v0.position.y })
+			};
+			if (w1 < 0) continue;
+
+			float w2{ area - w0 - w1 };
+			if (w2 < 0) continue;
+
+			// Calculate the depth
+			const float z{ v0.position.z * w0 + v1.position.z * w1 + v2.position.z * w2 };
+
+			//Check if pixel is in front of the current pixel in the depth buffer
+			// Calculate buffer index
+			const int bufferIdx{ px + (py * m_Width) };
+
+			if (z > m_pDepthBufferPixels[bufferIdx])
+				continue;
+
+			//Update depth buffer
+			m_pDepthBufferPixels[bufferIdx] = z;
+
+			//Interpolate color
+			ColorRGB finalColor{ (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[bufferIdx] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
 	}
 }
 
