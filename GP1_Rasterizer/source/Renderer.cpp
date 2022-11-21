@@ -571,15 +571,13 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 	{
 		for (Vertex& vertex : mesh.vertices)
 		{
-			//transform vertex from world space to view space
+			//Transform vertex from world space to view space
 			Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(vertex.position) };
 
-			vertex.position =
-			{
-				(viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (m_Width * .5f),
-				(1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (m_Height * .5f),
-				viewSpacePos.z
-			};
+			// Use correct perspective division
+			vertex.position.x = (viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (m_Width * .5f);
+			vertex.position.y = (1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (m_Height * .5f);
+			vertex.position.z = viewSpacePos.z;
 		}
 	}
 }
@@ -636,8 +634,8 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 			float w2{ area - w0 - w1 };
 			if (w2 < 0) continue;
 
-			// Calculate the depth
-			const float z{ v0.position.z * w0 + v1.position.z * w1 + v2.position.z * w2 };
+			// Calculate the depth account for perspective interpolation
+			const float z{ 1.f / ((1.f / v0.position.z * w0 + 1.f / v1.position.z * w1 + 1.f / v2.position.z * w2) / area) };
 
 			//Check if pixel is in front of the current pixel in the depth buffer
 			// Calculate buffer index
@@ -657,15 +655,16 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 
 			if (pTexture)
 			{
-				// Interpolate uv coordinates
-				const Vector2 uv{ v0.uv * w0 + v1.uv * w1 + v2.uv * w2 };
+				// Interpolate uv coordinates correct for perspective
+				const Vector2 uv{ (v0.uv / v0.position.z * w0 + v1.uv / v1.position.z * w1 + v2.uv / v2.position.z * w2) * z };
 
 				// Sample the texture
 				finalColor = pTexture->Sample(uv);
 			}
 			else
 			{
-				finalColor = { (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
+				// Interpolate color correct for perspective
+				finalColor = v0.color * w0 + v1.color * w1 + v2.color * w2;
 			}
 
 			//Update Color in Buffer
