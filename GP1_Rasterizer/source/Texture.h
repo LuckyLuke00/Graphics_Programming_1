@@ -20,5 +20,10 @@ namespace dae
 
 		SDL_Surface* m_pSurface{ nullptr };
 		uint32_t* m_pSurfacePixels{ nullptr };
+
+		// Color
+		Uint8* m_pR{ new Uint8 };
+		Uint8* m_pG{ new Uint8 };
+		Uint8* m_pB{ new Uint8 };
 	};
 }

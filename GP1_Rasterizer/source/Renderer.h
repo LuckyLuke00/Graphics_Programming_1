@@ -45,8 +45,8 @@ namespace dae
 	private:
 		SDL_Window* m_pWindow{ nullptr };
 
-		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
+		SDL_Surface* m_pFrontBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{ nullptr };
 
 		float* m_pDepthBufferPixels{};
@@ -56,10 +56,13 @@ namespace dae
 		int m_Width{};
 		int m_Height{};
 
+		// Texture
+		const Texture* m_pTexture{ nullptr };
+
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const; //W1 Version
 		void VertexTransformationFunction(const std::vector<Mesh>& meshes_in, std::vector<Mesh>& meshes_out) const; //W2 Version
 
-		void RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const;
+		void RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2, const Texture* pTexture = nullptr) const;
 	};
 }

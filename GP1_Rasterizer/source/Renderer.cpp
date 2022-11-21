@@ -12,7 +12,8 @@
 using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
-	m_pWindow(pWindow)
+	m_pWindow{ pWindow },
+	m_pTexture{ Texture::LoadFromFile("Resources/uv_grid_2.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -32,6 +33,12 @@ Renderer::~Renderer()
 {
 	delete[] m_pDepthBufferPixels;
 	m_pDepthBufferPixels = nullptr;
+
+	if (m_pTexture)
+	{
+		delete m_pTexture;
+		m_pTexture = nullptr;
+	}
 }
 
 void Renderer::Update(Timer* pTimer)
@@ -430,22 +437,22 @@ void dae::Renderer::Render_W2()
 	//	Mesh
 	//	{
 	//		{
-	//			Vertex{ { -3,  3, -2 } },
-	//			Vertex{ {  0,  3, -2 } },
-	//			Vertex{ {  3,  3, -2 } },
-	//			Vertex{ { -3,  0, -2 } },
-	//			Vertex{ {  0,  0, -2 } },
-	//			Vertex{ {  3,  0, -2 } },
-	//			Vertex{ { -3, -3, -2 } },
-	//			Vertex{ {  0, -3, -2 } },
-	//			Vertex{ {  3, -3, -2 } },
+	//			Vertex{ { -3,  3, -2 }, { colors::White }, { .0f, .0f } },
+	//			Vertex{ {  0,  3, -2 }, { colors::White }, { .5f, .0f } },
+	//			Vertex{ {  3,  3, -2 }, { colors::White }, { 1.f, .0f } },
+	//			Vertex{ { -3,  0, -2 }, { colors::White }, { .0f, .5f } },
+	//			Vertex{ {  0,  0, -2 }, { colors::White }, { .5f, .5f } },
+	//			Vertex{ {  3,  0, -2 }, { colors::White }, { 1.f, .5f } },
+	//			Vertex{ { -3, -3, -2 }, { colors::White }, { .0f, 1.f } },
+	//			Vertex{ {  0, -3, -2 }, { colors::White }, { .5f, 1.f } },
+	//			Vertex{ {  3, -3, -2 }, { colors::White }, { 1.f, 1.f } },
 	//		},
 	//		{
 	//			3, 0, 1,	1, 4, 3,	4, 1, 2,
 	//			2, 5, 4,	6, 3, 4,	4, 7, 6,
 	//			7, 4, 5,	5, 8, 7
 	//		},
-	//			PrimitiveTopology::TriangleList
+	//		PrimitiveTopology::TriangleList
 	//	}
 	//};
 
@@ -455,15 +462,15 @@ void dae::Renderer::Render_W2()
 		Mesh
 		{
 			{
-				Vertex{ { -3,  3, -2 } },
-				Vertex{ {  0,  3, -2 } },
-				Vertex{ {  3,  3, -2 } },
-				Vertex{ { -3,  0, -2 } },
-				Vertex{ {  0,  0, -2 } },
-				Vertex{ {  3,  0, -2 } },
-				Vertex{ { -3, -3, -2 } },
-				Vertex{ {  0, -3, -2 } },
-				Vertex{ {  3, -3, -2 } },
+				Vertex{ { -3,  3, -2 }, { colors::White }, { .0f, .0f } },
+				Vertex{ {  0,  3, -2 }, { colors::White }, { .5f, .0f } },
+				Vertex{ {  3,  3, -2 }, { colors::White }, { 1.f, .0f } },
+				Vertex{ { -3,  0, -2 }, { colors::White }, { .0f, .5f } },
+				Vertex{ {  0,  0, -2 }, { colors::White }, { .5f, .5f } },
+				Vertex{ {  3,  0, -2 }, { colors::White }, { 1.f, .5f } },
+				Vertex{ { -3, -3, -2 }, { colors::White }, { .0f, 1.f } },
+				Vertex{ {  0, -3, -2 }, { colors::White }, { .5f, 1.f } },
+				Vertex{ {  3, -3, -2 }, { colors::White }, { 1.f, 1.f } },
 			},
 			{
 				3, 0, 4, 1, 5, 2,
@@ -486,9 +493,7 @@ void dae::Renderer::Render_W2()
 	// According to the PrimitiveTopology, use a different index loop
 	for (const Mesh& mesh : meshes_screen)
 	{
-		switch (mesh.primitiveTopology)
-		{
-		case PrimitiveTopology::TriangleList:
+		if (mesh.primitiveTopology == PrimitiveTopology::TriangleList)
 		{
 			for (size_t i{ 0 }; i < mesh.indices.size(); i += 3)
 			{
@@ -496,31 +501,28 @@ void dae::Renderer::Render_W2()
 				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
 				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
 
-				RenderTriangle(v0, v1, v2);
+				RenderTriangle(v0, v1, v2, m_pTexture);
 			}
+			continue;
 		}
-		case PrimitiveTopology::TriangleStrip:
+		// Change your index loop accordingly(not pixel loop!). Considering if it’s an odd or even triangle if
+		// using the triangle strip technique.Hint: odd or even ? -> modulo or bit masking
+
+		for (size_t i{ 0 }; i < mesh.indices.size() - 2; ++i)
 		{
-			// Change your index loop accordingly(not pixel loop!). Considering if it’s an odd or even triangle if
-			// using the triangle strip technique.Hint: odd or even ? -> modulo or bit masking
+			const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
+			const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
+			const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
 
-			for (size_t i{ 0 }; i < mesh.indices.size() - 2; ++i)
+			if (i + 2 > mesh.indices.size()) break;
+
+			if (i % 2 == 0)
 			{
-				const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
-				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
-				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
-
-				if (i + 2 > mesh.indices.size()) break;
-
-				if (i % 2 == 0)
-				{
-					RenderTriangle(v0, v1, v2);
-					continue;
-				}
-
-				RenderTriangle(v0, v2, v1);
+				RenderTriangle(v0, v1, v2, m_pTexture);
+				continue;
 			}
-		}
+
+			RenderTriangle(v0, v2, v1, m_pTexture);
 		}
 	}
 }
@@ -559,42 +561,30 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 	meshes_out.clear();
 	meshes_out.reserve(meshes_in.size() * 3);
 
+	// Copy meshes_in to meshes_out
+	meshes_out = meshes_in;
+
 	const float aspectRatioFov{ static_cast<float>(m_Width) / static_cast<float>(m_Height) * m_Camera.fov };
 	const float fovReciprocal{ 1.f / m_Camera.fov };
 
-	// For every mesh in meshes_in
-	// Only transform the vertices, not the indices
-	// Add the transformed vertices to meshes_out
-	// and copy the indices and topology from meshes_in
-	for (const Mesh& mesh : meshes_in)
+	for (Mesh& mesh : meshes_out)
 	{
-		Mesh transformedMesh{ mesh };
-		transformedMesh.vertices.clear();
-		transformedMesh.vertices.reserve(mesh.vertices.size());
-
-		for (const Vertex& vertex : mesh.vertices)
+		for (Vertex& vertex : mesh.vertices)
 		{
 			//transform vertex from world space to view space
 			Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(vertex.position) };
 
-			const Vertex projectedVertex
+			vertex.position =
 			{
-				{
-					(viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (m_Width * .5f),
-					(1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (m_Height * .5f),
-					viewSpacePos.z
-				},
-				vertex.color
+				(viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (m_Width * .5f),
+				(1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (m_Height * .5f),
+				viewSpacePos.z
 			};
-
-			//add the vertex to vertices_out
-			transformedMesh.vertices.emplace_back(projectedVertex);
 		}
-		meshes_out.emplace_back(transformedMesh);
 	}
 }
 
-void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const
+void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2, const Texture* pTexture) const
 {
 	// Calculate the bounding box (Add small offset to prevent rounding errors)
 	static constexpr float offset{ .5f };
@@ -618,7 +608,6 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 		{ v2.position.x - v0.position.x, v2.position.y - v0.position.y })
 	};
 
-	// Float safe check for area == 0
 	if (area == 0.f) return;
 
 	// Loop over the bounding box
@@ -628,7 +617,7 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 		{
 			// Check if the pixel is inside the triangle
 			// If so, draw the pixel
-			const Vector2 pixel{ px + .5f, py + .5f };
+			const Vector2 pixel{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
 
 			float w0
 			{ Vector2::Cross(
@@ -660,8 +649,24 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 			//Update depth buffer
 			m_pDepthBufferPixels[bufferIdx] = z;
 
-			//Interpolate color
-			ColorRGB finalColor{ (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
+			w0 /= area;
+			w1 /= area;
+			w2 /= area;
+
+			ColorRGB finalColor{};
+
+			if (pTexture)
+			{
+				// Interpolate uv coordinates
+				const Vector2 uv{ v0.uv * w0 + v1.uv * w1 + v2.uv * w2 };
+
+				// Sample the texture
+				finalColor = pTexture->Sample(uv);
+			}
+			else
+			{
+				finalColor = { (v0.color * w0) + (v1.color * w1) + (v2.color * w2) };
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
