@@ -55,10 +55,10 @@ void Renderer::Render()
 	//Render_W1_Part1(); //Rasterizer Stage Only
 	//Render_W1_Part2(); //Projection Stage (Camera)
 	//Render_W1_Part3(); //Barycentric Coordinates
-	//Render_W1_Part4(); //Depth Buffer
+	Render_W1_Part4(); //Depth Buffer
 	//Render_W1_Part5(); //BoundingBox Optimization
 
-	Render_W2(); //Textures
+	//Render_W2(); //Textures
 
 	//@END
 	//Update SDL Surface
