@@ -2,6 +2,7 @@
 #include "Vector2.h"
 #include <SDL_image.h>
 #include <iostream>
+#include <cassert>
 
 namespace dae
 {
@@ -32,7 +33,6 @@ namespace dae
 
 	Texture* Texture::LoadFromFile(const std::string& path)
 	{
-		//TODO
 		//Load SDL_Surface using IMG_LOAD
 		//Create & Return a new Texture Object (using SDL_Surface)
 		SDL_Surface* pSurface{ IMG_Load(path.c_str()) };
@@ -46,11 +46,11 @@ namespace dae
 
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
-		const int index{ static_cast<int>(uv.x * m_pSurface->w) + static_cast<int>(uv.y * m_pSurface->h) * m_pSurface->w };
+		const int x{ static_cast<int>(uv.x * m_pSurface->w) };
+		const int y{ static_cast<int>(uv.y * m_pSurface->h) };
+		const uint32_t& color{ m_pSurfacePixels[y * m_pSurface->w + x] };
 
-		uint_fast32_t pixel{ m_pSurfacePixels[index] };
-
-		SDL_GetRGB(pixel, m_pSurface->format, m_pR, m_pG, m_pB);
+		SDL_GetRGB(color, m_pSurface->format, m_pR, m_pG, m_pB);
 
 		return { *m_pR / 255.f, *m_pG / 255.f, *m_pB / 255.f };
 	}

@@ -28,27 +28,31 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	const uint32_t width{ 640 };
+	const uint32_t height{ 480 };
 
-	SDL_Window* pWindow = SDL_CreateWindow(
-		"Rasterizer - **Lucas Kinoo (2DAE15)**",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		width, height, 0);
+	SDL_Window* pWindow
+	{
+		SDL_CreateWindow(
+			"Rasterizer - **Lucas Kinoo (2DAE15)**",
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			width, height, 0
+		)
+	};
 
 	if (!pWindow)
 		return 1;
 
 	//Initialize "framework"
-	const auto pTimer = new Timer();
-	const auto pRenderer = new Renderer(pWindow);
+	const auto pTimer{ new Timer() };
+	const auto pRenderer{ new Renderer(pWindow) };
 
 	//Start loop
 	pTimer->Start();
-	float printTimer = 0.f;
-	bool isLooping = true;
-	bool takeScreenshot = false;
+	float printTimer{ .0f };
+	bool isLooping{ true };
+	bool takeScreenshot{ false };
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -63,7 +67,8 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
-				break;
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					pTimer->StartBenchmark();
 			}
 		}
 
