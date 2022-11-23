@@ -3,7 +3,6 @@
 #include <iostream>
 #include <numeric>
 
-#include <iostream>
 #include <fstream>
 
 #include "SDL.h"
@@ -12,7 +11,7 @@ using namespace dae;
 Timer::Timer()
 {
 	const uint64_t countsPerSecond = SDL_GetPerformanceFrequency();
-	m_SecondsPerCount = 1.0f / static_cast<float>(countsPerSecond);
+	m_SecondsPerCount = 1.f / static_cast<float>(countsPerSecond);
 }
 
 void Timer::Reset()
@@ -69,7 +68,7 @@ void Timer::Update()
 	if (m_IsStopped)
 	{
 		m_FPS = 0;
-		m_ElapsedTime = 0.0f;
+		m_ElapsedTime = .0f;
 		m_TotalTime = static_cast<float>(((m_StopTime - m_PausedTime) - m_BaseTime) * m_BaseTime);
 		return;
 	}
@@ -80,8 +79,8 @@ void Timer::Update()
 	m_ElapsedTime = (static_cast<float>(m_CurrentTime - m_PreviousTime) * m_SecondsPerCount);
 	m_PreviousTime = m_CurrentTime;
 
-	if (m_ElapsedTime < 0.0f)
-		m_ElapsedTime = 0.0f;
+	if (m_ElapsedTime < .0f)
+		m_ElapsedTime = .0f;
 
 	if (m_ForceElapsedUpperBound && m_ElapsedTime > m_ElapsedUpperBound)
 	{
@@ -93,12 +92,12 @@ void Timer::Update()
 	//FPS LOGIC
 	m_FPSTimer += m_ElapsedTime;
 	++m_FPSCount;
-	if (m_FPSTimer >= 1.0f)
+	if (m_FPSTimer >= 1.f)
 	{
 		m_dFPS = m_FPSCount / m_FPSTimer;
 		m_FPS = m_FPSCount;
 		m_FPSCount = 0;
-		m_FPSTimer = 0.0f;
+		m_FPSTimer = .0f;
 
 		if (m_BenchmarkActive)
 		{

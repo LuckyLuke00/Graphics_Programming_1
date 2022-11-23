@@ -29,7 +29,8 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Update(Timer* pTimer);
+		bool SaveBufferToImage() const;
+
 		void Render();
 
 		void Render_W1_Part1(); //Rasterizer Stage Only
@@ -41,7 +42,9 @@ namespace dae
 		void Render_W2(); //Textures
 		void Render_W3(); //Matrix Transformations
 
-		bool SaveBufferToImage() const;
+		void ToggleDepthBuffer();
+
+		void Update(Timer* pTimer);
 
 	private:
 		SDL_Window* m_pWindow{ nullptr };
@@ -57,6 +60,9 @@ namespace dae
 		int m_Width{};
 		int m_Height{};
 		float m_AspectRatio{};
+
+		// bool that toggles between finalColor and DepthBuffer
+		bool m_RenderDepthBuffer{ false };
 
 		// Texture
 		const Texture* m_pTexture{ nullptr };

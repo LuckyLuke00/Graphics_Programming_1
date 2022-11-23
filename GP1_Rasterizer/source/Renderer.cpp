@@ -481,6 +481,11 @@ void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
 	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
 }
 
+void dae::Renderer::ToggleDepthBuffer()
+{
+	m_RenderDepthBuffer = !m_RenderDepthBuffer;
+}
+
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
 	// Only copy and reserve space for meshes out once
@@ -674,13 +679,13 @@ void Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& 
 
 void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture) const
 {
-	//Create aliases for the vertex positions
+	// Create aliases for the vertex positions
 	const Vector4& v0Pos{ v0.position };
 	const Vector4& v1Pos{ v1.position };
 	const Vector4& v2Pos{ v2.position };
 
-	// Check if the triangle is behind the camera by sign checking use Mathhelpters sign
-	if (v0Pos.z < .0f || v1Pos.z < .0f || v2Pos.z < .0f) return;
+	// Check if the triangle is behind the camera by sign checking
+	if (v0Pos.w < .0f || v1Pos.w < .0f || v2Pos.w < .0f) return;
 
 	//Pre-calculate dimentions
 	const float width{ m_Width - 1.f };
@@ -703,20 +708,27 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 
 	if (area < FLT_EPSILON) return;
 
-	// Pre-caclulate the inverse area
+	const float invArea{ 1.f / area };
+
+	// Pre-caclulate the inverse z
 	const float z0{ 1.f / v0Pos.z };
 	const float z1{ 1.f / v1Pos.z };
 	const float z2{ 1.f / v2Pos.z };
 
+	// Pre-caclulate the inverse w
+	const float w0V{ 1.f / v0Pos.w };
+	const float w1V{ 1.f / v1Pos.w };
+	const float w2V{ 1.f / v2Pos.w };
+
 	// Pre calculate the uv coordinates
-	const Vector2 uv0{ v0.uv / v0Pos.z };
-	const Vector2 uv1{ v1.uv / v1Pos.z };
-	const Vector2 uv2{ v2.uv / v2Pos.z };
+	const Vector2 uv0{ v0.uv / v0Pos.w };
+	const Vector2 uv1{ v1.uv / v1Pos.w };
+	const Vector2 uv2{ v2.uv / v2Pos.w };
 
 	// Pre calculate the color coordinates
-	const ColorRGB c0{ v0.color / v0Pos.z };
-	const ColorRGB c1{ v1.color / v1Pos.z };
-	const ColorRGB c2{ v2.color / v2Pos.z };
+	const ColorRGB c0{ v0.color / v0Pos.w };
+	const ColorRGB c1{ v1.color / v1Pos.w };
+	const ColorRGB c2{ v2.color / v2Pos.w };
 
 	// Loop over the bounding box
 	for (int py{ minY }; py < maxY; ++py)
@@ -744,8 +756,12 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			float w2{ area - w0 - w1 };
 			if (w2 < 0) continue;
 
+			w0 *= invArea;
+			w1 *= invArea;
+			w2 *= invArea;
+
 			// Calculate the depth account for perspective interpolation
-			const float z{ 1.f / ((z0 * w0 + z1 * w1 + z2 * w2) / area) };
+			const float z{ 1.f / (z0 * w0 + z1 * w1 + z2 * w2) };
 			const int zBufferIdx{ py * m_Width + px };
 			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
 
@@ -756,24 +772,28 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			//Update depth buffer
 			zBuffer = z;
 
-			w0 /= area;
-			w1 /= area;
-			w2 /= area;
+			// Interpolated w
+			const float w{ 1.f / (w0V * w0 + w1V * w1 + w2V * w2) };
 
 			ColorRGB finalColor{};
 
-			if (pTexture)
+			if (pTexture && !m_RenderDepthBuffer)
 			{
 				// Interpolate uv coordinates correct for perspective
-				const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * z };
+				const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * w };
 
 				// Sample the texture
 				finalColor = pTexture->Sample(uv);
 			}
+			else if (m_RenderDepthBuffer)
+			{
+				const float depthColor{ Remap(z, .985f, 1.f) };
+				finalColor = { depthColor, depthColor, depthColor };
+			}
 			else
 			{
 				// Interpolate color correct for perspective
-				finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * z;
+				finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * w;
 			}
 
 			//Update Color in Buffer
