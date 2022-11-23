@@ -13,22 +13,26 @@ using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
-	m_pTexture{ Texture::LoadFromFile("Resources/uv_grid_2.png") }
-
+	m_pTexture{ Texture::LoadFromFile("Resources/tuktuk.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
-	m_AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
+	m_fWidth = static_cast<float>(m_Width);
+	m_fHeight = static_cast<float>(m_Height);
+
+	m_AspectRatio = m_fWidth / m_fHeight;
 
 	//Create Buffers
 	m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
 	m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
 	m_pBackBufferPixels = static_cast<uint32_t*>(m_pBackBuffer->pixels);
-
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	//Initialize Camera
 	m_Camera.Initialize(60.f, { .0f, .0f, -10.f }, m_AspectRatio);
+
+	const Vector3 position{ m_Camera.origin + Vector3{ .0f, -5.f, 25.f } };
+	InitializeMesh("Resources/tuktuk.obj", Matrix::CreateTranslation(position));
 }
 
 Renderer::~Renderer()
@@ -43,7 +47,7 @@ Renderer::~Renderer()
 	}
 }
 
-void Renderer::Update(Timer* pTimer)
+void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
 }
@@ -54,7 +58,8 @@ void Renderer::Render()
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
 
-	Render_W3(); //Matrix Transformations
+	//Render_W3(); //Matrix Transformations
+	Render_Tuktuk();
 
 	//@END
 	//Update SDL Surface
@@ -63,66 +68,11 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::Render_W3()
+void Renderer::Render_Tuktuk()
 {
 	ClearBuffers();
-
-	//Define Mesh - Triangle List
-	//static std::vector<Mesh> meshes
-	//{
-	//	Mesh
-	//	{
-	//		{
-	//			Vertex{ { -3.f,  3.f, -2.f }, { colors::White }, { .0f, .0f } },
-	//			Vertex{ {  .0f,  3.f, -2.f }, { colors::White }, { .5f, .0f } },
-	//			Vertex{ {  3.f,  3.f, -2.f }, { colors::White }, { 1.f, .0f } },
-	//			Vertex{ { -3.f,  .0f, -2.f }, { colors::White }, { .0f, .5f } },
-	//			Vertex{ {  .0f,  .0f, -2.f }, { colors::White }, { .5f, .5f } },
-	//			Vertex{ {  3.f,  .0f, -2.f }, { colors::White }, { 1.f, .5f } },
-	//			Vertex{ { -3.f, -3.f, -2.f }, { colors::White }, { .0f, 1.f } },
-	//			Vertex{ {  .0f, -3.f, -2.f }, { colors::White }, { .5f, 1.f } },
-	//			Vertex{ {  3.f, -3.f, -2.f }, { colors::White }, { 1.f, 1.f } },
-	//		},
-	//		{
-	//			3, 0, 1,	1, 4, 3,	4, 1, 2,
-	//			2, 5, 4,	6, 3, 4,	4, 7, 6,
-	//			7, 4, 5,	5, 8, 7
-	//		},
-	//		PrimitiveTopology::TriangleList
-	//	}
-	//};
-
-	//Define Mesh - Triangle Strip
-	static std::vector<Mesh> meshes
-	{
-		Mesh
-		{
-			{
-				Vertex{ { -3.f,  3.f, -2.f }, { colors::White }, { .0f, .0f } },
-				Vertex{ {  .0f,  3.f, -2.f }, { colors::White }, { .5f, .0f } },
-				Vertex{ {  3.f,  3.f, -2.f }, { colors::White }, { 1.f, .0f } },
-				Vertex{ { -3.f,  .0f, -2.f }, { colors::White }, { .0f, .5f } },
-				Vertex{ {  .0f,  .0f, -2.f }, { colors::White }, { .5f, .5f } },
-				Vertex{ {  3.f,  .0f, -2.f }, { colors::White }, { 1.f, .5f } },
-				Vertex{ { -3.f, -3.f, -2.f }, { colors::White }, { .0f, 1.f } },
-				Vertex{ {  .0f, -3.f, -2.f }, { colors::White }, { .5f, 1.f } },
-				Vertex{ {  3.f, -3.f, -2.f }, { colors::White }, { 1.f, 1.f } },
-			},
-			{
-				3, 0, 4, 1, 5, 2,
-				2, 6,
-				6, 3, 7, 4, 8, 5
-			},
-		PrimitiveTopology::TriangleStrip
-		}
-	};
-
-	VertexTransformationFunction(meshes);
-
-	for (const Mesh& mesh : meshes)
-	{
-		RenderMesh(mesh, m_pTexture);
-	}
+	VertexTransformationFunction(m_Meshes);
+	RenderMesh(m_Meshes[0], m_pTexture);
 }
 
 void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
@@ -131,15 +81,19 @@ void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
 	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
 }
 
-void dae::Renderer::ToggleDepthBuffer()
+void Renderer::ToggleDepthBuffer()
 {
 	m_RenderDepthBuffer = !m_RenderDepthBuffer;
 }
+
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
-	const Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+	Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+
 	for (Mesh& mesh : meshes)
 	{
+		viewProjectionMatrix = mesh.worldMatrix * viewProjectionMatrix;
+
 		if (mesh.vertices_out.empty())
 		{
 			mesh.vertices_out.reserve(mesh.vertices.size());
@@ -158,21 +112,46 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 			vertexPos.y /= vertexPos.w;
 			vertexPos.z /= vertexPos.w;
 
-			vertexPos.x = (vertexPos.x + 1.f) * (static_cast<float>(m_Width) * .5f);
-			vertexPos.y = (1.f - vertexPos.y) * (static_cast<float>(m_Height) * .5f);
+			vertexPos.x = (vertexPos.x + 1.f) * (m_fWidth * .5f);
+			vertexPos.y = (1.f - vertexPos.y) * (m_fHeight * .5f);
 		}
 	}
 }
 
+void Renderer::InitializeMesh(const std::string& path, const Matrix& worldMatrix, const PrimitiveTopology& topology)
+{
+	// Create a temporary mesh object to push back into the meshes vector
+	Mesh mesh;
+	mesh.primitiveTopology = topology;
+	Utils::ParseOBJ(path, mesh.vertices, mesh.indices);
+	mesh.worldMatrix = worldMatrix;
+
+	m_Meshes.emplace_back(mesh);
+	VertexTransformationFunction(m_Meshes);
+}
+
+bool Renderer::IsOutsideViewFrustum(const Vertex_Out& v) const
+{
+	return
+		v.position.x < .0f ||
+		v.position.x > m_fWidth ||
+		v.position.y < 0.f ||
+		v.position.y > m_fHeight ||
+		v.position.z < .0f ||
+		v.position.z > 1.f;
+}
+
 void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture) const
 {
+	if (IsOutsideViewFrustum(v0) || IsOutsideViewFrustum(v1) || IsOutsideViewFrustum(v2)) return;
+
 	// Create aliases for the vertex positions
 	const Vector4& v0Pos{ v0.position };
 	const Vector4& v1Pos{ v1.position };
 	const Vector4& v2Pos{ v2.position };
 
 	// Check if the triangle is behind the camera by sign checking
-	if (v0Pos.w < .0f || v1Pos.w < .0f || v2Pos.w < .0f) return;
+	//if (v0Pos.w < .0f || v1Pos.w < .0f || v2Pos.w < .0f) return;
 
 	//Pre-calculate dimentions
 	const float width{ m_Width - 1.f };
@@ -184,7 +163,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 	const int minY{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.y, std::min(v1Pos.y, v2Pos.y))))) };
 	const int maxY{ static_cast<int>(std::ceil(std::min(height, std::max(v0Pos.y, std::max(v1Pos.y, v2Pos.y))))) };
 
-	// is triangle of screen?
+	// is triangle off screen?
 	if (minX > maxX || minY > maxY) return;
 
 	const float area
@@ -303,9 +282,16 @@ void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
 
 	for (int i{ 0 }; i < size; i += increment)
 	{
-		const Vertex_Out& v0{ mesh.vertices_out[mesh.indices[i + 0]] };
-		const Vertex_Out& v1{ mesh.vertices_out[mesh.indices[i + 1]] };
-		const Vertex_Out& v2{ mesh.vertices_out[mesh.indices[i + 2]] };
+		const uint32_t& idx0{ mesh.indices[i] };
+		const uint32_t& idx1{ mesh.indices[i + 1] };
+		const uint32_t& idx2{ mesh.indices[i + 2] };
+
+		// If any of the indeces are equal skip
+		if (idx0 == idx1 || idx1 == idx2 || idx2 == idx0) continue;
+
+		const Vertex_Out& v0{ mesh.vertices_out[idx0] };
+		const Vertex_Out& v1{ mesh.vertices_out[idx1] };
+		const Vertex_Out& v2{ mesh.vertices_out[idx2] };
 
 		if (isTriangleList)
 		{
