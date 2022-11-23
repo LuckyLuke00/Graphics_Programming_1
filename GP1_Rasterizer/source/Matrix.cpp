@@ -108,7 +108,7 @@ namespace dae {
 		Vector3 v = c * w - d * z;
 
 		float det = Vector3::Dot(s, v) + Vector3::Dot(t, u);
-		assert((!AreEqual(det, 0.f)) && "ERROR: determinant is 0, there is no INVERSE!");
+		assert((!AreEqual(det, .0f)) && "ERROR: determinant is 0, there is no INVERSE!");
 		float invDet = 1.f / det;
 
 		s *= invDet; t *= invDet; u *= invDet; v *= invDet;
@@ -118,9 +118,9 @@ namespace dae {
 		Vector3 r2 = Vector3::Cross(d, u) + s * w;
 		Vector3 r3 = Vector3::Cross(u, c) - s * z;
 
-		data[0] = Vector4{ r0.x, r1.x, r2.x, 0.f };
-		data[1] = Vector4{ r0.y, r1.y, r2.y, 0.f };
-		data[2] = Vector4{ r0.z, r1.z, r2.z, 0.f };
+		data[0] = Vector4{ r0.x, r1.x, r2.x, .0f };
+		data[1] = Vector4{ r0.y, r1.y, r2.y, .0f };
+		data[2] = Vector4{ r0.z, r1.z, r2.z, .0f };
 		data[3] = { { -Vector3::Dot(b, t)},{Vector3::Dot(a, t)},{-Vector3::Dot(d, s)},{Vector3::Dot(c, s)} };
 
 		return *this;
@@ -151,9 +151,9 @@ namespace dae {
 
 		return
 		{
-			{ xAxis.x, yAxis.x, zAxis.x, 0.f },
-			{ xAxis.y, yAxis.y, zAxis.y, 0.f },
-			{ xAxis.z, yAxis.z, zAxis.z, 0.f },
+			{ xAxis.x, yAxis.x, zAxis.x, .0f },
+			{ xAxis.y, yAxis.y, zAxis.y, .0f },
+			{ xAxis.z, yAxis.z, zAxis.z, .0f },
 			{ -Vector3::Dot(xAxis, origin), -Vector3::Dot(yAxis, origin), -Vector3::Dot(zAxis, origin), 1.f }
 		};
 	}
@@ -162,17 +162,17 @@ namespace dae {
 	{
 		//TODO: Test
 		//DirectX implementation
-		const float yScale{ 1.f / (aspect * fov) };
-		const float xScale{ 1.f / fov };
 		const float q{ zf / (zf - zn) };
 		const float w{ -zf * zn / (zf - zn) };
+		const float xScale{ 1.f / (aspect * fov) };
+		const float yScale{ 1.f / fov };
 
 		return
 		{
-			{ xScale, 0.f, 0.f, 0.f },
-			{ 0.f, yScale, 0.f, 0.f },
-			{ 0.f,    0.f,   q, 1.f },
-			{ 0.f,    0.f,   w, 0.f }
+			{ xScale, .0f, .0f, .0f },
+			{ .0f, yScale, .0f, .0f },
+			{ .0f,    .0f,   q, 1.f },
+			{ .0f,    .0f,   w, .0f }
 		};
 	}
 

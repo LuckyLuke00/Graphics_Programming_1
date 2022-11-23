@@ -60,9 +60,9 @@ void Renderer::Render()
 	//Render_W1_Part4(); //Depth Buffer
 	//Render_W1_Part5(); //BoundingBox Optimization
 
-	Render_W2(); //Textures
+	//Render_W2(); //Textures
 
-	//Render_W3(); //Matrix Transformations
+	Render_W3(); //Matrix Transformations
 
 	//@END
 	//Update SDL Surface
@@ -71,7 +71,7 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void dae::Renderer::Render_W1_Part1()
+void Renderer::Render_W1_Part1()
 {
 	//Define Triangle - Vertices in NDC space
 	static const std::vector<Vector3> vertices_ndc
@@ -129,7 +129,7 @@ void dae::Renderer::Render_W1_Part1()
 	}
 }
 
-void dae::Renderer::Render_W1_Part2()
+void Renderer::Render_W1_Part2()
 {
 	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
@@ -175,7 +175,7 @@ void dae::Renderer::Render_W1_Part2()
 	}
 }
 
-void dae::Renderer::Render_W1_Part3()
+void Renderer::Render_W1_Part3()
 {
 	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
@@ -239,7 +239,7 @@ void dae::Renderer::Render_W1_Part3()
 	}
 }
 
-void dae::Renderer::Render_W1_Part4()
+void Renderer::Render_W1_Part4()
 {
 	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
@@ -329,7 +329,7 @@ void dae::Renderer::Render_W1_Part4()
 	}
 }
 
-void dae::Renderer::Render_W1_Part5()
+void Renderer::Render_W1_Part5()
 {
 	//Define Triangle - Vertices in WORLD space
 	static const std::vector<Vertex> vertices_world
@@ -358,7 +358,7 @@ void dae::Renderer::Render_W1_Part5()
 	}
 }
 
-void dae::Renderer::Render_W2()
+void Renderer::Render_W2()
 {
 	//Define Mesh - Triangle List
 	//const static std::vector<Mesh> meshes_world
@@ -415,47 +415,35 @@ void dae::Renderer::Render_W2()
 
 	ClearBuffers();
 
-	// According to the PrimitiveTopology, use a different index loop
 	for (const Mesh& mesh : meshes_screen)
 	{
-		if (mesh.primitiveTopology == PrimitiveTopology::TriangleList)
+		const bool isTriangleList{ mesh.primitiveTopology == PrimitiveTopology::TriangleList };
+
+		const int increment{ isTriangleList ? 3 : 1 };
+		const size_t size{ isTriangleList ? mesh.indices.size() : mesh.indices.size() - 2 };
+
+		for (int i{ 0 }; i < size; i += increment)
 		{
-			for (size_t i{ 0 }; i < mesh.indices.size(); i += 3)
-			{
-				const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
-				const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
-				const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
-
-				RenderTriangle(v0, v1, v2, m_pTexture);
-			}
-			continue;
-		}
-		// Change your index loop accordingly(not pixel loop!). Considering if it’s an odd or even triangle if
-		// using the triangle strip technique.Hint: odd or even ? -> modulo or bit masking
-
-		for (size_t i{ 0 }; i < mesh.indices.size() - 2; ++i)
-		{
-			if (i + 2 > mesh.indices.size()) break;
-
 			const Vertex& v0{ mesh.vertices[mesh.indices[i + 0]] };
 			const Vertex& v1{ mesh.vertices[mesh.indices[i + 1]] };
 			const Vertex& v2{ mesh.vertices[mesh.indices[i + 2]] };
 
-			if (i % 2 == 0)
+			if (isTriangleList)
 			{
 				RenderTriangle(v0, v1, v2, m_pTexture);
 				continue;
 			}
-
-			RenderTriangle(v0, v2, v1, m_pTexture);
+			RenderTriangle(i % 2 == 0 ? v0 : v2, v1, i % 2 == 0 ? v2 : v0, m_pTexture);
 		}
 	}
 }
 
-void dae::Renderer::Render_W3()
+void Renderer::Render_W3()
 {
+	ClearBuffers();
+
 	//Define Mesh - Triangle Strip
-	static std::vector<Mesh> meshes_world
+	static std::vector<Mesh> meshes
 	{
 		Mesh
 		{
@@ -479,10 +467,15 @@ void dae::Renderer::Render_W3()
 		}
 	};
 
-	VertexTransformationFunction(meshes_world);
+	VertexTransformationFunction(meshes);
+
+	for (const Mesh& mesh : meshes)
+	{
+		RenderMesh(mesh, m_pTexture);
+	}
 }
 
-void dae::Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
+void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
 {
 	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
 	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
@@ -535,9 +528,9 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 		}
 	}
 }
-
-void dae::Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
+void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
+	const Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
 	for (Mesh& mesh : meshes)
 	{
 		if (mesh.vertices_out.empty())
@@ -551,23 +544,27 @@ void dae::Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) cons
 
 		for (int i{ 0 }; i < mesh.vertices.size(); ++i)
 		{
-			Vertex_Out& vertex{ mesh.vertices_out[i] };
-			vertex.position = (m_Camera.viewMatrix * m_Camera.projectionMatrix).TransformPoint({ mesh.vertices[i].position, 1.f });
-			vertex.position.x /= vertex.position.w;
-			vertex.position.y /= vertex.position.w;
-			vertex.position.z /= vertex.position.w;
+			Vector4& vertexPos{ mesh.vertices_out[i].position };
+			vertexPos = viewProjectionMatrix.TransformPoint({ mesh.vertices[i].position, 1.f });
+
+			vertexPos.x /= vertexPos.w;
+			vertexPos.y /= vertexPos.w;
+			vertexPos.z /= vertexPos.w;
+
+			vertexPos.x = (vertexPos.x + 1.f) * (static_cast<float>(m_Width) * .5f);
+			vertexPos.y = (1.f - vertexPos.y) * (static_cast<float>(m_Height) * .5f);
 		}
 	}
 }
 
-void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2, const Texture* pTexture) const
+void Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2, const Texture* pTexture) const
 {
 	// Create aliases for the vertex positions
 	const Vector3& v0Pos{ v0.position };
 	const Vector3& v1Pos{ v1.position };
 	const Vector3& v2Pos{ v2.position };
 
-	// Check if the triangle is behind the camera by sign checking
+	// Check if the triangle is behind the camera by sign checking use Mathhelpters sign
 	if (v0Pos.z < .0f || v1Pos.z < .0f || v2Pos.z < .0f) return;
 
 	//Pre-calculate dimentions
@@ -675,8 +672,141 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 	}
 }
 
-void dae::Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
+void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture) const
 {
+	//Create aliases for the vertex positions
+	const Vector4& v0Pos{ v0.position };
+	const Vector4& v1Pos{ v1.position };
+	const Vector4& v2Pos{ v2.position };
+
+	// Check if the triangle is behind the camera by sign checking use Mathhelpters sign
+	if (v0Pos.z < .0f || v1Pos.z < .0f || v2Pos.z < .0f) return;
+
+	//Pre-calculate dimentions
+	const float width{ m_Width - 1.f };
+	const float height{ m_Height - 1.f };
+
+	// Calculate the bounding box - but make sure the triangle is inside the screen
+	const int minX{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.x, std::min(v1Pos.x, v2Pos.x))))) };
+	const int maxX{ static_cast<int>(std::ceil(std::min(width, std::max(v0Pos.x, std::max(v1Pos.x, v2Pos.x))))) };
+	const int minY{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.y, std::min(v1Pos.y, v2Pos.y))))) };
+	const int maxY{ static_cast<int>(std::ceil(std::min(height, std::max(v0Pos.y, std::max(v1Pos.y, v2Pos.y))))) };
+
+	// is triangle of screen?
+	if (minX > maxX || minY > maxY) return;
+
+	const float area
+	{ Vector2::Cross(
+		{ v1Pos.x - v0Pos.x, v1Pos.y - v0Pos.y },
+		{ v2Pos.x - v0Pos.x, v2Pos.y - v0Pos.y })
+	};
+
+	if (area < FLT_EPSILON) return;
+
+	// Pre-caclulate the inverse area
+	const float z0{ 1.f / v0Pos.z };
+	const float z1{ 1.f / v1Pos.z };
+	const float z2{ 1.f / v2Pos.z };
+
+	// Pre calculate the uv coordinates
+	const Vector2 uv0{ v0.uv / v0Pos.z };
+	const Vector2 uv1{ v1.uv / v1Pos.z };
+	const Vector2 uv2{ v2.uv / v2Pos.z };
+
+	// Pre calculate the color coordinates
+	const ColorRGB c0{ v0.color / v0Pos.z };
+	const ColorRGB c1{ v1.color / v1Pos.z };
+	const ColorRGB c2{ v2.color / v2Pos.z };
+
+	// Loop over the bounding box
+	for (int py{ minY }; py < maxY; ++py)
+	{
+		for (int px{ minX }; px < maxX; ++px)
+		{
+			// Check if the pixel is inside the triangle
+			// If so, draw the pixel
+			const Vector2 pixel{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
+
+			float w0
+			{ Vector2::Cross(
+				{ pixel.x - v1Pos.x, pixel.y - v1Pos.y },
+				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y })
+			};
+			if (w0 < 0) continue;
+
+			float w1
+			{ Vector2::Cross(
+				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y },
+				{ pixel.x - v0Pos.x, pixel.y - v0Pos.y })
+			};
+			if (w1 < 0) continue;
+
+			float w2{ area - w0 - w1 };
+			if (w2 < 0) continue;
+
+			// Calculate the depth account for perspective interpolation
+			const float z{ 1.f / ((z0 * w0 + z1 * w1 + z2 * w2) / area) };
+			const int zBufferIdx{ py * m_Width + px };
+			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
+
+			//Check if pixel is in front of the current pixel in the depth buffer
+			if (z > zBuffer)
+				continue;
+
+			//Update depth buffer
+			zBuffer = z;
+
+			w0 /= area;
+			w1 /= area;
+			w2 /= area;
+
+			ColorRGB finalColor{};
+
+			if (pTexture)
+			{
+				// Interpolate uv coordinates correct for perspective
+				const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * z };
+
+				// Sample the texture
+				finalColor = pTexture->Sample(uv);
+			}
+			else
+			{
+				// Interpolate color correct for perspective
+				finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * z;
+			}
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[zBufferIdx] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
+	}
+}
+
+void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
+{
+	const bool isTriangleList{ mesh.primitiveTopology == PrimitiveTopology::TriangleList };
+
+	const int increment{ isTriangleList ? 3 : 1 };
+	const size_t size{ isTriangleList ? mesh.indices.size() : mesh.indices.size() - 2 };
+
+	for (int i{ 0 }; i < size; i += increment)
+	{
+		const Vertex_Out& v0{ mesh.vertices_out[mesh.indices[i + 0]] };
+		const Vertex_Out& v1{ mesh.vertices_out[mesh.indices[i + 1]] };
+		const Vertex_Out& v2{ mesh.vertices_out[mesh.indices[i + 2]] };
+
+		if (isTriangleList)
+		{
+			RenderTriangle(v0, v1, v2, pTexture);
+			continue;
+		}
+		RenderTriangle(i % 2 == 0 ? v0 : v2, v1, i % 2 == 0 ? v2 : v0, pTexture);
+	}
 }
 
 bool Renderer::SaveBufferToImage() const

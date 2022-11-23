@@ -51,7 +51,7 @@ void Timer::StartBenchmark(int numFrames)
 
 	m_BenchmarkActive = true;
 
-	m_BenchmarkAvg = 0.f;
+	m_BenchmarkAvg = .0f;
 	m_BenchmarkHigh = FLT_MIN;
 	m_BenchmarkLow = FLT_MAX;
 
@@ -111,7 +111,7 @@ void Timer::Update()
 			if (m_BenchmarkCurrFrame >= m_BenchmarkFrames)
 			{
 				m_BenchmarkActive = false;
-				m_BenchmarkAvg = std::accumulate(m_Benchmarks.begin(), m_Benchmarks.end(), 0.f) / static_cast<float>(m_BenchmarkFrames);
+				m_BenchmarkAvg = std::accumulate(m_Benchmarks.begin(), m_Benchmarks.end(), .0f) / static_cast<float>(m_BenchmarkFrames);
 
 				//print
 				std::cout << "**BENCHMARK FINISHED**\n";

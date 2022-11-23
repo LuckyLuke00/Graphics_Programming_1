@@ -83,7 +83,7 @@ int main(int argc, char* args[])
 		printTimer += pTimer->GetElapsed();
 		if (printTimer >= 1.f)
 		{
-			printTimer = 0.f;
+			printTimer = .0f;
 			std::cout << "dFPS: " << pTimer->GetdFPS() << std::endl;
 		}
 

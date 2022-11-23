@@ -52,7 +52,7 @@ namespace dae
 
 	inline float Saturate(const float v)
 	{
-		if (v < 0.f) return 0.f;
+		if (v < .0f) return .0f;
 		if (v > 1.f) return 1.f;
 		return v;
 	}
