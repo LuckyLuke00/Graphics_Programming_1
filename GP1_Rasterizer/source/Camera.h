@@ -23,23 +23,28 @@ namespace dae
 		//Movement
 		Vector3 origin{ Vector3::Zero };
 		Vector3 velocity{ Vector3::Zero };
-		float deltaTime{ 0.f };
+		float deltaTime{ .0f };
 
 		//Movement constants
-		const float moveSpeed{ 10.0f };
+		const float moveSpeed{ 10.f };
 
-		//Input
-		bool canMove{ false };
-		const float mouseSensitivity{ 0.0025f };
-		const uint8_t* pKeyboardState{ SDL_GetKeyboardState(nullptr) };
+		//Keyboard input
+		const Uint8* pKeyboardState{ SDL_GetKeyboardState(nullptr) };
+		//Mouse input
+		Uint32 mouseState{};
+
+		Uint32 leftMouse{};
+		Uint32 middleMouse{};
+		Uint32 rightMouse{};
+
 		int mouseX{ 0 };
 		int mouseY{ 0 };
-		uint32_t mouseState{};
+		const float mouseSensitivity{ .0025f };
 
 		//Field of view
 		float fovAngle{ 90.f };
-		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
-		const float near{ 0.1f };
+		float fov{ tanf((fovAngle * TO_RADIANS) * .5f) };
+		const float near{ .1f };
 		const float far{ 100.f };
 
 		float aspectRatio{ 1.f };
@@ -74,53 +79,52 @@ namespace dae
 
 		void CalculateProjectionMatrix()
 		{
-			//TODO W2
-
-			//ProjectionMatrix => Matrix::CreatePerspectiveFovLH(...) [not implemented yet]
-			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixperspectivefovlh
 			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, near, far);
 		}
 
-		void Update(Timer* pTimer)
+		void Update(const Timer* pTimer)
 		{
 			deltaTime = pTimer->GetElapsed();
 
 			//Camera Update Logic
-			UpdateMouse();
+			UpdateMouseState();
 
-			HandleKeyboardMovement();
+			//Movement Logic
 			HandleMouseMovement();
-			UpdateVectors();
+			HandleKeyboardMovement();
+
+			UpdateCameraVectors();
 
 			//Update Matrices
 			CalculateViewMatrix();
 			CalculateProjectionMatrix(); //Try to optimize this - should only be called once or when fov/aspectRatio changes
 		}
 
-		void UpdateMouse()
+		void UpdateMouseState()
 		{
+			//Update mouse state and position
 			mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			canMove =
-				mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) ||
-				mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) ||
-				mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
+			//Hide the mouse when any mouse button is pressed
+			SDL_SetRelativeMouseMode(mouseState ? SDL_TRUE : SDL_FALSE);
 
-			//Hide or show the mouse cursor if the user can move the camera
-			SDL_SetRelativeMouseMode(canMove ? SDL_TRUE : SDL_FALSE);
+			//Update mouse button states
+			leftMouse = mouseState & SDL_BUTTON(SDL_BUTTON_LEFT);
+			rightMouse = mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT);
+			middleMouse = mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
 		}
 
 		void HandleKeyboardMovement()
 		{
 			//Prevent floating point accumulation and allow for smooth movement
-			if (!canMove && velocity.SqrMagnitude() < 0.01f) return;
+			if (!mouseState && velocity.SqrMagnitude() < .01f) return;
 
-			//Use WASD to move the camera if CanMove() is false (no mouse buttons pressed) the value will be 0.f
-			float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
-			float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
+			//Use WASD to move the camera
+			const float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
+			const float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
 
 			//Lerp the velocity to the desired direction
-			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed * canMove };
+			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed };
 			velocity = Vector3::Lerp(velocity, desiredVelocity, deltaTime * moveSpeed);
 
 			//Add the velocity to the origin
@@ -129,17 +133,12 @@ namespace dae
 
 		void HandleMouseMovement()
 		{
-			if (!canMove) return;
+			if (!mouseState) return;
 
 			//Type cast mouse x and y to float
 			// Make it so that the camera rotates at a constant speed
 			const float x{ static_cast<float>(mouseX) * mouseSensitivity };
 			const float y{ -static_cast<float>(mouseY) * mouseSensitivity };
-
-			//Store mouse button states
-			const uint32_t& leftMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_LEFT) };
-			const uint32_t& rightMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT) };
-			const uint32_t& middleMouse{ mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE) };
 
 			//Camera movement
 			//Move forward/backward - if left mouse button is pressed
@@ -157,7 +156,7 @@ namespace dae
 		}
 
 		//Function that updates forward, up and right vectors
-		void UpdateVectors()
+		void UpdateCameraVectors()
 		{
 			//Calculate the forward vector
 			forward = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitZ);
