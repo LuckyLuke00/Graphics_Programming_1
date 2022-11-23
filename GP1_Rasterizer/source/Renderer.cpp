@@ -18,16 +18,17 @@ Renderer::Renderer(SDL_Window* pWindow) :
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
+	m_AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
 
 	//Create Buffers
 	m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
 	m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
-	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
+	m_pBackBufferPixels = static_cast<uint32_t*>(m_pBackBuffer->pixels);
 
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	m_Camera.Initialize(60.f, { .0f, .0f, -10.f }, m_AspectRatio);
 }
 
 Renderer::~Renderer()
@@ -60,6 +61,8 @@ void Renderer::Render()
 	//Render_W1_Part5(); //BoundingBox Optimization
 
 	Render_W2(); //Textures
+
+	//Render_W3(); //Matrix Transformations
 
 	//@END
 	//Update SDL Surface
@@ -345,11 +348,7 @@ void dae::Renderer::Render_W1_Part5()
 	static std::vector<Vertex> vertices_screen;
 	VertexTransformationFunction(vertices_world, vertices_screen);
 
-	// Initialize the depth buffer to float max
-	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
-
-	// Also clear the BackBuffer (SDL_FillRect, clearColor = {100,100,100}
-	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+	ClearBuffers();
 
 	//RENDER LOGIC
 	// For every triangle
@@ -367,15 +366,15 @@ void dae::Renderer::Render_W2()
 	//	Mesh
 	//	{
 	//		{
-	//			Vertex{ { -3,  3, -2 }, { colors::White }, { .0f, .0f } },
-	//			Vertex{ {  0,  3, -2 }, { colors::White }, { .5f, .0f } },
-	//			Vertex{ {  3,  3, -2 }, { colors::White }, { 1.f, .0f } },
-	//			Vertex{ { -3,  0, -2 }, { colors::White }, { .0f, .5f } },
-	//			Vertex{ {  0,  0, -2 }, { colors::White }, { .5f, .5f } },
-	//			Vertex{ {  3,  0, -2 }, { colors::White }, { 1.f, .5f } },
-	//			Vertex{ { -3, -3, -2 }, { colors::White }, { .0f, 1.f } },
-	//			Vertex{ {  0, -3, -2 }, { colors::White }, { .5f, 1.f } },
-	//			Vertex{ {  3, -3, -2 }, { colors::White }, { 1.f, 1.f } },
+	//			Vertex{ { -3.f,  3.f, -2.f }, { colors::White }, { .0f, .0f } },
+	//			Vertex{ {  .0f,  3.f, -2.f }, { colors::White }, { .5f, .0f } },
+	//			Vertex{ {  3.f,  3.f, -2.f }, { colors::White }, { 1.f, .0f } },
+	//			Vertex{ { -3.f,  .0f, -2.f }, { colors::White }, { .0f, .5f } },
+	//			Vertex{ {  .0f,  .0f, -2.f }, { colors::White }, { .5f, .5f } },
+	//			Vertex{ {  3.f,  .0f, -2.f }, { colors::White }, { 1.f, .5f } },
+	//			Vertex{ { -3.f, -3.f, -2.f }, { colors::White }, { .0f, 1.f } },
+	//			Vertex{ {  .0f, -3.f, -2.f }, { colors::White }, { .5f, 1.f } },
+	//			Vertex{ {  3.f, -3.f, -2.f }, { colors::White }, { 1.f, 1.f } },
 	//		},
 	//		{
 	//			3, 0, 1,	1, 4, 3,	4, 1, 2,
@@ -392,15 +391,15 @@ void dae::Renderer::Render_W2()
 		Mesh
 		{
 			{
-				Vertex{ { -3,  3, -2 }, { colors::White }, { .0f, .0f } },
-				Vertex{ {  0,  3, -2 }, { colors::White }, { .5f, .0f } },
-				Vertex{ {  3,  3, -2 }, { colors::White }, { 1.f, .0f } },
-				Vertex{ { -3,  0, -2 }, { colors::White }, { .0f, .5f } },
-				Vertex{ {  0,  0, -2 }, { colors::White }, { .5f, .5f } },
-				Vertex{ {  3,  0, -2 }, { colors::White }, { 1.f, .5f } },
-				Vertex{ { -3, -3, -2 }, { colors::White }, { .0f, 1.f } },
-				Vertex{ {  0, -3, -2 }, { colors::White }, { .5f, 1.f } },
-				Vertex{ {  3, -3, -2 }, { colors::White }, { 1.f, 1.f } },
+				Vertex{ { -3.f,  3.f, -2.f }, { colors::White }, { .0f, .0f } },
+				Vertex{ {  .0f,  3.f, -2.f }, { colors::White }, { .5f, .0f } },
+				Vertex{ {  3.f,  3.f, -2.f }, { colors::White }, { 1.f, .0f } },
+				Vertex{ { -3.f,  .0f, -2.f }, { colors::White }, { .0f, .5f } },
+				Vertex{ {  .0f,  .0f, -2.f }, { colors::White }, { .5f, .5f } },
+				Vertex{ {  3.f,  .0f, -2.f }, { colors::White }, { 1.f, .5f } },
+				Vertex{ { -3.f, -3.f, -2.f }, { colors::White }, { .0f, 1.f } },
+				Vertex{ {  .0f, -3.f, -2.f }, { colors::White }, { .5f, 1.f } },
+				Vertex{ {  3.f, -3.f, -2.f }, { colors::White }, { 1.f, 1.f } },
 			},
 			{
 				3, 0, 4, 1, 5, 2,
@@ -414,11 +413,7 @@ void dae::Renderer::Render_W2()
 	static std::vector<Mesh> meshes_screen;
 	VertexTransformationFunction(meshes_world, meshes_screen);
 
-	// Initialize the depth buffer to float max
-	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
-
-	// Also clear the BackBuffer (SDL_FillRect, clearColor = {100,100,100}
-	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+	ClearBuffers();
 
 	// According to the PrimitiveTopology, use a different index loop
 	for (const Mesh& mesh : meshes_screen)
@@ -457,6 +452,42 @@ void dae::Renderer::Render_W2()
 	}
 }
 
+void dae::Renderer::Render_W3()
+{
+	//Define Mesh - Triangle Strip
+	static std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+			{
+				Vertex{ { -3.f,  3.f, -2.f }, { colors::White }, { .0f, .0f } },
+				Vertex{ {  .0f,  3.f, -2.f }, { colors::White }, { .5f, .0f } },
+				Vertex{ {  3.f,  3.f, -2.f }, { colors::White }, { 1.f, .0f } },
+				Vertex{ { -3.f,  .0f, -2.f }, { colors::White }, { .0f, .5f } },
+				Vertex{ {  .0f,  .0f, -2.f }, { colors::White }, { .5f, .5f } },
+				Vertex{ {  3.f,  .0f, -2.f }, { colors::White }, { 1.f, .5f } },
+				Vertex{ { -3.f, -3.f, -2.f }, { colors::White }, { .0f, 1.f } },
+				Vertex{ {  .0f, -3.f, -2.f }, { colors::White }, { .5f, 1.f } },
+				Vertex{ {  3.f, -3.f, -2.f }, { colors::White }, { 1.f, 1.f } },
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+		PrimitiveTopology::TriangleStrip
+		}
+	};
+
+	VertexTransformationFunction(meshes_world);
+}
+
+void dae::Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
+{
+	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
+	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
+}
+
 void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
 {
 	// Only copy and reserve space for meshes out once
@@ -466,11 +497,7 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 		vertices_out = vertices_in;
 	}
 
-	// Convert with and height to float
-	const float width{ static_cast<float>(m_Width) };
-	const float height{ static_cast<float>(m_Height) };
-
-	const float aspectRatioFov{ width / height * m_Camera.fov };
+	const float aspectRatioFov{ m_AspectRatio * m_Camera.fov };
 	const float fovReciprocal{ 1.f / m_Camera.fov };
 
 	for (int i{ 0 }; i < vertices_out.size(); ++i)
@@ -478,8 +505,8 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 		const Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(vertices_in[i].position) };
 		Vector3& vertexPos{ vertices_out[i].position };
 
-		vertexPos.x = (viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (width * .5f);
-		vertexPos.y = (1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (height * .5f);
+		vertexPos.x = (viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (static_cast<float>(m_Width) * .5f);
+		vertexPos.y = (1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (static_cast<float>(m_Height) * .5f);
 		vertexPos.z = viewSpacePos.z;
 	}
 }
@@ -492,11 +519,7 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 		meshes_out = meshes_in;
 	}
 
-	// Convert with and height to float
-	const float width{ static_cast<float>(m_Width) };
-	const float height{ static_cast<float>(m_Height) };
-
-	const float aspectRatioFov{ width / height * m_Camera.fov };
+	const float aspectRatioFov{ m_AspectRatio * m_Camera.fov };
 	const float fovReciprocal{ 1.f / m_Camera.fov };
 
 	for (int i{ 0 }; i < meshes_out.size(); ++i)
@@ -506,9 +529,33 @@ void Renderer::VertexTransformationFunction(const std::vector<Mesh>& meshes_in, 
 			const Vector3 viewSpacePos{ m_Camera.viewMatrix.TransformPoint(meshes_in[i].vertices[j].position) };
 			Vector3& vertexPos{ meshes_out[i].vertices[j].position };
 
-			vertexPos.x = (viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (width * .5f);
-			vertexPos.y = (1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (height * .5f);
+			vertexPos.x = (viewSpacePos.x / viewSpacePos.z / aspectRatioFov + 1.f) * (static_cast<float>(m_Width) * .5f);
+			vertexPos.y = (1.f - viewSpacePos.y / viewSpacePos.z * fovReciprocal) * (static_cast<float>(m_Height) * .5f);
 			vertexPos.z = viewSpacePos.z;
+		}
+	}
+}
+
+void dae::Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
+{
+	for (Mesh& mesh : meshes)
+	{
+		if (mesh.vertices_out.empty())
+		{
+			mesh.vertices_out.reserve(mesh.vertices.size());
+			for (const Vertex& vertex : mesh.vertices)
+			{
+				mesh.vertices_out.push_back({ {}, vertex.color, vertex.uv, vertex.normal, vertex.tangent });
+			}
+		}
+
+		for (int i{ 0 }; i < mesh.vertices.size(); ++i)
+		{
+			Vertex_Out& vertex{ mesh.vertices_out[i] };
+			vertex.position = (m_Camera.viewMatrix * m_Camera.projectionMatrix).TransformPoint({ mesh.vertices[i].position, 1.f });
+			vertex.position.x /= vertex.position.w;
+			vertex.position.y /= vertex.position.w;
+			vertex.position.z /= vertex.position.w;
 		}
 	}
 }
@@ -626,6 +673,10 @@ void dae::Renderer::RenderTriangle(const Vertex& v0, const Vertex& v1, const Ver
 				static_cast<uint8_t>(finalColor.b * 255));
 		}
 	}
+}
+
+void dae::Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
+{
 }
 
 bool Renderer::SaveBufferToImage() const

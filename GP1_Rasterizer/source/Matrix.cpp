@@ -144,8 +144,6 @@ namespace dae {
 
 	Matrix Matrix::CreateLookAtLH(const Vector3& origin, const Vector3& forward, const Vector3& up)
 	{
-		//TODO W1
-
 		//DirectX implementation
 		const Vector3 zAxis{ forward };
 		const Vector3 xAxis{ (Vector3::Cross(up, zAxis)).Normalized() };
@@ -162,9 +160,20 @@ namespace dae {
 
 	Matrix Matrix::CreatePerspectiveFovLH(float fov, float aspect, float zn, float zf)
 	{
-		//TODO W2
+		//TODO: Test
+		//DirectX implementation
+		const float yScale{ 1.f / (aspect * fov) };
+		const float xScale{ 1.f / fov };
+		const float q{ zf / (zf - zn) };
+		const float w{ -zf * zn / (zf - zn) };
 
-		return {};
+		return
+		{
+			{ xScale, 0.f, 0.f, 0.f },
+			{ 0.f, yScale, 0.f, 0.f },
+			{ 0.f,    0.f,   q, 1.f },
+			{ 0.f,    0.f,   w, 0.f }
+		};
 	}
 
 	Vector3 Matrix::GetAxisX() const
