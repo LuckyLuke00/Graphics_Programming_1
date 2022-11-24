@@ -65,7 +65,7 @@ namespace dae
 		const Texture* m_pTexture{ nullptr };
 		std::vector<Mesh> m_Meshes{};
 
-		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0);
+		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
 
 		void RenderMesh(const Mesh& mesh, const Texture* pTexture = nullptr) const;
 		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture = nullptr) const;
@@ -73,7 +73,7 @@ namespace dae
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(std::vector<Mesh>& meshes) const; //W3 Version
 
-		void InitializeMesh(const std::string& path, const Matrix& worldMatrix = {}, const PrimitiveTopology& topology = PrimitiveTopology::TriangleList);
+		void InitializeMesh(const char* path, const Matrix& worldMatrix = {}, const PrimitiveTopology& topology = PrimitiveTopology::TriangleList);
 
 		// Function that checks if a vertex is outside the view frustum
 		bool IsOutsideViewFrustum(const Vertex_Out& v) const;

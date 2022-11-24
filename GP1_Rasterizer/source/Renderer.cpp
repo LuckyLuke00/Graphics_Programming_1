@@ -70,7 +70,7 @@ void Renderer::Render()
 	//@END
 	//Update SDL Surface
 	SDL_UnlockSurface(m_pBackBuffer);
-	SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
+	SDL_BlitSurface(m_pBackBuffer, nullptr, m_pFrontBuffer, nullptr);
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
@@ -81,7 +81,7 @@ void Renderer::Render_Tuktuk()
 	RenderMesh(m_Meshes[0], m_pTexture);
 }
 
-void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b)
+void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b) const
 {
 	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
 	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
@@ -95,6 +95,9 @@ void Renderer::ToggleDepthBuffer()
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
 	Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+
+	const float halfWidth{ m_fWidth * .5f };
+	const float halfHeight{ m_fHeight * .5f };
 
 	for (Mesh& mesh : meshes)
 	{
@@ -118,21 +121,20 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 			vertexPos.y /= vertexPos.w;
 			vertexPos.z /= vertexPos.w;
 
-			vertexPos.x = (vertexPos.x + 1.f) * (m_fWidth * .5f);
-			vertexPos.y = (1.f - vertexPos.y) * (m_fHeight * .5f);
+			vertexPos.x = (vertexPos.x + 1.f) * halfWidth;
+			vertexPos.y = (1.f - vertexPos.y) * halfHeight;
 		}
 	}
 }
 
-void Renderer::InitializeMesh(const std::string& path, const Matrix& worldMatrix, const PrimitiveTopology& topology)
+void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const PrimitiveTopology& topology)
 {
-	// Create a temporary mesh object to push back into the meshes vector
-	Mesh mesh;
-	mesh.primitiveTopology = topology;
-	Utils::ParseOBJ(path, mesh.vertices, mesh.indices);
-	mesh.worldMatrix = worldMatrix;
+	m_Meshes.emplace_back();
+	m_Meshes.back().primitiveTopology = topology;
+	m_Meshes.back().worldMatrix = worldMatrix;
+	Utils::ParseOBJ(path, m_Meshes.back().vertices, m_Meshes.back().indices);
+	path = nullptr;
 
-	m_Meshes.emplace_back(mesh);
 	VertexTransformationFunction(m_Meshes);
 }
 
@@ -159,9 +161,9 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 	// Check if the triangle is behind the camera by sign checking
 	//if (v0Pos.w < .0f || v1Pos.w < .0f || v2Pos.w < .0f) return;
 
-	//Pre-calculate dimentions
-	const float width{ m_Width - 1.f };
-	const float height{ m_Height - 1.f };
+	//Pre-calculate dimensions
+	const float width{ m_fWidth - 1.f };
+	const float height{ m_fHeight - 1.f };
 
 	// Calculate the bounding box - but make sure the triangle is inside the screen
 	const int minX{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.x, std::min(v1Pos.x, v2Pos.x))))) };
@@ -182,12 +184,12 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 
 	const float invArea{ 1.f / area };
 
-	// Pre-caclulate the inverse z
+	// Pre-calculate the inverse z
 	const float z0{ 1.f / v0Pos.z };
 	const float z1{ 1.f / v1Pos.z };
 	const float z2{ 1.f / v2Pos.z };
 
-	// Pre-caclulate the inverse w
+	// Pre-calculate the inverse w
 	const float w0V{ 1.f / v0Pos.w };
 	const float w1V{ 1.f / v1Pos.w };
 	const float w2V{ 1.f / v2Pos.w };
@@ -292,7 +294,7 @@ void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
 		const uint32_t& idx1{ mesh.indices[i + 1] };
 		const uint32_t& idx2{ mesh.indices[i + 2] };
 
-		// If any of the indeces are equal skip
+		// If any of the indexes are equal skip
 		if (idx0 == idx1 || idx1 == idx2 || idx2 == idx0) continue;
 
 		const Vertex_Out& v0{ mesh.vertices_out[idx0] };
