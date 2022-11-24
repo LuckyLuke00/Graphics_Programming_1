@@ -13,6 +13,7 @@ using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
+	m_MeshRotationAngle{ 45.f },
 	m_pTexture{ Texture::LoadFromFile("Resources/tuktuk.png") }
 {
 	//Initialize
@@ -50,6 +51,11 @@ Renderer::~Renderer()
 void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
+
+	for (Mesh& mesh : m_Meshes)
+	{
+		mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
+	}
 }
 
 void Renderer::Render()

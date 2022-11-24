@@ -46,18 +46,21 @@ namespace dae
 		uint32_t* m_pBackBufferPixels{ nullptr };
 
 		bool m_RenderDepthBuffer{ false };
-		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
 
-		int m_Width{};
-		int m_Height{};
-
-		// Float of the width and height of the window
-		float m_fWidth{};
-		float m_fHeight{};
+		const float m_MeshRotationAngle{};
 
 		float m_AspectRatio{};
+
+		int m_Height{};
+		int m_Width{};
+
+		// Float of the width and height of the window
+		float m_fHeight{};
+		float m_fWidth{};
+
+		float* m_pDepthBufferPixels{};
 
 		const Texture* m_pTexture{ nullptr };
 		std::vector<Mesh> m_Meshes{};

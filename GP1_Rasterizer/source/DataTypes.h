@@ -38,5 +38,10 @@ namespace dae
 
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
+
+		void RotateY(const float angle)
+		{
+			worldMatrix = Matrix::CreateRotationY(angle * TO_RADIANS) * worldMatrix;
+		}
 	};
 }
