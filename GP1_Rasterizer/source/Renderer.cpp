@@ -64,7 +64,6 @@ void Renderer::Render()
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
 
-	//Render_W3(); //Matrix Transformations
 	Render_Tuktuk();
 
 	//@END
@@ -127,6 +126,15 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 	}
 }
 
+void dae::Renderer::CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const
+{
+	// Returns false if triangle is degenerate
+	min.x = static_cast<int>(std::floor(std::max(.0f, std::min(v0.position.x, std::min(v1.position.x, v2.position.x)))));
+	min.y = static_cast<int>(std::floor(std::max(.0f, std::min(v0.position.y, std::min(v1.position.y, v2.position.y)))));
+	max.x = static_cast<int>(std::ceil(std::min(m_fWidth - 1.f, std::max(v0.position.x, std::max(v1.position.x, v2.position.x)))));
+	max.y = static_cast<int>(std::ceil(std::min(m_fHeight - 1.f, std::max(v0.position.y, std::max(v1.position.y, v2.position.y)))));
+}
+
 void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const PrimitiveTopology& topology)
 {
 	m_Meshes.emplace_back();
@@ -141,12 +149,9 @@ void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const
 bool Renderer::IsOutsideViewFrustum(const Vertex_Out& v) const
 {
 	return
-		v.position.x < .0f ||
-		v.position.x > m_fWidth ||
-		v.position.y < 0.f ||
-		v.position.y > m_fHeight ||
-		v.position.z < .0f ||
-		v.position.z > 1.f;
+		(v.position.x < .0f || v.position.x > m_fWidth) ||
+		(v.position.y < .0f || v.position.y > m_fHeight) ||
+		(v.position.z < .0f || v.position.z > 1.f);
 }
 
 void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture) const
@@ -158,21 +163,10 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 	const Vector4& v1Pos{ v1.position };
 	const Vector4& v2Pos{ v2.position };
 
-	// Check if the triangle is behind the camera by sign checking
-	//if (v0Pos.w < .0f || v1Pos.w < .0f || v2Pos.w < .0f) return;
-
-	//Pre-calculate dimensions
-	const float width{ m_fWidth - 1.f };
-	const float height{ m_fHeight - 1.f };
-
 	// Calculate the bounding box - but make sure the triangle is inside the screen
-	const int minX{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.x, std::min(v1Pos.x, v2Pos.x))))) };
-	const int maxX{ static_cast<int>(std::ceil(std::min(width, std::max(v0Pos.x, std::max(v1Pos.x, v2Pos.x))))) };
-	const int minY{ static_cast<int>(std::floor(std::max(.0f, std::min(v0Pos.y, std::min(v1Pos.y, v2Pos.y))))) };
-	const int maxY{ static_cast<int>(std::ceil(std::min(height, std::max(v0Pos.y, std::max(v1Pos.y, v2Pos.y))))) };
-
-	// is triangle off screen?
-	if (minX > maxX || minY > maxY) return;
+	Int2 min;
+	Int2 max;
+	CalculateBoundingBox(v0, v1, v2, min, max);
 
 	const float area
 	{ Vector2::Cross(
@@ -205,34 +199,31 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 	const ColorRGB c2{ v2.color / v2Pos.w };
 
 	// Loop over the bounding box
-	for (int py{ minY }; py < maxY; ++py)
+	for (int py{ min.y }; py < max.y; ++py)
 	{
-		for (int px{ minX }; px < maxX; ++px)
+		for (int px{ min.x }; px < max.x; ++px)
 		{
 			// Check if the pixel is inside the triangle
 			// If so, draw the pixel
 			const Vector2 pixel{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
 
-			float w0
+			const float w0
 			{ Vector2::Cross(
 				{ pixel.x - v1Pos.x, pixel.y - v1Pos.y },
-				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y })
+				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y }) * invArea
 			};
-			if (w0 < 0) continue;
+			if (w0 < .0f) continue;
 
-			float w1
+			const float w1
 			{ Vector2::Cross(
 				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y },
-				{ pixel.x - v0Pos.x, pixel.y - v0Pos.y })
+				{ pixel.x - v0Pos.x, pixel.y - v0Pos.y }) * invArea
 			};
-			if (w1 < 0) continue;
+			if (w1 < .0f) continue;
 
-			float w2{ area - w0 - w1 };
-			if (w2 < 0) continue;
-
-			w0 *= invArea;
-			w1 *= invArea;
-			w2 *= invArea;
+			// Optimize by not calculating the cross product for the last edge
+			const float w2{ 1.f - w0 - w1 };
+			if (w2 < .0f) continue;
 
 			// Calculate the depth account for perspective interpolation
 			const float z{ 1.f / (z0 * w0 + z1 * w1 + z2 * w2) };
@@ -240,8 +231,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
 
 			//Check if pixel is in front of the current pixel in the depth buffer
-			if (z > zBuffer)
-				continue;
+			if (z > zBuffer) continue;
 
 			//Update depth buffer
 			zBuffer = z;

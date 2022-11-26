@@ -32,7 +32,6 @@ namespace dae
 		bool SaveBufferToImage() const;
 
 		void Render();
-		void Render_Tuktuk();
 
 		void ToggleDepthBuffer();
 
@@ -67,11 +66,14 @@ namespace dae
 
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
 
+		void Render_Tuktuk();
 		void RenderMesh(const Mesh& mesh, const Texture* pTexture = nullptr) const;
 		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture = nullptr) const;
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
-		void VertexTransformationFunction(std::vector<Mesh>& meshes) const; //W3 Version
+		void VertexTransformationFunction(std::vector<Mesh>& meshes) const;
+		void CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const;
+		// Function that loops over the bounding box
 
 		void InitializeMesh(const char* path, const Matrix& worldMatrix = {}, const PrimitiveTopology& topology = PrimitiveTopology::TriangleList);
 
