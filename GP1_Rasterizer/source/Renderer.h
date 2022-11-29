@@ -62,6 +62,7 @@ namespace dae
 		float* m_pDepthBufferPixels{};
 
 		const Texture* m_pTexture{ nullptr };
+		const Texture* m_pNormalMap{ nullptr };
 		std::vector<Mesh> m_Meshes{};
 
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
