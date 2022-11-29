@@ -13,8 +13,8 @@ using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
-	m_MeshRotationAngle{ 57.5f },
-	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
+	m_MeshRotationAngle{ 57.5f }
+	//m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -32,8 +32,10 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	//Initialize Camera
 	m_Camera.Initialize(45.f, { .0f, .0f, .0f }, m_AspectRatio);
 
-	const Vector3 position{ m_Camera.origin + Vector3{ .0f, .0f, 50.f } };
-	InitializeMesh("Resources/vehicle.obj", Matrix::CreateTranslation(position));
+	const Vector3 position{ .0f, .0f, 50.f };
+	constexpr float angle{ 90.f * TO_RADIANS };
+	const Matrix worldMatrix{ Matrix::CreateRotationY(angle) * Matrix::CreateTranslation(position) };
+	InitializeMesh("Resources/vehicle.obj", worldMatrix);
 }
 
 Renderer::~Renderer()
@@ -52,10 +54,10 @@ void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
 
-	for (Mesh& mesh : m_Meshes)
-	{
-		mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
-	}
+	//for (Mesh& mesh : m_Meshes)
+	//{
+	//	mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
+	//}
 }
 
 void Renderer::Render()
@@ -64,20 +66,15 @@ void Renderer::Render()
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
 
-	Render_Tuktuk();
+	ClearBuffers(100, 100, 100);
+	VertexTransformationFunction(m_Meshes);
+	RenderMesh(m_Meshes[0], m_pTexture);
 
 	//@END
 	//Update SDL Surface
 	SDL_UnlockSurface(m_pBackBuffer);
 	SDL_BlitSurface(m_pBackBuffer, nullptr, m_pFrontBuffer, nullptr);
 	SDL_UpdateWindowSurface(m_pWindow);
-}
-
-void Renderer::Render_Tuktuk()
-{
-	ClearBuffers(100, 100, 100);
-	VertexTransformationFunction(m_Meshes);
-	RenderMesh(m_Meshes[0], m_pTexture);
 }
 
 void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b) const
@@ -113,20 +110,22 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 
 		for (int i{ 0 }; i < mesh.vertices.size(); ++i)
 		{
-			Vector4& vertexPos{ mesh.vertices_out[i].position };
-			vertexPos = viewProjectionMatrix.TransformPoint({ mesh.vertices[i].position, 1.f });
+			Vertex_Out& vertex{ mesh.vertices_out[i] };
+			vertex.position = viewProjectionMatrix.TransformPoint({ mesh.vertices[i].position, 1.f });
 
-			vertexPos.x /= vertexPos.w;
-			vertexPos.y /= vertexPos.w;
-			vertexPos.z /= vertexPos.w;
+			vertex.normal = mesh.worldMatrix.TransformVector(mesh.vertices[i].normal).Normalized();
 
-			vertexPos.x = (vertexPos.x + 1.f) * halfWidth;
-			vertexPos.y = (1.f - vertexPos.y) * halfHeight;
+			vertex.position.x /= vertex.position.w;
+			vertex.position.y /= vertex.position.w;
+			vertex.position.z /= vertex.position.w;
+
+			vertex.position.x = (vertex.position.x + 1.f) * halfWidth;
+			vertex.position.y = (1.f - vertex.position.y) * halfHeight;
 		}
 	}
 }
 
-void dae::Renderer::CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const
+void Renderer::CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const
 {
 	// Returns false if triangle is degenerate
 	min.x = static_cast<int>(std::floor(std::max(.0f, std::min(v0.position.x, std::min(v1.position.x, v2.position.x)))));
@@ -226,26 +225,35 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			// Interpolated w
 			const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
 
-			ColorRGB finalColor{};
+			const Vertex_Out fragmentToShade
+			{
+				{ pixel.x, pixel.y, z, w },
+				c0 * w0 + c1 * w1 + c2 * w2,
+				uv0 * w0 + uv1 * w1 + uv2 * w2,
+				(v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w,
+				(v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w,
+			};
 
-			if (pTexture && !m_RenderDepthBuffer)
-			{
-				// Interpolate uv coordinates correct for perspective
-				const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * w };
+			ColorRGB finalColor{ PixelShading(fragmentToShade) };
 
-				// Sample the texture
-				finalColor = pTexture->Sample(uv);
-			}
-			else if (m_RenderDepthBuffer)
-			{
-				const float depthColor{ Remap(z, .985f, 1.f) };
-				finalColor = { depthColor, depthColor, depthColor };
-			}
-			else
-			{
-				// Interpolate color correct for perspective
-				finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * w;
-			}
+			//if (pTexture && !m_RenderDepthBuffer)
+			//{
+			//	// Interpolate uv coordinates correct for perspective
+			//	const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * w };
+
+			//	// Sample the texture
+			//	finalColor = pTexture->Sample(uv);
+			//}
+			//else if (m_RenderDepthBuffer)
+			//{
+			//	const float depthColor{ Remap(z, .985f, 1.f) };
+			//	finalColor = { depthColor, depthColor, depthColor };
+			//}
+			//else
+			//{
+			//	// Interpolate color correct for perspective
+			//	finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * w;
+			//}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
@@ -261,6 +269,13 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& c)
 {
 	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
+{
+	static const Vector3 lightDirection{ .577f, -.577f, .577f };
+	const float diffuse{ std::max(0.f, Vector3::Dot(v.normal, -lightDirection)) };
+	return v.color * diffuse;
 }
 
 void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const

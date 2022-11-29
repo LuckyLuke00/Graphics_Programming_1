@@ -66,11 +66,13 @@ namespace dae
 
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
 
-		void Render_Tuktuk();
 		void RenderMesh(const Mesh& mesh, const Texture* pTexture = nullptr) const;
 		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture = nullptr) const;
 
 		static float EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& c);
+
+		// Pixel shading functions
+		ColorRGB PixelShading(const Vertex_Out& v) const;
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(std::vector<Mesh>& meshes) const;
