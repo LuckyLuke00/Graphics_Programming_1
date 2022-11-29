@@ -158,45 +158,40 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 {
 	if (IsOutsideViewFrustum(v0) || IsOutsideViewFrustum(v1) || IsOutsideViewFrustum(v2)) return;
 
-	// Create aliases for the vertex positions
-	const Vector4& v0Pos{ v0.position };
-	const Vector4& v1Pos{ v1.position };
-	const Vector4& v2Pos{ v2.position };
+	const Vector2& v0Pos{ v0.position.GetXY() };
+	const Vector2& v1Pos{ v1.position.GetXY() };
+	const Vector2& v2Pos{ v2.position.GetXY() };
 
 	// Calculate the bounding box - but make sure the triangle is inside the screen
 	Int2 min;
 	Int2 max;
 	CalculateBoundingBox(v0, v1, v2, min, max);
 
-	const float area
-	{ Vector2::Cross(
-		{ v1Pos.x - v0Pos.x, v1Pos.y - v0Pos.y },
-		{ v2Pos.x - v0Pos.x, v2Pos.y - v0Pos.y })
-	};
+	const float area{ EdgeFunction(v0Pos, v1Pos, v2Pos) };
 
 	if (area < FLT_EPSILON) return;
 
-	const float invArea{ 1.f / area };
+	const float invArea{ Inverse(area) };
 
 	// Pre-calculate the inverse z
-	const float z0{ 1.f / v0Pos.z };
-	const float z1{ 1.f / v1Pos.z };
-	const float z2{ 1.f / v2Pos.z };
+	const float z0{ Inverse(v0.position.z) };
+	const float z1{ Inverse(v1.position.z) };
+	const float z2{ Inverse(v2.position.z) };
 
 	// Pre-calculate the inverse w
-	const float w0V{ 1.f / v0Pos.w };
-	const float w1V{ 1.f / v1Pos.w };
-	const float w2V{ 1.f / v2Pos.w };
+	const float w0V{ Inverse(v0.position.w) };
+	const float w1V{ Inverse(v1.position.w) };
+	const float w2V{ Inverse(v2.position.w) };
 
 	// Pre calculate the uv coordinates
-	const Vector2 uv0{ v0.uv / v0Pos.w };
-	const Vector2 uv1{ v1.uv / v1Pos.w };
-	const Vector2 uv2{ v2.uv / v2Pos.w };
+	const Vector2& uv0{ v0.uv / v0.position.w };
+	const Vector2& uv1{ v1.uv / v1.position.w };
+	const Vector2& uv2{ v2.uv / v2.position.w };
 
 	// Pre calculate the color coordinates
-	const ColorRGB c0{ v0.color / v0Pos.w };
-	const ColorRGB c1{ v1.color / v1Pos.w };
-	const ColorRGB c2{ v2.color / v2Pos.w };
+	const ColorRGB& c0{ v0.color / v0.position.w };
+	const ColorRGB& c1{ v1.color / v1.position.w };
+	const ColorRGB& c2{ v2.color / v2.position.w };
 
 	// Loop over the bounding box
 	for (int py{ min.y }; py < max.y; ++py)
@@ -207,18 +202,10 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			// If so, draw the pixel
 			const Vector2 pixel{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
 
-			const float w0
-			{ Vector2::Cross(
-				{ pixel.x - v1Pos.x, pixel.y - v1Pos.y },
-				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y }) * invArea
-			};
+			const float w0{ EdgeFunction(v1Pos, v2Pos, pixel) * invArea };
 			if (w0 < .0f) continue;
 
-			const float w1
-			{ Vector2::Cross(
-				{ pixel.x - v2Pos.x, pixel.y - v2Pos.y },
-				{ pixel.x - v0Pos.x, pixel.y - v0Pos.y }) * invArea
-			};
+			const float w1{ EdgeFunction(v2Pos, v0Pos, pixel) * invArea };
 			if (w1 < .0f) continue;
 
 			// Optimize by not calculating the cross product for the last edge
@@ -226,7 +213,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			if (w2 < .0f) continue;
 
 			// Calculate the depth account for perspective interpolation
-			const float z{ 1.f / (z0 * w0 + z1 * w1 + z2 * w2) };
+			const float z{ Inverse(z0 * w0 + z1 * w1 + z2 * w2) };
 			const int zBufferIdx{ py * m_Width + px };
 			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
 
@@ -237,7 +224,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			zBuffer = z;
 
 			// Interpolated w
-			const float w{ 1.f / (w0V * w0 + w1V * w1 + w2V * w2) };
+			const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
 
 			ColorRGB finalColor{};
 
@@ -269,6 +256,11 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 				static_cast<uint8_t>(finalColor.b * 255));
 		}
 	}
+}
+
+float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& c)
+{
+	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
 void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const

@@ -70,6 +70,8 @@ namespace dae
 		void RenderMesh(const Mesh& mesh, const Texture* pTexture = nullptr) const;
 		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture = nullptr) const;
 
+		static float EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& c);
+
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(std::vector<Mesh>& meshes) const;
 		void CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const;

@@ -26,6 +26,11 @@ namespace dae
 		return a * a;
 	}
 
+	inline float Inverse(const float a)
+	{
+		return 1.f / a;
+	}
+
 	inline float Lerpf(float a, float b, float factor)
 	{
 		return ((1 - factor) * a) + (factor * b);
