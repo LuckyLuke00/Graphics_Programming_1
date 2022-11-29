@@ -13,8 +13,8 @@ using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
-	m_MeshRotationAngle{ 45.f },
-	m_pTexture{ Texture::LoadFromFile("Resources/tuktuk.png") }
+	m_MeshRotationAngle{ 57.5f },
+	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -30,10 +30,10 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { .0f, .0f, -10.f }, m_AspectRatio);
+	m_Camera.Initialize(45.f, { .0f, .0f, .0f }, m_AspectRatio);
 
-	const Vector3 position{ m_Camera.origin + Vector3{ .0f, -5.f, 25.f } };
-	InitializeMesh("Resources/tuktuk.obj", Matrix::CreateTranslation(position));
+	const Vector3 position{ m_Camera.origin + Vector3{ .0f, .0f, 50.f } };
+	InitializeMesh("Resources/vehicle.obj", Matrix::CreateTranslation(position));
 }
 
 Renderer::~Renderer()
@@ -75,7 +75,7 @@ void Renderer::Render()
 
 void Renderer::Render_Tuktuk()
 {
-	ClearBuffers();
+	ClearBuffers(100, 100, 100);
 	VertexTransformationFunction(m_Meshes);
 	RenderMesh(m_Meshes[0], m_pTexture);
 }
