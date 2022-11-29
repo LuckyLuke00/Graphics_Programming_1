@@ -34,6 +34,9 @@ namespace dae
 		void Render();
 
 		void ToggleDepthBuffer();
+		void ToggleRotation();
+		void ToggleNormalMap();
+		void CycleShadingMode();
 
 		void Update(const Timer* pTimer);
 
@@ -45,6 +48,8 @@ namespace dae
 		uint32_t* m_pBackBufferPixels{ nullptr };
 
 		bool m_RenderDepthBuffer{ false };
+		bool m_RenderNormalMap{ true };
+		bool m_RotateMesh{ false };
 
 		Camera m_Camera{};
 
@@ -61,8 +66,11 @@ namespace dae
 
 		float* m_pDepthBufferPixels{};
 
-		const Texture* m_pTexture{ nullptr };
+		const Texture* m_pGlossMap{ nullptr };
 		const Texture* m_pNormalMap{ nullptr };
+		const Texture* m_pSpecularMap{ nullptr };
+		const Texture* m_pTexture{ nullptr };
+
 		std::vector<Mesh> m_Meshes{};
 
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
@@ -84,5 +92,15 @@ namespace dae
 
 		// Function that checks if a vertex is outside the view frustum
 		bool IsOutsideViewFrustum(const Vertex_Out& v) const;
+
+		enum class ShadingMode
+		{
+			ObservedArea,
+			Diffuse,
+			Specular,
+			Combined,
+		};
+
+		ShadingMode m_CurrentShadingMode{ ShadingMode::Specular };
 	};
 }

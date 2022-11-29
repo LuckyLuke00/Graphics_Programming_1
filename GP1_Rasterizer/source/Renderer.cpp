@@ -3,9 +3,10 @@
 #include "SDL_surface.h"
 
 //Project includes
-#include "Renderer.h"
+#include "BRDFs.h"
 #include "Math.h"
 #include "Matrix.h"
+#include "Renderer.h"
 #include "Texture.h"
 #include "Utils.h"
 
@@ -14,8 +15,10 @@ using namespace dae;
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
 	m_MeshRotationAngle{ 57.5f },
-	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") },
-	m_pNormalMap{ Texture::LoadFromFile("Resources/vehicle_normal.png") }
+	m_pGlossMap{ Texture::LoadFromFile("Resources/vehicle_gloss.png") },
+	m_pNormalMap{ Texture::LoadFromFile("Resources/vehicle_normal.png") },
+	m_pSpecularMap{ Texture::LoadFromFile("Resources/vehicle_specular.png") },
+	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -44,10 +47,10 @@ Renderer::~Renderer()
 	delete[] m_pDepthBufferPixels;
 	m_pDepthBufferPixels = nullptr;
 
-	if (m_pTexture)
+	if (m_pGlossMap)
 	{
-		delete m_pTexture;
-		m_pTexture = nullptr;
+		delete m_pGlossMap;
+		m_pGlossMap = nullptr;
 	}
 
 	if (m_pNormalMap)
@@ -55,16 +58,30 @@ Renderer::~Renderer()
 		delete m_pNormalMap;
 		m_pNormalMap = nullptr;
 	}
+
+	if (m_pSpecularMap)
+	{
+		delete m_pSpecularMap;
+		m_pSpecularMap = nullptr;
+	}
+
+	if (m_pTexture)
+	{
+		delete m_pTexture;
+		m_pTexture = nullptr;
+	}
 }
 
 void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
 
-	//for (Mesh& mesh : m_Meshes)
-	//{
-	//	mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
-	//}
+	if (!m_RotateMesh) return;
+
+	for (Mesh& mesh : m_Meshes)
+	{
+		mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
+	}
 }
 
 void Renderer::Render()
@@ -95,6 +112,22 @@ void Renderer::ToggleDepthBuffer()
 	m_RenderDepthBuffer = !m_RenderDepthBuffer;
 }
 
+void Renderer::ToggleRotation()
+{
+	m_RotateMesh = !m_RotateMesh;
+}
+
+void dae::Renderer::ToggleNormalMap()
+{
+	m_RenderNormalMap = !m_RenderNormalMap;
+}
+
+void dae::Renderer::CycleShadingMode()
+{
+	static constexpr int enumSize{ sizeof(ShadingMode) };
+	m_CurrentShadingMode = static_cast<ShadingMode>((static_cast<int>(m_CurrentShadingMode) + 1) % enumSize);
+}
+
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
 	Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
@@ -120,8 +153,9 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 			Vertex_Out& vertex{ mesh.vertices_out[i] };
 			vertex.position = viewProjectionMatrix.TransformPoint({ mesh.vertices[i].position, 1.f });
 
-			vertex.normal = mesh.worldMatrix.TransformVector(mesh.vertices[i].normal).Normalized();
-			vertex.tangent = mesh.worldMatrix.TransformVector(mesh.vertices[i].tangent).Normalized();
+			vertex.normal = mesh.worldMatrix.TransformVector(mesh.vertices[i].normal);
+			vertex.tangent = mesh.worldMatrix.TransformVector(mesh.vertices[i].tangent);
+			vertex.viewDirection = mesh.worldMatrix.TransformPoint(mesh.vertices[i].position) - m_Camera.origin;
 
 			vertex.position.x /= vertex.position.w;
 			vertex.position.y /= vertex.position.w;
@@ -240,6 +274,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 				w * (uv0 * w0 + uv1 * w1 + uv2 * w2),
 				((v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w).Normalized(),
 				((v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w).Normalized(),
+				((v0.viewDirection * w0 + v1.viewDirection * w1 + v2.viewDirection * w2) * w).Normalized()
 			};
 
 			ColorRGB finalColor{ PixelShading(interpolatedVertex) };
@@ -281,34 +316,55 @@ float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& 
 
 ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 {
+	//Sampled colors
+	ColorRGB normalColor{ m_pNormalMap->Sample(v.uv) };
+	const ColorRGB textureColor{ m_pTexture->Sample(v.uv) };
+	const ColorRGB specularColor{ m_pSpecularMap->Sample(v.uv) };
+	const ColorRGB glossColor{ m_pGlossMap->Sample(v.uv) };
+
 	//Normal Mapping
 	const Vector3 binormal{ Vector3::Cross(v.normal, v.tangent) };
 	const Matrix tangentSpaceAxis{ v.tangent, binormal, v.normal, Vector3::Zero };
 
 	//Calculate the tangent space normal
-	ColorRGB sampledNormalColor{ m_pNormalMap->Sample(v.uv) };
-	sampledNormalColor = 2.f * sampledNormalColor - colors::White;
-	Vector3 sampledNormal{ sampledNormalColor.r, sampledNormalColor.g, sampledNormalColor.b };
+	normalColor = 2.f * normalColor - colors::White;
+	Vector3 sampledNormal{ normalColor.r, normalColor.g, normalColor.b };
 	sampledNormal = tangentSpaceAxis.TransformVector(sampledNormal).Normalized();
+
+	if (!m_RenderNormalMap) sampledNormal = v.normal;
 
 	// Hard-coded light
 	static constexpr float lightIntensity{ 7.f };
+	static constexpr float shininess{ 25.f };
 	static const Vector3 lightDirection{ .577f, -.577f, .577f };
-	
+	static const ColorRGB& ambient{ .025f, .025f, .025f };
+	static const ColorRGB& radiance{ colors::White * (lightIntensity / lightDirection.SqrMagnitude()) };
+
 	const float lambertCosine{ Vector3::Dot(sampledNormal, -lightDirection) };
 	if (lambertCosine < .0f) return colors::Black;
+
+	// Phong Shading
+	const ColorRGB ks{ specularColor * glossColor };
+	const ColorRGB exp{ ks * shininess };
 
 	if (!m_pTexture)
 	{
 		return { lambertCosine, lambertCosine, lambertCosine };
 	}
 
-	static const ColorRGB& radiance{ colors::White * (lightIntensity / lightDirection.SqrMagnitude()) };
+	const ColorRGB diffuse{ BRDF::Lambert(colors::White, textureColor) };
 
-	const ColorRGB textureColor{ m_pTexture->Sample(v.uv) };
-	const auto diffuse{ textureColor * (1.f / static_cast<float>(M_PI)) };
-
-	return radiance * diffuse * lambertCosine;
+	switch (m_CurrentShadingMode)
+	{
+	case ShadingMode::ObservedArea:
+		return { lambertCosine, lambertCosine, lambertCosine };
+	case ShadingMode::Diffuse:
+		return radiance * diffuse * lambertCosine;
+	case ShadingMode::Specular:
+		return radiance * BRDF::Phong(ks, exp, lightDirection, v.viewDirection, sampledNormal) * lambertCosine;
+	case ShadingMode::Combined:
+		return ambient + radiance * (diffuse * lambertCosine + BRDF::Phong(ks, exp, lightDirection, v.viewDirection, sampledNormal) * lambertCosine);
+	}
 }
 
 void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
