@@ -13,8 +13,8 @@ using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow{ pWindow },
-	m_MeshRotationAngle{ 57.5f }
-	//m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
+	m_MeshRotationAngle{ 57.5f },
+	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -224,17 +224,18 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 
 			// Interpolated w
 			const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
+			const Vector2 uv{ w * (uv0 * w0 + uv1 * w1 + uv2 * w2) };
 
-			const Vertex_Out fragmentToShade
+			const Vertex_Out interpolatedVertex
 			{
 				{ pixel.x, pixel.y, z, w },
 				c0 * w0 + c1 * w1 + c2 * w2,
-				uv0 * w0 + uv1 * w1 + uv2 * w2,
+				w * (uv0 * w0 + uv1 * w1 + uv2 * w2),
 				(v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w,
 				(v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w,
 			};
 
-			ColorRGB finalColor{ PixelShading(fragmentToShade) };
+			ColorRGB finalColor{ PixelShading(interpolatedVertex) };
 
 			//if (pTexture && !m_RenderDepthBuffer)
 			//{
@@ -273,9 +274,22 @@ float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& 
 
 ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 {
+	// Hard-coded light
+	static constexpr float lightIntensity{ 7.f };
 	static const Vector3 lightDirection{ .577f, -.577f, .577f };
-	const float diffuse{ std::max(0.f, Vector3::Dot(v.normal, -lightDirection)) };
-	return v.color * diffuse;
+
+	const float lambertCosine{ std::max(0.f, Vector3::Dot(v.normal, -lightDirection)) };
+	if (!m_pTexture)
+	{
+		return v.color * lambertCosine;
+	}
+
+	static const ColorRGB& radiance{ colors::White * (lightIntensity / lightDirection.SqrMagnitude()) };
+
+	const ColorRGB textureColor{ m_pTexture->Sample(v.uv) };
+	const auto diffuse{ textureColor * (1.f / static_cast<float>(M_PI)) };
+
+	return v.color * radiance * diffuse * lambertCosine;
 }
 
 void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
