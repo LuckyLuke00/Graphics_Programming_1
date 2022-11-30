@@ -3,7 +3,6 @@
 #include "SDL_surface.h"
 
 //Project includes
-#include "BRDFs.h"
 #include "Math.h"
 #include "Matrix.h"
 #include "Renderer.h"
@@ -316,55 +315,46 @@ float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& 
 
 ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 {
-	//Sampled colors
-	ColorRGB normalColor{ m_pNormalMap->Sample(v.uv) };
-	const ColorRGB textureColor{ m_pTexture->Sample(v.uv) };
-	const ColorRGB specularColor{ m_pSpecularMap->Sample(v.uv) };
-	const ColorRGB glossColor{ m_pGlossMap->Sample(v.uv) };
-
-	//Normal Mapping
-	const Vector3 binormal{ Vector3::Cross(v.normal, v.tangent) };
-	const Matrix tangentSpaceAxis{ v.tangent, binormal, v.normal, Vector3::Zero };
-
-	//Calculate the tangent space normal
-	normalColor = 2.f * normalColor - colors::White;
-	Vector3 sampledNormal{ normalColor.r, normalColor.g, normalColor.b };
-	sampledNormal = tangentSpaceAxis.TransformVector(sampledNormal).Normalized();
-
-	if (!m_RenderNormalMap) sampledNormal = v.normal;
-
-	// Hard-coded light
+	// Hardcoded shading values
+	static constexpr ColorRGB ambient{ .025f, .025f, .025f };
 	static constexpr float lightIntensity{ 7.f };
 	static constexpr float shininess{ 25.f };
-	static const Vector3 lightDirection{ .577f, -.577f, .577f };
-	static const ColorRGB& ambient{ .025f, .025f, .025f };
-	static const ColorRGB& radiance{ colors::White * (lightIntensity / lightDirection.SqrMagnitude()) };
+	static const Vector3 lightDir{ .577f, -.577f, .577f };
+	static const ColorRGB radiance{ colors::White * (lightIntensity / lightDir.SqrMagnitude()) };
 
-	const float lambertCosine{ Vector3::Dot(sampledNormal, -lightDirection) };
-	if (lambertCosine < .0f) return colors::Black;
+	// Sampled texture colors
+	const ColorRGB sampledColor{ m_pTexture->Sample(v.uv) };
+	const ColorRGB sampledGloss{ m_pGlossMap->Sample(v.uv) };
+	const ColorRGB sampledNormal{ m_pNormalMap->Sample(v.uv) };
+	const ColorRGB sampledSpecular{ m_pSpecularMap->Sample(v.uv) };
 
-	// Phong Shading
-	const ColorRGB ks{ specularColor * glossColor };
-	const ColorRGB exp{ ks * shininess };
+	// Normal mapping
+	const Vector3 binormal{ Vector3::Cross(v.normal, v.tangent) };
+	const Matrix tangentSpaceAxis{ v.tangent, binormal, v.normal, Vector3::Zero };
+	const Vector3 normal{ m_RenderNormalMap ? tangentSpaceAxis.TransformVector(2.f * sampledNormal.ToVector3() - Vector3::One) : v.normal };
 
-	if (!m_pTexture)
-	{
-		return { lambertCosine, lambertCosine, lambertCosine };
-	}
+	const ColorRGB lambert{ colors::White * sampledColor / PI };
 
-	const ColorRGB diffuse{ BRDF::Lambert(colors::White, textureColor) };
+	// Calculate diffuse and specular lighting
+	const float ks{ sampledSpecular.r };
+	const float exp{ sampledGloss.r * shininess };
+	const ColorRGB specular{ colors::White * ks * powf(std::max(Vector3::Dot(Vector3::Reflect(-lightDir, normal), v.viewDirection), .0f), exp) };
+	const float diffuse{ std::max(Vector3::Dot(normal, -lightDir), .0f) };
 
 	switch (m_CurrentShadingMode)
 	{
-	case ShadingMode::ObservedArea:
-		return { lambertCosine, lambertCosine, lambertCosine };
-	case ShadingMode::Diffuse:
-		return radiance * diffuse * lambertCosine;
-	case ShadingMode::Specular:
-		return radiance * BRDF::Phong(ks, exp, lightDirection, v.viewDirection, sampledNormal) * lambertCosine;
-	case ShadingMode::Combined:
-		return ambient + radiance * (diffuse * lambertCosine + BRDF::Phong(ks, exp, lightDirection, v.viewDirection, sampledNormal) * lambertCosine);
+		using enum ShadingMode;
+	case ObservedArea:
+		return { diffuse, diffuse, diffuse };
+	case Diffuse:
+		return lambert * (diffuse * radiance);
+	case Specular:
+		return specular;
+	case Combined:
+		return lambert * (diffuse * radiance) + specular + ambient;
 	}
+
+	return colors::Black;
 }
 
 void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const

@@ -1,5 +1,6 @@
 #pragma once
 #include "MathHelpers.h"
+#include "Math.h"
 
 namespace dae
 {
@@ -19,6 +20,12 @@ namespace dae
 		static ColorRGB Lerp(const ColorRGB& c1, const ColorRGB& c2, float factor)
 		{
 			return { Lerpf(c1.r, c2.r, factor), Lerpf(c1.g, c2.g, factor), Lerpf(c1.b, c2.b, factor) };
+		}
+
+		// Convert to vector3
+		Vector3 ToVector3() const
+		{
+			return { r, g, b };
 		}
 
 #pragma region ColorRGB (Member) Operators

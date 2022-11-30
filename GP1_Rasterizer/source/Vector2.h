@@ -36,6 +36,7 @@ namespace dae
 		static const Vector2 UnitX;
 		static const Vector2 UnitY;
 		static const Vector2 Zero;
+		static const Vector2 One;
 	};
 
 	//Global Operators

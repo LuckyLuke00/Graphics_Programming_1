@@ -49,7 +49,7 @@ namespace dae
 
 		bool m_RenderDepthBuffer{ false };
 		bool m_RenderNormalMap{ true };
-		bool m_RotateMesh{ false };
+		bool m_RotateMesh{ true };
 
 		Camera m_Camera{};
 
@@ -101,6 +101,6 @@ namespace dae
 			Combined,
 		};
 
-		ShadingMode m_CurrentShadingMode{ ShadingMode::Specular };
+		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
 	};
 }

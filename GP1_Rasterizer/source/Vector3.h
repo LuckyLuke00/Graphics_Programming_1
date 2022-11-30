@@ -51,6 +51,7 @@ namespace dae
 		static const Vector3 UnitY;
 		static const Vector3 UnitZ;
 		static const Vector3 Zero;
+		static const Vector3 One;
 	};
 
 	//Global Operators
