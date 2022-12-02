@@ -320,7 +320,6 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	static constexpr float lightIntensity{ 7.f };
 	static constexpr float shininess{ 25.f };
 	static const Vector3 lightDir{ .577f, -.577f, .577f };
-	static const ColorRGB radiance{ colors::White * (lightIntensity / lightDir.SqrMagnitude()) };
 
 	// Sampled texture colors
 	const ColorRGB sampledColor{ m_pTexture->Sample(v.uv) };
@@ -331,27 +330,27 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	// Normal mapping
 	const Vector3 binormal{ Vector3::Cross(v.normal, v.tangent) };
 	const Matrix tangentSpaceAxis{ v.tangent, binormal, v.normal, Vector3::Zero };
-	const Vector3 normal{ m_RenderNormalMap ? tangentSpaceAxis.TransformVector(2.f * sampledNormal.ToVector3() - Vector3::One) : v.normal };
+	const Vector3 normal{ m_RenderNormalMap ? (tangentSpaceAxis.TransformVector(2.f * sampledNormal.ToVector3() - Vector3::One).Normalized()) : v.normal };
 
-	const ColorRGB lambert{ colors::White * sampledColor / PI };
+	const ColorRGB diffuse{ lightIntensity * sampledColor / PI };
+	// Remember to normalize the light direction when it's not hard coded
+	const float observedArea{ std::max(0.f, Vector3::Dot(normal, -lightDir)) };
 
 	// Calculate diffuse and specular lighting
-	const float ks{ sampledSpecular.r };
 	const float exp{ sampledGloss.r * shininess };
-	const ColorRGB specular{ colors::White * ks * powf(std::max(Vector3::Dot(Vector3::Reflect(-lightDir, normal), v.viewDirection), .0f), exp) };
-	const float diffuse{ std::max(Vector3::Dot(normal, -lightDir), .0f) };
+	const ColorRGB specular{ (colors::White * sampledSpecular * powf(std::max(Vector3::Dot(Vector3::Reflect(-lightDir, normal), v.viewDirection), .0f), exp)) };
 
 	switch (m_CurrentShadingMode)
 	{
 		using enum ShadingMode;
 	case ObservedArea:
-		return { diffuse, diffuse, diffuse };
+		return { observedArea, observedArea, observedArea };
 	case Diffuse:
-		return lambert * (diffuse * radiance);
+		return observedArea * diffuse;
 	case Specular:
 		return specular;
 	case Combined:
-		return lambert * (diffuse * radiance) + specular + ambient;
+		return (diffuse + specular + ambient) * observedArea;
 	}
 
 	return colors::Black;
