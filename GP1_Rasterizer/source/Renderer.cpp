@@ -270,7 +270,7 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			{
 				{ pixel.x, pixel.y, z, w },
 				c0 * w0 + c1 * w1 + c2 * w2,
-				w * (uv0 * w0 + uv1 * w1 + uv2 * w2),
+				(uv0 * w0 + uv1 * w1 + uv2 * w2) * w,
 				((v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w).Normalized(),
 				((v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w).Normalized(),
 				((v0.viewDirection * w0 + v1.viewDirection * w1 + v2.viewDirection * w2) * w).Normalized()
@@ -334,7 +334,7 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 
 	const ColorRGB diffuse{ lightIntensity * sampledColor / PI };
 	// Remember to normalize the light direction when it's not hard coded
-	const float observedArea{ std::max(0.f, Vector3::Dot(normal, -lightDir)) };
+	const float observedArea{ std::max(.0f, Vector3::Dot(normal, -lightDir)) };
 
 	// Calculate diffuse and specular lighting
 	const float exp{ sampledGloss.r * shininess };
