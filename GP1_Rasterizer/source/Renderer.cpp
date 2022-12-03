@@ -258,44 +258,35 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
 
 			//Check if pixel is in front of the current pixel in the depth buffer
-			if (z > zBuffer) continue;
+			if (z >= zBuffer) continue;
 
 			//Update depth buffer
 			zBuffer = z;
 
-			// Interpolated w
-			const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
+			ColorRGB finalColor{ colors::Black };
 
-			const Vertex_Out interpolatedVertex
+			if (m_RenderDepthBuffer)
 			{
-				{ pixel.x, pixel.y, z, w },
-				c0 * w0 + c1 * w1 + c2 * w2,
-				(uv0 * w0 + uv1 * w1 + uv2 * w2) * w,
-				((v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w).Normalized(),
-				((v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w).Normalized(),
-				((v0.viewDirection * w0 + v1.viewDirection * w1 + v2.viewDirection * w2) * w).Normalized()
-			};
+				const float depthColor{ Remap(z, .997f, 1.f) };
+				finalColor = colors::White * depthColor;
+			}
+			else
+			{
+				// Interpolated w
+				const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
 
-			ColorRGB finalColor{ PixelShading(interpolatedVertex) };
+				const Vertex_Out interpolatedVertex
+				{
+					{ pixel.x, pixel.y, z, w },
+					c0 * w0 + c1 * w1 + c2 * w2,
+					(uv0 * w0 + uv1 * w1 + uv2 * w2) * w,
+					((v0.normal * w0 + v1.normal * w1 + v2.normal * w2) * w).Normalized(),
+					((v0.tangent * w0 + v1.tangent * w1 + v2.tangent * w2) * w).Normalized(),
+					((v0.viewDirection * w0 + v1.viewDirection * w1 + v2.viewDirection * w2) * w).Normalized()
+				};
 
-			//if (pTexture && !m_RenderDepthBuffer)
-			//{
-			//	// Interpolate uv coordinates correct for perspective
-			//	const Vector2 uv{ (uv0 * w0 + uv1 * w1 + uv2 * w2) * w };
-
-			//	// Sample the texture
-			//	finalColor = pTexture->Sample(uv);
-			//}
-			//else if (m_RenderDepthBuffer)
-			//{
-			//	const float depthColor{ Remap(z, .985f, 1.f) };
-			//	finalColor = { depthColor, depthColor, depthColor };
-			//}
-			//else
-			//{
-			//	// Interpolate color correct for perspective
-			//	finalColor = (c0 * w0 + c1 * w1 + c2 * w2) * w;
-			//}
+				finalColor = PixelShading(interpolatedVertex);
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();

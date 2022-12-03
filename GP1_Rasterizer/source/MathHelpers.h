@@ -64,7 +64,6 @@ namespace dae
 
 	inline float Remap(float value, float min, float max)
 	{
-		const float clamped{ Clamp(value, min, max) };
-		return (clamped - min) / (max - min);
+		return Clamp((value - min) / (max - min), .0f, 1.f);
 	}
 }
