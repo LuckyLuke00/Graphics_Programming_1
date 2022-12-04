@@ -19,16 +19,6 @@ namespace dae
 			SDL_FreeSurface(m_pSurface);
 			m_pSurface = nullptr;
 		}
-
-		// Delete color
-		delete m_pR;
-		m_pR = nullptr;
-
-		delete m_pG;
-		m_pG = nullptr;
-
-		delete m_pB;
-		m_pB = nullptr;
 	}
 
 	Texture* Texture::LoadFromFile(const std::string& path)
@@ -50,8 +40,6 @@ namespace dae
 		const int y{ static_cast<int>(uv.y * m_pSurface->h) };
 		const uint32_t& color{ m_pSurfacePixels[y * m_pSurface->w + x] };
 
-		SDL_GetRGB(color, m_pSurface->format, m_pR, m_pG, m_pB);
-
-		return { *m_pR / 255.f, *m_pG / 255.f, *m_pB / 255.f };
+		return ColorRGB{ (color & 0xFF) / 255.f, ((color >> 8) & 0xFF) / 255.f, ((color >> 16) & 0xFF) / 255.f };
 	}
 }

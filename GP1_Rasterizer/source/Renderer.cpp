@@ -324,8 +324,9 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	const Vector3 normal{ m_RenderNormalMap ? (tangentSpaceAxis.TransformVector(2.f * sampledNormal.ToVector3() - Vector3::One).Normalized()) : v.normal };
 
 	const ColorRGB diffuse{ lightIntensity * sampledColor / PI };
-	// Remember to normalize the light direction when it's not hard coded
-	const float observedArea{ std::max(.0f, Vector3::Dot(normal, -lightDir)) };
+
+	const float observedArea{ Vector3::Dot(normal, -lightDir) };
+	if (observedArea < .0f) return colors::Black;
 
 	// Calculate diffuse and specular lighting
 	const float exp{ sampledGloss.r * shininess };

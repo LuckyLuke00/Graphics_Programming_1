@@ -32,7 +32,7 @@ namespace dae {
 
 	float Vector3::Normalize()
 	{
-		const float m = Magnitude();
+		const float m{ Magnitude() };
 		x /= m;
 		y /= m;
 		z /= m;
@@ -42,7 +42,7 @@ namespace dae {
 
 	Vector3 Vector3::Normalized() const
 	{
-		const float m = Magnitude();
+		const float m{ Magnitude() };
 		return { x / m, y / m, z / m };
 	}
 
