@@ -29,8 +29,8 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	constexpr uint32_t width = 640;
-	constexpr uint32_t height = 480;
+	constexpr uint32_t width{ 640 };
+	constexpr uint32_t height{ 480 };
 
 	SDL_Window* pWindow = SDL_CreateWindow(
 		"RayTracer - **Lucas Kinoo (2DAE15)**",
@@ -42,25 +42,25 @@ int main(int argc, char* args[])
 		return 1;
 
 	//Initialize "framework"
-	const auto pTimer = new Timer();
-	const auto pRenderer = new Renderer(pWindow);
+	const auto pTimer{ new Timer() };
+	const auto pRenderer{ new Renderer(pWindow) };
 
-	//const auto pScene = new Scene_W1();
-	//const auto pScene = new Scene_W2();
-	//const auto pScene = new Scene_W3_TestScene();
-	//const auto pScene = new Scene_W3();
-	//const auto pScene = new Scene_W4_TestScene();
+	//const auto pScene{ new Scene_W1() };
+	//const auto pScene{ new Scene_W2() };
+	//const auto pScene{ new Scene_W3_TestScene() };
+	//const auto pScene{ new Scene_W3() };
+	//const auto pScene{ new Scene_W4_TestScene() };
 
-	const auto pScene = new Scene_W4_ReferenceScene();
-	//const auto pScene = new Scene_W4_BunnyScene();
+	//const auto pScene{ new Scene_W4_BunnyScene() };
+	const auto pScene{ new Scene_W4_ReferenceScene() };
 
 	pScene->Initialize();
 
 	//Start loop
 	pTimer->Start();
-	float printTimer = 0.f;
-	bool isLooping = true;
-	bool takeScreenshot = false;
+	float printTimer{ .0f };
+	bool isLooping{ true };
+	bool takeScreenshot{ false };
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -98,7 +98,7 @@ int main(int argc, char* args[])
 		printTimer += pTimer->GetElapsed();
 		if (printTimer >= 1.f)
 		{
-			printTimer = 0.f;
+			printTimer = .0f;
 			std::cout << "dFPS: " << pTimer->GetdFPS() << '\n';
 		}
 
