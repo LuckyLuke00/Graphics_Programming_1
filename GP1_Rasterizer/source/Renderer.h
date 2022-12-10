@@ -75,8 +75,8 @@ namespace dae
 
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
 
-		void RenderMesh(const Mesh& mesh, const Texture* pTexture = nullptr) const;
-		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture = nullptr) const;
+		void RenderMesh(const Mesh& mesh) const;
+		void RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2) const;
 
 		static float EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& c);
 
@@ -100,6 +100,12 @@ namespace dae
 			Specular,
 			Combined,
 		};
+
+		// Hard-coded shading Values: ambient, intensity, direction, color and shininess
+		const Vector3 m_LightDirection;
+		static constexpr ColorRGB m_Ambient{ .025f, .025f, .025f };
+		static constexpr float m_LightIntensity{ 7.f };
+		static constexpr float m_Shininess{ 25.f };
 
 		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
 	};

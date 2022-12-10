@@ -146,6 +146,10 @@ namespace dae {
 		if (FAILED(result))
 			return result;
 
+		// Hidden DXGIFactory leak?
+		pDxgiFactory->Release();
+		pDxgiFactory = nullptr;
+
 		//3. Create DepthStencil (DS) & DepthStencilView (DSV)
 		//Resource
 		D3D11_TEXTURE2D_DESC depthStencilDesc{};

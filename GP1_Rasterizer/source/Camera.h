@@ -44,6 +44,8 @@ namespace dae
 		//Field of view
 		float fovAngle{ 90.f };
 		float fov{ tanf((fovAngle * TO_RADIANS) * .5f) };
+		float previousFovAngle{ 0.f };
+		float previousAspectRatio{ 0.f };
 		const float near{ .1f };
 		const float far{ 100.f };
 
@@ -69,6 +71,14 @@ namespace dae
 			fov = tanf((fovAngle * TO_RADIANS) * .5f);
 
 			origin = _origin;
+
+			if (fovAngle != previousFovAngle || aspectRatio != previousAspectRatio)
+			{
+				previousFovAngle = fovAngle;
+				previousAspectRatio = aspectRatio;
+
+				CalculateProjectionMatrix();
+			}
 		}
 
 		void CalculateViewMatrix()

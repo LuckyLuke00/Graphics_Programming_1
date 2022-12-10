@@ -9,6 +9,8 @@
 #include "Texture.h"
 #include "Utils.h"
 
+#include <algorithm>
+
 using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
@@ -17,7 +19,8 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pGlossMap{ Texture::LoadFromFile("Resources/vehicle_gloss.png") },
 	m_pNormalMap{ Texture::LoadFromFile("Resources/vehicle_normal.png") },
 	m_pSpecularMap{ Texture::LoadFromFile("Resources/vehicle_specular.png") },
-	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") }
+	m_pTexture{ Texture::LoadFromFile("Resources/vehicle_diffuse.png") },
+	m_LightDirection{ .577f, -.577f, .577f }
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -75,8 +78,6 @@ void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
 
-	if (!m_RotateMesh) return;
-
 	for (Mesh& mesh : m_Meshes)
 	{
 		mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
@@ -91,7 +92,7 @@ void Renderer::Render()
 
 	ClearBuffers(100, 100, 100);
 	VertexTransformationFunction(m_Meshes);
-	RenderMesh(m_Meshes[0], m_pTexture);
+	RenderMesh(m_Meshes[0]);
 
 	//@END
 	//Update SDL Surface
@@ -129,46 +130,67 @@ void dae::Renderer::CycleShadingMode()
 
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
+	// Precompute the viewProjectionMatrix for each mesh
 	Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
 
+	// Compute half the width and height of the screen
 	const float halfWidth{ m_fWidth * .5f };
 	const float halfHeight{ m_fHeight * .5f };
 
+	// Iterate over each mesh
 	for (Mesh& mesh : meshes)
 	{
+		// Precompute the viewProjectionMatrix for this mesh.
 		viewProjectionMatrix = mesh.worldMatrix * viewProjectionMatrix;
 
-		if (mesh.vertices_out.empty())
+		// Use a reference to the mesh vertices and vertices_out vectors
+		// to avoid repeated calls to the mesh accessor functions.
+		const std::vector<Vertex>& vertices{ mesh.vertices };
+		std::vector<Vertex_Out>& verticesOut{ mesh.vertices_out };
+
+		// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
+		// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
+		if (verticesOut.empty())
 		{
-			mesh.vertices_out.reserve(mesh.vertices.size());
-			for (const Vertex& vertex : mesh.vertices)
+			verticesOut.reserve(vertices.size());
+			for (const Vertex& vertex : vertices)
 			{
-				mesh.vertices_out.push_back({ {}, vertex.color, vertex.uv, vertex.normal, vertex.tangent });
+				verticesOut.emplace_back(Vertex_Out{ {}, vertex.color, vertex.uv, vertex.normal, vertex.tangent });
 			}
 		}
 
-		for (int i{ 0 }; i < mesh.vertices.size(); ++i)
+		// Iterate over the vertices of the mesh using a range-based for loop.
+		for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
 		{
-			Vertex_Out& vertex{ mesh.vertices_out[i] };
-			vertex.position = viewProjectionMatrix.TransformPoint({ mesh.vertices[i].position, 1.f });
+			// Transform the vertex position using the precomputed viewProjectionMatrix
+			vertex.position = viewProjectionMatrix.TransformPoint({ vertices[i].position, 1.f });
 
-			vertex.normal = mesh.worldMatrix.TransformVector(mesh.vertices[i].normal);
-			vertex.tangent = mesh.worldMatrix.TransformVector(mesh.vertices[i].tangent);
-			vertex.viewDirection = mesh.worldMatrix.TransformPoint(mesh.vertices[i].position) - m_Camera.origin;
+			// Transform the normal and tangent vectors using the world matrix of the mesh
+			vertex.normal = mesh.worldMatrix.TransformVector(vertices[i].normal);
+			vertex.tangent = mesh.worldMatrix.TransformVector(vertices[i].tangent);
 
+			// Compute the view direction vector as the difference between the transformed vertex position
+			// and the origin of the camera.
+			vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].position) - m_Camera.origin;
+
+			// Divide the x, y, and z coordinates of the position by the w coordinate.
 			vertex.position.x /= vertex.position.w;
 			vertex.position.y /= vertex.position.w;
 			vertex.position.z /= vertex.position.w;
 
+			// Transform the x and y coordinates of the position from normalized device coordinates
+			// to screen space coordinates.
 			vertex.position.x = (vertex.position.x + 1.f) * halfWidth;
 			vertex.position.y = (1.f - vertex.position.y) * halfHeight;
+
+			++i;
 		}
 	}
 }
 
 void Renderer::CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const
 {
-	// Returns false if triangle is degenerate
+	// Compute the minimum and maximum x and y coordinates of the triangle.
 	min.x = static_cast<int>(std::floor(std::max(.0f, std::min(v0.position.x, std::min(v1.position.x, v2.position.x)))));
 	min.y = static_cast<int>(std::floor(std::max(.0f, std::min(v0.position.y, std::min(v1.position.y, v2.position.y)))));
 	max.x = static_cast<int>(std::ceil(std::min(m_fWidth - 1.f, std::max(v0.position.x, std::max(v1.position.x, v2.position.x)))));
@@ -181,7 +203,6 @@ void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const
 	m_Meshes.back().primitiveTopology = topology;
 	m_Meshes.back().worldMatrix = worldMatrix;
 	Utils::ParseOBJ(path, m_Meshes.back().vertices, m_Meshes.back().indices);
-	path = nullptr;
 
 	VertexTransformationFunction(m_Meshes);
 }
@@ -189,12 +210,12 @@ void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const
 bool Renderer::IsOutsideViewFrustum(const Vertex_Out& v) const
 {
 	return
-		(v.position.x < .0f || v.position.x > m_fWidth) ||
-		(v.position.y < .0f || v.position.y > m_fHeight) ||
-		(v.position.z < .0f || v.position.z > 1.f);
+		v.position.x < .0f || v.position.x > m_fWidth ||
+		v.position.y < .0f || v.position.y > m_fHeight ||
+		v.position.z < .0f || v.position.z > 1.f;
 }
 
-void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, const Texture* pTexture) const
+void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2) const
 {
 	if (IsOutsideViewFrustum(v0) || IsOutsideViewFrustum(v1) || IsOutsideViewFrustum(v2)) return;
 
@@ -306,12 +327,6 @@ float Renderer::EdgeFunction(const Vector2& a, const Vector2& b, const Vector2& 
 
 ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 {
-	// Hardcoded shading values
-	static constexpr ColorRGB ambient{ .025f, .025f, .025f };
-	static constexpr float lightIntensity{ 7.f };
-	static constexpr float shininess{ 25.f };
-	static const Vector3 lightDir{ .577f, -.577f, .577f };
-
 	// Sampled texture colors
 	const ColorRGB sampledColor{ m_pTexture->Sample(v.uv) };
 	const ColorRGB sampledGloss{ m_pGlossMap->Sample(v.uv) };
@@ -323,14 +338,14 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	const Matrix tangentSpaceAxis{ v.tangent, binormal, v.normal, Vector3::Zero };
 	const Vector3 normal{ m_RenderNormalMap ? (tangentSpaceAxis.TransformVector(2.f * sampledNormal.ToVector3() - Vector3::One).Normalized()) : v.normal };
 
-	const ColorRGB diffuse{ lightIntensity * sampledColor / PI };
+	const ColorRGB diffuse{ m_LightIntensity * sampledColor / PI };
 
-	const float observedArea{ Vector3::Dot(normal, -lightDir) };
+	const float observedArea{ Vector3::Dot(normal, -m_LightDirection) };
 	if (observedArea < .0f) return colors::Black;
 
 	// Calculate diffuse and specular lighting
-	const float exp{ sampledGloss.r * shininess };
-	const ColorRGB specular{ (colors::White * sampledSpecular * powf(std::max(Vector3::Dot(Vector3::Reflect(-lightDir, normal), v.viewDirection), .0f), exp)) };
+	const float exp{ sampledGloss.r * m_Shininess };
+	const ColorRGB specular{ (colors::White * sampledSpecular * powf(std::max(Vector3::Dot(Vector3::Reflect(-m_LightDirection, normal), v.viewDirection), .0f), exp)) };
 
 	switch (m_CurrentShadingMode)
 	{
@@ -342,13 +357,13 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	case Specular:
 		return specular;
 	case Combined:
-		return (diffuse + specular + ambient) * observedArea;
+		return (diffuse + specular + m_Ambient) * observedArea;
 	}
 
 	return colors::Black;
 }
 
-void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
+void Renderer::RenderMesh(const Mesh& mesh) const
 {
 	const bool isTriangleList{ mesh.primitiveTopology == PrimitiveTopology::TriangleList };
 
@@ -370,10 +385,10 @@ void Renderer::RenderMesh(const Mesh& mesh, const Texture* pTexture) const
 
 		if (isTriangleList)
 		{
-			RenderTriangle(v0, v1, v2, pTexture);
+			RenderTriangle(v0, v1, v2);
 			continue;
 		}
-		RenderTriangle(i % 2 == 0 ? v0 : v2, v1, i % 2 == 0 ? v2 : v0, pTexture);
+		RenderTriangle(i % 2 == 0 ? v0 : v2, v1, i % 2 == 0 ? v2 : v0);
 	}
 }
 
