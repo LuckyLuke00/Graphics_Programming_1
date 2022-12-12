@@ -24,9 +24,9 @@ namespace dae {
 
 		const std::vector<Vertex_PosCol> vertices
 		{
-		{{.0f, .5f, .5f},{1.f, .0f, .0f}},
-		{{.5f, -.5f, .5f},{.0f, .0f, 1.f}},
-		{{-.5f, -.5f, .5f},{.0f, 1.f, .0f}},
+			{{.0f, .5f, .5f},{1.f, .0f, .0f}},
+			{{.5f, -.5f, .5f},{.0f, .0f, 1.f}},
+			{{-.5f, -.5f, .5f},{.0f, 1.f, .0f}},
 		};
 
 		const std::vector<uint32_t> indices{ 0, 1, 2 };
@@ -76,7 +76,8 @@ namespace dae {
 			return;
 
 		//1. CLEAR RTV & DSV
-		const ColorRGB clearColor{ .0f, .0f, .3f };
+		// Only clear when nothing has been drawn yet
+		constexpr ColorRGB clearColor{ .0f, .0f, .3f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
