@@ -1,36 +1,42 @@
 #pragma once
 
-class Effect;
-
-// Create the Vertex_PosCol struct
-struct Vertex_PosCol
+namespace dae
 {
-	dae::Vector3 pos;
-	dae::Vector3 col;
-};
+	class Effect;
+	class Texture;
 
-class Mesh
-{
-public:
-	Mesh() = default;
-	Mesh(ID3D11Device* pDevice, const std::vector<Vertex_PosCol>& vertices, const std::vector<uint32_t>& indices);
+	// Create the Vertex_PosCol struct
+	struct Vertex_PosCol
+	{
+		Vector3 pos;
+		Vector3 col;
+		Vector2 uv;
+	};
 
-	Mesh(const Mesh& other) = delete;
-	Mesh(Mesh&& other) = delete;
-	Mesh& operator=(const Mesh& other) = delete;
-	Mesh& operator=(Mesh&& other) = delete;
+	class Mesh
+	{
+	public:
+		Mesh() = default;
+		Mesh(ID3D11Device* pDevice, const std::vector<Vertex_PosCol>& vertices, const std::vector<uint32_t>& indices);
 
-	~Mesh();
+		Mesh(const Mesh& other) = delete;
+		Mesh(Mesh&& other) = delete;
+		Mesh& operator=(const Mesh& other) = delete;
+		Mesh& operator=(Mesh&& other) = delete;
 
-	void Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const;
+		~Mesh();
 
-private:
-	Effect* m_pEffect{};
-	ID3DX11EffectTechnique* m_pTechnique{};
+		void Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const;
+		void SetTexture(const Texture* texture);
 
-	ID3D11Buffer* m_pIndexBuffer{};
-	ID3D11Buffer* m_pVertexBuffer{};
-	ID3D11InputLayout* m_pInputLayout{};
+	private:
+		Effect* m_pEffect{};
+		ID3DX11EffectTechnique* m_pTechnique{};
 
-	uint32_t m_NumIndices{};
-};
+		ID3D11Buffer* m_pIndexBuffer{};
+		ID3D11Buffer* m_pVertexBuffer{};
+		ID3D11InputLayout* m_pInputLayout{};
+
+		uint32_t m_NumIndices{};
+	};
+}

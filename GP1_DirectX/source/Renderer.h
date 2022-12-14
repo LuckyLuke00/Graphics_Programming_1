@@ -1,14 +1,15 @@
 #pragma once
 
 #include "Camera.h"
-
-class Mesh;
+#include "Texture.h"
 
 struct SDL_Window;
 struct SDL_Surface;
 
 namespace dae
 {
+	class Mesh;
+
 	class Renderer final
 	{
 	public:
@@ -33,6 +34,7 @@ namespace dae
 
 		Camera* m_pCamera;
 		Mesh* m_pMesh;
+		Texture* m_pTexture;
 
 		//DirectX
 		HRESULT InitializeDirectX();

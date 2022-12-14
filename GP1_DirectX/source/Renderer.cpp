@@ -6,8 +6,7 @@
 namespace dae
 {
 	Renderer::Renderer(SDL_Window* pWindow) :
-		m_pWindow{ pWindow },
-		m_pCamera{ new Camera{} }
+		m_pWindow{ pWindow }
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -24,20 +23,52 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
+		//const std::vector<Vertex_PosCol> vertices
+		//{
+		//	{ { -3.f,  3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  .0f,  3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  3.f,  3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ { -3.f,  .0f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  .0f,  .0f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  3.f,  .0f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ { -3.f, -3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  .0f, -3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//	{ {  3.f, -3.f, -2.f }, { 1.f, 1.f, 1.f } },
+		//};
+
 		const std::vector<Vertex_PosCol> vertices
 		{
-			{ { .0f,  3.f, 2.f}, { 1.f, .0f, .0f } },
-			{ { 3.f, -3.f, 2.f}, { .0f, .0f, 1.f } },
-			{ {-3.f, -3.f, 2.f}, { .0f, 1.f, .0f } },
+			{ { -3.f,  3.f, -2.f }, { 1.f, 1.f, 1.f }, { .0f, .0f } },
+			{ {  .0f,  3.f, -2.f }, { 1.f, 1.f, 1.f }, { .5f, .0f } },
+			{ {  3.f,  3.f, -2.f }, { 1.f, 1.f, 1.f }, { 1.f, .0f } },
+			{ { -3.f,  .0f, -2.f }, { 1.f, 1.f, 1.f }, { .0f, .5f } },
+			{ {  .0f,  .0f, -2.f }, { 1.f, 1.f, 1.f }, { .5f, .5f } },
+			{ {  3.f,  .0f, -2.f }, { 1.f, 1.f, 1.f }, { 1.f, .5f } },
+			{ { -3.f, -3.f, -2.f }, { 1.f, 1.f, 1.f }, { .0f, 1.f } },
+			{ {  .0f, -3.f, -2.f }, { 1.f, 1.f, 1.f }, { .5f, 1.f } },
+			{ {  3.f, -3.f, -2.f }, { 1.f, 1.f, 1.f }, { 1.f, 1.f } },
 		};
 
-		const std::vector<uint32_t> indices{ 0, 1, 2 };
-
-		m_pMesh = new Mesh(m_pDevice, vertices, indices);
+		const std::vector<uint32_t> indices
+		{
+			3, 0, 1,	1, 4, 3,	4, 1, 2,
+			2, 5, 4,	6, 3, 4,	4, 7, 6,
+			7, 4, 5,	5, 8, 7,
+		};
 
 		// Initialize the camera
 		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
-		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -10.f });
+
+		m_pCamera = new Camera{};
+		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -14.f });
+
+		// Initialize the texture
+		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/uv_grid_2.png");
+		m_pDeviceContext->GenerateMips(m_pTexture->GetSRV());
+
+		// Initialize the mesh
+		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
+		m_pMesh->SetTexture(m_pTexture);
 	}
 
 	Renderer::~Renderer()
@@ -73,6 +104,12 @@ namespace dae
 
 		delete m_pCamera;
 		m_pCamera = nullptr;
+
+		if (m_pTexture)
+		{
+			delete m_pTexture;
+			m_pTexture = nullptr;
+		}
 	}
 
 	void Renderer::Update(const Timer* pTimer)
