@@ -36,6 +36,12 @@ namespace dae
 		return ((1 - factor) * a) + (factor * b);
 	}
 
+	template <typename T>
+	inline T Lerp(const T& a, const T& b, float factor)
+	{
+		return ((1 - factor) * a) + (factor * b);
+	}
+
 	inline bool AreEqual(float a, float b, float epsilon = FLT_EPSILON)
 	{
 		return abs(a - b) < epsilon;

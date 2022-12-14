@@ -1,9 +1,4 @@
 #pragma once
-#include <cassert>
-#include <SDL_keyboard.h>
-#include <SDL_mouse.h>
-
-#include <iostream>
 
 #include "Math.h"
 #include "Timer.h"
@@ -12,79 +7,100 @@ namespace dae
 {
 	struct Camera
 	{
+		// Constructor
 		Camera() = default;
 
-		Camera(const Vector3& _origin, float _fovAngle) :
-			origin{ _origin },
-			fovAngle{ _fovAngle }
-		{
-		}
+		Camera(const Camera&) = delete;
+		Camera(Camera&&) noexcept = delete;
+		Camera& operator=(const Camera&) = delete;
+		Camera& operator=(Camera&&) noexcept = delete;
 
-		//Movement
-		Vector3 origin{ Vector3::Zero };
-		Vector3 velocity{ Vector3::Zero };
-		float deltaTime{ .0f };
+		// Destructor
+		~Camera() = default;
 
-		//Movement constants
-		const float moveSpeed{ 10.f };
-
-		//Keyboard input
-		const Uint8* pKeyboardState{ SDL_GetKeyboardState(nullptr) };
-		//Mouse input
-		Uint32 mouseState{};
-
-		Uint32 leftMouse{};
-		Uint32 middleMouse{};
-		Uint32 rightMouse{};
-
-		int mouseX{ 0 };
-		int mouseY{ 0 };
-		const float mouseSensitivity{ .0025f };
-
-		//Field of view
-		float fovAngle{ 90.f };
-		float fov{ tanf((fovAngle * TO_RADIANS) * .5f) };
-		float previousFovAngle{ 0.f };
-		float previousAspectRatio{ 0.f };
-		const float near{ .1f };
-		const float far{ 100.f };
-
-		float aspectRatio{ 1.f };
-
-		//Rotation
-		Vector3 forward{ Vector3::UnitZ };
-		Vector3 up{ Vector3::UnitY };
-		Vector3 right{ Vector3::UnitX };
-
-		float totalPitch{ .0f };
-		float totalYaw{ .0f };
-
-		Matrix invViewMatrix{};
+		// Transform matrices
 		Matrix projectionMatrix{};
 		Matrix viewMatrix{};
 
-		void Initialize(float _fovAngle = 90.f, Vector3 _origin = Vector3::Zero, float _aspectRatio = 1.f)
+		// Camera position and orientation
+		Vector3 origin{ Vector3::Zero };
+
+		Vector3 forward{ Vector3::UnitZ };
+		Vector3 right{ Vector3::UnitX };
+		Vector3 up{ Vector3::UnitY };
+
+		// Camera orientation
+		float pitch{};
+		float yaw{};
+
+		// Camera movement
+		Vector3 velocity{ Vector3::Zero };
+
+		// Field of view and aspect ratio
+		float aspectRatio{};
+		float lastAspectRatio{};
+
+		float fov{};
+		float fovAngle{};
+		float lastFovAngle{};
+
+		// Time
+		float deltaTime{};
+
+		// Mouse input
+		Int2 mousePos{};
+
+		Uint32 mouseLeft{};
+		Uint32 mouseMiddle{};
+		Uint32 mouseRight{};
+		Uint32 mouseState{};
+
+		// Camera behavior constants
+		static constexpr float far{ 100.f };
+		static constexpr float near{ .1f };
+
+		static constexpr float moveSpeed{ 50.f };
+		static constexpr float sensitivity{ .0025f };
+
+		void Initialize(const float _aspectRatio = 1.f, const float _fovAngle = 90.f, const Vector3& _origin = Vector3::Zero)
 		{
-			aspectRatio = _aspectRatio;
-
-			fovAngle = _fovAngle;
-			fov = tanf((fovAngle * TO_RADIANS) * .5f);
-
+			// Set the camera's initial position and orientation
 			origin = _origin;
 
-			if (fovAngle != previousFovAngle || aspectRatio != previousAspectRatio)
-			{
-				previousFovAngle = fovAngle;
-				previousAspectRatio = aspectRatio;
+			// Set the camera's initial field of view and aspect ratio
+			fovAngle = _fovAngle;
+			lastFovAngle = _fovAngle;
+			fov = tanf((_fovAngle * .5f) * TO_RADIANS);
 
-				CalculateProjectionMatrix();
-			}
+			aspectRatio = _aspectRatio;
+			lastAspectRatio = _aspectRatio;
+
+			// Calculate the initial view and projection matrices
+			CalculateViewMatrix();
+			CalculateProjectionMatrix();
 		}
 
-		void CalculateViewMatrix()
+		void Update(const Timer* pTimer)
 		{
-			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
-			invViewMatrix = Matrix::Inverse(viewMatrix);
+			// Update the camera's elapsed time
+			deltaTime = pTimer->GetElapsed();
+
+			// Update the camera's mouse state
+			UpdateMouseState();
+
+			// Handle mouse and keyboard input for camera movement
+			HandleMouseMovement();
+			HandleKeyboardMovement();
+
+			// Update the camera's orientation vectors
+			UpdateCameraVectors();
+
+			// Calculate the updated view and projection matrices
+			CalculateViewMatrix();
+			if (fovAngle != lastFovAngle || aspectRatio != lastAspectRatio)
+			{
+				CalculateProjectionMatrix();
+			}
 		}
 
 		void CalculateProjectionMatrix()
@@ -92,90 +108,81 @@ namespace dae
 			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, near, far);
 		}
 
-		void Update(const Timer* pTimer)
+		void CalculateViewMatrix()
 		{
-			deltaTime = pTimer->GetElapsed();
-
-			//Camera Update Logic
-			UpdateMouseState();
-
-			//Movement Logic
-			HandleMouseMovement();
-			HandleKeyboardMovement();
-
-			UpdateCameraVectors();
-
-			//Update Matrices
-			CalculateViewMatrix();
-			CalculateProjectionMatrix(); //Try to optimize this - should only be called once or when fov/aspectRatio changes
+			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
 		}
 
 		void UpdateMouseState()
 		{
-			//Update mouse state and position
-			mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+			// Update the current mouse state
+			mouseState = SDL_GetRelativeMouseState(&mousePos.x, &mousePos.y);
 
-			//Hide the mouse when any mouse button is pressed
-			SDL_SetRelativeMouseMode(mouseState ? SDL_TRUE : SDL_FALSE);
+			// Hide the mouse cursor when any mouse button is pressed
+			SDL_SetRelativeMouseMode(SDL_bool(mouseState));
 
-			//Update mouse button states
-			leftMouse = mouseState & SDL_BUTTON(SDL_BUTTON_LEFT);
-			rightMouse = mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT);
-			middleMouse = mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
+			// Return if no mouse buttons are pressed
+			if (!mouseState) return;
+
+			// Update the state of each mouse button
+			mouseLeft = mouseState & SDL_BUTTON(SDL_BUTTON_LEFT);
+			mouseMiddle = mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
+			mouseRight = mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT);
 		}
 
 		void HandleKeyboardMovement()
 		{
-			//Prevent floating point accumulation and allow for smooth movement
-			if (!mouseState && velocity.SqrMagnitude() < .01f) return;
+			// Return if the player is not moving the mouse and is already standing still
+			if (!mouseState && IsStandingStill()) return;
 
-			//Use WASD to move the camera
-			const float moveForward{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
-			const float moveRight{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
+			// Get the current state of the keyboard
+			const Uint8* pKeyboardState{ SDL_GetKeyboardState(nullptr) };
 
-			//Lerp the velocity to the desired direction
-			const Vector3 desiredVelocity{ (forward * moveForward + right * moveRight) * moveSpeed };
-			velocity = Vector3::Lerp(velocity, desiredVelocity, deltaTime * moveSpeed);
+			// Calculate the forward and right movement deltas based on the keyboard input
+			const float forwardDelta{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
+			const float rightDelta{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
 
-			//Add the velocity to the origin
+			// Calculate the desired velocity based on the mouse state and keyboard input
+			const Vector3 desiredVelocity{ (mouseState ? (forward * forwardDelta + right * rightDelta) * moveSpeed : Vector3::Zero) };
+
+			// Update the velocity using a linear interpolation to smoothly transition to the desired velocity
+			constexpr float lerpSpeed{ 5.f };
+			velocity = Lerp(velocity, desiredVelocity, deltaTime * lerpSpeed);
+
+			// Update the player's position based on the calculated velocity
 			origin += velocity * deltaTime;
+		}
+
+		// Returns true if the player is not moving (i.e. their velocity is below a certain threshold)
+		bool IsStandingStill(const float _tolerance = .1f) const
+		{
+			return velocity.SqrMagnitude() < _tolerance;
 		}
 
 		void HandleMouseMovement()
 		{
+			// Return if the no mouse buttons are pressed
 			if (!mouseState) return;
 
-			//Type cast mouse x and y to float
-			// Make it so that the camera rotates at a constant speed
-			const float x{ static_cast<float>(mouseX) * mouseSensitivity };
-			const float y{ -static_cast<float>(mouseY) * mouseSensitivity };
+			// Calculate the x and y movement deltas based on the current mouse position and sensitivity
+			const float x{ static_cast<float>(mousePos.x) * sensitivity };
+			const float y{ -static_cast<float>(mousePos.y) * sensitivity };
 
-			//Camera movement
-			//Move forward/backward - if left mouse button is pressed
-			origin += (forward * y) * (leftMouse && !rightMouse);
+			// Update the player's position based on the mouse movement and button states
+			origin += (forward * y * (moveSpeed * .5f)) * (mouseLeft && !mouseRight);
+			origin += (right * x * (moveSpeed * .5f)) * (mouseMiddle || (mouseLeft && mouseRight));
+			origin += (up * y * (moveSpeed * .5f)) * (mouseMiddle || (mouseLeft && mouseRight));
 
-			//Move right/left - if middle mouse button is pressed or both left and right mouse buttons are pressed
-			origin += (right * x) * (middleMouse || (leftMouse && rightMouse));
-
-			//Move up/down - if middle mouse button is pressed or both left and right mouse buttons are pressed
-			origin += (up * y) * (middleMouse || (leftMouse && rightMouse));
-
-			//Camera rotation
-			totalPitch += y * static_cast<float>(!leftMouse && rightMouse);
-			totalYaw += x * static_cast<float>(rightMouse && !leftMouse || leftMouse && !rightMouse);
+			// Update the player's pitch and yaw based on the mouse movement and button states
+			pitch += y * static_cast<float>(!mouseLeft && mouseRight);
+			yaw += x * static_cast<float>(mouseRight && !mouseLeft || mouseLeft && !mouseRight);
 		}
 
-		//Function that updates forward, up and right vectors
 		void UpdateCameraVectors()
 		{
-			//Calculate the forward vector
-			forward = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitZ);
-
-			//Calculate the right vector
-			right = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitX);
-
-			//Calculate the up vector
-			up = Matrix::CreateRotation(totalPitch, totalYaw, .0f).TransformVector(Vector3::UnitY);
+			forward = Matrix::CreateRotation(pitch, yaw, .0f).TransformVector(Vector3::UnitZ);
+			right = Matrix::CreateRotation(pitch, yaw, .0f).TransformVector(Vector3::UnitX);
+			up = Matrix::CreateRotation(pitch, yaw, .0f).TransformVector(Vector3::UnitY);
 		}
 	};
 }

@@ -160,7 +160,6 @@ namespace dae {
 
 	Matrix Matrix::CreatePerspectiveFovLH(float fov, float aspect, float zn, float zf)
 	{
-		//TODO: Test
 		//DirectX implementation
 		const float q{ zf / (zf - zn) };
 		const float w{ -zf * zn / (zf - zn) };

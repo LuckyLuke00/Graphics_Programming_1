@@ -1,11 +1,9 @@
-#include "Vector3.h"
-
-#include <cassert>
-
-#include "Vector4.h"
-#include <cmath>
-
 #include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
+
+#include <cmath>
+#include <cassert>
 
 namespace dae {
 	const Vector3 Vector3::UnitX = Vector3{ 1, 0, 0 };
@@ -58,11 +56,6 @@ namespace dae {
 			v1.z * v2.x - v1.x * v2.z,
 			v1.x * v2.y - v1.y * v2.x
 		};
-	}
-
-	Vector3 Vector3::Lerp(const Vector3& v1, const Vector3& v2, float t)
-	{
-		return v1 + (v2 - v1) * t;
 	}
 
 	Vector3 Vector3::Project(const Vector3& v1, const Vector3& v2)

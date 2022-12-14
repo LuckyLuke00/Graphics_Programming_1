@@ -36,7 +36,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	//Initialize Camera
-	m_Camera.Initialize(45.f, { .0f, .0f, .0f }, m_AspectRatio);
+	m_Camera.Initialize(m_AspectRatio, 45.f);
 
 	const Vector3 position{ .0f, .0f, 50.f };
 	constexpr float angle{ 90.f * TO_RADIANS };
@@ -77,6 +77,8 @@ Renderer::~Renderer()
 void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera.Update(pTimer);
+
+	if (!m_RotateMesh) return;
 
 	for (Mesh& mesh : m_Meshes)
 	{
