@@ -3,9 +3,11 @@
 
 #include "Mesh.h"
 
-namespace dae {
+namespace dae
+{
 	Renderer::Renderer(SDL_Window* pWindow) :
-		m_pWindow(pWindow)
+		m_pWindow{ pWindow },
+		m_pCamera{ new Camera{} }
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -24,14 +26,18 @@ namespace dae {
 
 		const std::vector<Vertex_PosCol> vertices
 		{
-			{{.0f, .5f, .5f},{1.f, .0f, .0f}},
-			{{.5f, -.5f, .5f},{.0f, .0f, 1.f}},
-			{{-.5f, -.5f, .5f},{.0f, 1.f, .0f}},
+			{ { .0f,  3.f, 2.f}, { 1.f, .0f, .0f } },
+			{ { 3.f, -3.f, 2.f}, { .0f, .0f, 1.f } },
+			{ {-3.f, -3.f, 2.f}, { .0f, 1.f, .0f } },
 		};
 
 		const std::vector<uint32_t> indices{ 0, 1, 2 };
 
 		m_pMesh = new Mesh(m_pDevice, vertices, indices);
+
+		// Initialize the camera
+		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
+		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -10.f });
 	}
 
 	Renderer::~Renderer()
@@ -64,10 +70,14 @@ namespace dae {
 			delete m_pMesh;
 			m_pMesh = nullptr;
 		}
+
+		delete m_pCamera;
+		m_pCamera = nullptr;
 	}
 
 	void Renderer::Update(const Timer* pTimer)
 	{
+		m_pCamera->Update(pTimer);
 	}
 
 	void Renderer::Render() const
@@ -82,7 +92,7 @@ namespace dae {
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
-		m_pMesh->Render(m_pDeviceContext);
+		m_pMesh->Render(m_pDeviceContext, m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix());
 
 		//3. PRESENT BACKBUFFER (SWAP)
 		m_pSwapChain->Present(0, 0);
@@ -147,7 +157,7 @@ namespace dae {
 		if (FAILED(result))
 			return result;
 
-		// Hidden DXGIFactory leak?
+		// Release the factory
 		pDxgiFactory->Release();
 		pDxgiFactory = nullptr;
 

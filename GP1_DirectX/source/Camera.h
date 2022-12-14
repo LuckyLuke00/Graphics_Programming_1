@@ -1,4 +1,6 @@
 #pragma once
+#include <SDL_keyboard.h>
+#include <SDL_mouse.h>
 
 #include "Math.h"
 #include "Timer.h"
@@ -57,8 +59,8 @@ namespace dae
 		Uint32 mouseState{};
 
 		// Camera behavior constants
-		static constexpr float far{ 100.f };
-		static constexpr float near{ .1f };
+		static constexpr float farPlane{ 100.f };
+		static constexpr float nearPlane{ .1f };
 
 		static constexpr float moveSpeed{ 50.f };
 		static constexpr float sensitivity{ .0025f };
@@ -112,7 +114,7 @@ namespace dae
 	private:
 		void CalculateProjectionMatrix()
 		{
-			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, near, far);
+			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, nearPlane, farPlane);
 		}
 
 		void CalculateViewMatrix()

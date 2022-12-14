@@ -81,7 +81,7 @@ Mesh::~Mesh()
 	m_pVertexBuffer = nullptr;
 }
 
-void Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
+void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const
 {
 	//1. Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -92,7 +92,9 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
 	//3. Set vertex buffer
 	constexpr UINT stride{ sizeof(Vertex_PosCol) };
 	constexpr UINT offset{ 0 };
+
 	pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+	m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&WorldViewProjection));
 
 	//4. Set index buffer
 	pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);

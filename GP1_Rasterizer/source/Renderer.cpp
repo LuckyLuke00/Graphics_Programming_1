@@ -133,7 +133,7 @@ void dae::Renderer::CycleShadingMode()
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
 	// Precompute the viewProjectionMatrix for each mesh
-	Matrix viewProjectionMatrix{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+	Matrix viewProjectionMatrix{ m_Camera.GetViewMatrix() * m_Camera.GetProjectionMatrix() };
 
 	// Compute half the width and height of the screen
 	const float halfWidth{ m_fWidth * .5f };
@@ -173,7 +173,7 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 
 			// Compute the view direction vector as the difference between the transformed vertex position
 			// and the origin of the camera.
-			vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].position) - m_Camera.origin;
+			vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].position) - m_Camera.GetPosition();
 
 			// Divide the x, y, and z coordinates of the position by the w coordinate.
 			vertex.position.x /= vertex.position.w;

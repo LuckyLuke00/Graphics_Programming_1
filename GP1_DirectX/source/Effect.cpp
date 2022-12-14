@@ -9,6 +9,12 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 	{
 		std::wcout << L"Technique is invalid!\n";
 	}
+
+	m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
+	if (!m_pMatWorldViewProjVariable->IsValid())
+	{
+		std::wcout << L"m_pMatWorldViewProjVariable is invalid\n";
+	}
 }
 
 Effect::~Effect()

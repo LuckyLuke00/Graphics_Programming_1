@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Camera.h"
+
 class Mesh;
+
 struct SDL_Window;
 struct SDL_Surface;
 
@@ -28,6 +31,7 @@ namespace dae
 
 		bool m_IsInitialized{ false };
 
+		Camera* m_pCamera;
 		Mesh* m_pMesh;
 
 		//DirectX

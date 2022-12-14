@@ -22,7 +22,7 @@ public:
 
 	~Mesh();
 
-	void Render(ID3D11DeviceContext* pDeviceContext) const;
+	void Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const;
 
 private:
 	Effect* m_pEffect{};

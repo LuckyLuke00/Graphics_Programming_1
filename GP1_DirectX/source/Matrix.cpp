@@ -118,7 +118,6 @@ namespace dae {
 		const Vector3 r0 = Vector3::Cross(b, v) + t * y;
 		const Vector3 r1 = Vector3::Cross(v, a) - t * x;
 		const Vector3 r2 = Vector3::Cross(d, u) + s * w;
-		//Vector3 r3 = Vector3::Cross(u, c) - s * z;
 
 		data[0] = Vector4{ r0.x, r1.x, r2.x, 0.f };
 		data[1] = Vector4{ r0.y, r1.y, r2.y, 0.f };
@@ -146,14 +145,33 @@ namespace dae {
 
 	Matrix Matrix::CreateLookAtLH(const Vector3& origin, const Vector3& forward, const Vector3& up)
 	{
-		assert(false && "Not Implemented");
-		return {};
+		const Vector3 zAxis{ forward };
+		const Vector3 xAxis{ (Vector3::Cross(up, zAxis)).Normalized() };
+		const Vector3 yAxis{ Vector3::Cross(zAxis, xAxis) };
+
+		return
+		{
+			{ xAxis.x, yAxis.x, zAxis.x, .0f },
+			{ xAxis.y, yAxis.y, zAxis.y, .0f },
+			{ xAxis.z, yAxis.z, zAxis.z, .0f },
+			{ -Vector3::Dot(xAxis, origin), -Vector3::Dot(yAxis, origin), -Vector3::Dot(zAxis, origin), 1.f }
+		};
 	}
 
 	Matrix Matrix::CreatePerspectiveFovLH(float fov, float aspect, float zn, float zf)
 	{
-		assert(false && "Not Implemented");
-		return {};
+		const float q{ zf / (zf - zn) };
+		const float w{ -zf * zn / (zf - zn) };
+		const float xScale{ 1.f / (aspect * fov) };
+		const float yScale{ 1.f / fov };
+
+		return
+		{
+			{ xScale, .0f, .0f, .0f },
+			{ .0f, yScale, .0f, .0f },
+			{ .0f,    .0f,   q, 1.f },
+			{ .0f,    .0f,   w, .0f }
+		};
 	}
 
 	Vector3 Matrix::GetAxisX() const
