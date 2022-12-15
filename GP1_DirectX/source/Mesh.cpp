@@ -127,4 +127,11 @@ namespace dae
 	{
 		m_WorldMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_WorldMatrix;
 	}
+
+	void Mesh::CycleTechniques()
+	{
+		static uint32_t techniqueIndex{ 0 };
+		techniqueIndex = (techniqueIndex + 1) % m_pEffect->GetTechniques().size();
+		m_pEffect->SetTechnique(m_pEffect->GetTechniques()[techniqueIndex]);
+	}
 }

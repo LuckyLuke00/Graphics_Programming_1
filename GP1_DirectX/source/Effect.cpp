@@ -5,13 +5,9 @@
 namespace dae
 {
 	Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
-		: m_pEffect{ LoadEffect(pDevice, assetFile) },
-		m_pTechnique{ m_pEffect->GetTechniqueByName("Render") }
+		: m_pEffect{ LoadEffect(pDevice, assetFile) }
 	{
-		if (!m_pTechnique->IsValid())
-		{
-			std::wcout << L"Technique is invalid!\n";
-		}
+		CaptureTechniques();
 
 		m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
 		if (!m_pMatWorldViewProjVariable->IsValid())
@@ -88,5 +84,56 @@ namespace dae
 	{
 		if (m_pDiffuseMapVariable)
 			m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
+	}
+
+	void Effect::SetTechnique(ID3DX11EffectTechnique* pTechnique)
+	{
+		if (!pTechnique->IsValid())
+		{
+			std::wcout << L"Technique is invalid\n";
+			return;
+		}
+
+		m_pTechnique = pTechnique;
+
+		PrintTechnique();
+	}
+
+	void Effect::CaptureTechniques()
+	{
+		D3DX11_EFFECT_DESC effectDesc{};
+		m_pEffect->GetDesc(&effectDesc);
+
+		const uint32_t nrOfTechniques{ effectDesc.Techniques };
+
+		m_Techniques.reserve(nrOfTechniques);
+
+		for (uint32_t i{ 0 }; i < nrOfTechniques; ++i)
+		{
+			ID3DX11EffectTechnique* pTechnique{ m_pEffect->GetTechniqueByIndex(i) };
+
+			// Only add the technique to the vector if it is valid
+			if (pTechnique->IsValid())
+			{
+				m_Techniques.emplace_back(pTechnique);
+			}
+		}
+
+		// Set the default technique to the first one, but only if there is one
+		if (m_Techniques.empty())
+		{
+			std::wcout << L"No valid techniques found!\n";
+			m_pTechnique = nullptr;
+			return;
+		}
+
+		SetTechnique(m_Techniques.front());
+	}
+
+	void Effect::PrintTechnique() const
+	{
+		D3DX11_TECHNIQUE_DESC techniqueDesc{};
+		m_pTechnique->GetDesc(&techniqueDesc);
+		std::wcout << "Current Technique: " << techniqueDesc.Name << '\n';
 	}
 }

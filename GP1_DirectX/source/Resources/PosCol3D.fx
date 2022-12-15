@@ -19,13 +19,13 @@ struct VS_OUTPUT
 };
 
 //--------------------------------------------------
-//  Samplers
+// Samplers
 //--------------------------------------------------
 SamplerState samPoint
 {
-	Filter = MIN_MAG_MIP_POINT;
-	AddressU = Wrap; // or Mirror, Clamp, Border
-	AddressV = Wrap; // or Mirror, Clamp, Border
+    Filter = MIN_MAG_MIP_POINT;
+    AddressU = Wrap; // or Mirror, Clamp, Border
+    AddressV = Wrap; // or Mirror, Clamp, Border
 };
 
 SamplerState samLinear
@@ -58,70 +58,52 @@ VS_OUTPUT VS(VS_INPUT input)
 }
 
 //--------------------------------------------------
-//  Pixel Shader
+// Pixel Shaders
 //--------------------------------------------------
-float4 PS(VS_OUTPUT input) : SV_TARGET
+float4 PS_Point(VS_OUTPUT input) : SV_TARGET
 {
     return gDiffuseMap.Sample(samPoint, input.UV) * float4(input.Color, 1.f);
 }
 
-// Point Sampling
-float4 PSPoint(VS_OUTPUT input) : SV_TARGET
-{
-    return gDiffuseMap.Sample(samPoint, input.UV) * float4(input.Color, 1.f);
-}
-
-// Linear Sampling
-float4 PSLinear(VS_OUTPUT input) : SV_TARGET
+float4 PS_Linear(VS_OUTPUT input) : SV_TARGET
 {
     return gDiffuseMap.Sample(samLinear, input.UV) * float4(input.Color, 1.f);
 }
 
-// Anisotropic Sampling
-float4 PSAnisotropic(VS_OUTPUT input) : SV_TARGET
+float4 PS_Anisotropic(VS_OUTPUT input) : SV_TARGET
 {
     return gDiffuseMap.Sample(samAnisotropic, input.UV) * float4(input.Color, 1.f);
 }
 
 //--------------------------------------------------
-//  Technique
+// Techniques
 //--------------------------------------------------
-technique11 Render
+technique11 Point
 {
     pass P0
     {
         SetVertexShader( CompileShader( vs_5_0, VS() ) );
         SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_5_0, PS() ) );
+        SetPixelShader( CompileShader( ps_5_0, PS_Point() ) );
     }
 }
 
-technique11 RenderPoint
+technique11 Linear
 {
     pass P0
     {
         SetVertexShader( CompileShader( vs_5_0, VS() ) );
         SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_5_0, PSPoint() ) );
+        SetPixelShader( CompileShader( ps_5_0, PS_Linear() ) );
     }
 }
 
-technique11 RenderLinear
+technique11 Anisotropic
 {
     pass P0
     {
         SetVertexShader( CompileShader( vs_5_0, VS() ) );
         SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_5_0, PSLinear() ) );
-    }
-}
-
-technique11 RenderAnisotropic
-{
-    pass P0
-    {
-        SetVertexShader( CompileShader( vs_5_0, VS() ) );
-        SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_5_0, PSAnisotropic() ) );
+        SetPixelShader( CompileShader( ps_5_0, PS_Anisotropic() ) );
     }
 }

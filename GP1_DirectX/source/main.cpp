@@ -6,6 +6,7 @@
 
 #undef main
 #include "Renderer.h"
+#include "Mesh.h"
 
 using namespace dae;
 
@@ -57,7 +58,7 @@ int main(int argc, char* args[])
 				break;
 			case SDL_KEYUP:
 				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
-					break;
+					pRenderer->GetMesh()->CycleTechniques();
 			default:;
 			}
 		}

@@ -25,8 +25,8 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		//InitQuad();
-		InitVehicle(true);
+		InitQuad();
+		//InitVehicle(true);
 	}
 
 	Renderer::~Renderer()

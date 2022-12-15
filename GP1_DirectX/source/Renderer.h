@@ -24,6 +24,8 @@ namespace dae
 		void Update(const Timer* pTimer);
 		void Render() const;
 
+		Mesh* GetMesh() const { return m_pMesh; }
+
 	private:
 		SDL_Window* m_pWindow{};
 

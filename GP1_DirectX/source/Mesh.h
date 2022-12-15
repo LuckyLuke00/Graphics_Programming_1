@@ -22,6 +22,7 @@ namespace dae
 		void Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const;
 		void SetTexture(const Texture* texture);
 		void RotateY(const float degrees);
+		void CycleTechniques();
 
 	private:
 		Effect* m_pEffect{};
