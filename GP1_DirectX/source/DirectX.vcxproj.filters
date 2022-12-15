@@ -48,6 +48,12 @@
     <ClInclude Include="Texture.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTypes.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

@@ -27,14 +27,20 @@ namespace dae
 	private:
 		SDL_Window* m_pWindow{};
 
+		const float m_RotationSpeed{ 90.f };
+
 		int m_Width{};
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+		bool m_RotateMesh{ false };
 
 		Camera* m_pCamera;
 		Mesh* m_pMesh;
 		Texture* m_pTexture;
+
+		void InitVehicle(const bool rotate = false);
+		void InitQuad(const bool rotate = false);
 
 		//DirectX
 		HRESULT InitializeDirectX();

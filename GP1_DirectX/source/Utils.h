@@ -1,6 +1,9 @@
 #pragma once
+#include "pch.h"
+
 #include <fstream>
 #include "Math.h"
+#include "DataTypes.h"
 
 namespace dae
 {
@@ -26,9 +29,9 @@ namespace dae
 			// start a while iteration ending when the end of file is reached (ios::eof)
 			while (!file.eof())
 			{
-				//read the first word of the string, use the >> operator (istream::operator>>) 
+				//read the first word of the string, use the >> operator (istream::operator>>)
 				file >> sCommand;
-				//use conditional statements to process the different commands	
+				//use conditional statements to process the different commands
 				if (sCommand == "#")
 				{
 					// Ignore Comment
@@ -72,7 +75,7 @@ namespace dae
 					{
 						// OBJ format uses 1-based arrays
 						file >> iPosition;
-						vertex.position = positions[iPosition - 1];
+						vertex.pos = positions[iPosition - 1];
 
 						if ('/' == file.peek())//is next in buffer ==  '/' ?
 						{
@@ -91,17 +94,16 @@ namespace dae
 
 								// Optional vertex normal
 								file >> iNormal;
-								vertex.normal = normals[iNormal - 1];
+								vertex.norm = normals[iNormal - 1];
 							}
 						}
 
 						vertices.push_back(vertex);
 						tempIndices[iFace] = uint32_t(vertices.size()) - 1;
-						//indices.push_back(uint32_t(vertices.size()) - 1);
 					}
 
 					indices.push_back(tempIndices[0]);
-					if (flipAxisAndWinding) 
+					if (flipAxisAndWinding)
 					{
 						indices.push_back(tempIndices[2]);
 						indices.push_back(tempIndices[1]);
@@ -123,9 +125,9 @@ namespace dae
 				uint32_t index1 = indices[size_t(i) + 1];
 				uint32_t index2 = indices[size_t(i) + 2];
 
-				const Vector3& p0 = vertices[index0].position;
-				const Vector3& p1 = vertices[index1].position;
-				const Vector3& p2 = vertices[index2].position;
+				const Vector3& p0 = vertices[index0].pos;
+				const Vector3& p1 = vertices[index1].pos;
+				const Vector3& p2 = vertices[index2].pos;
 				const Vector2& uv0 = vertices[index0].uv;
 				const Vector2& uv1 = vertices[index1].uv;
 				const Vector2& uv2 = vertices[index2].uv;
@@ -137,23 +139,22 @@ namespace dae
 				float r = 1.f / Vector2::Cross(diffX, diffY);
 
 				Vector3 tangent = (edge0 * diffY.y - edge1 * diffY.x) * r;
-				vertices[index0].tangent += tangent;
-				vertices[index1].tangent += tangent;
-				vertices[index2].tangent += tangent;
+				vertices[index0].tan += tangent;
+				vertices[index1].tan += tangent;
+				vertices[index2].tan += tangent;
 			}
 
 			//Create the Tangents (reject)
 			for (auto& v : vertices)
 			{
-				v.tangent = Vector3::Reject(v.tangent, v.normal).Normalized();
+				v.tan = Vector3::Reject(v.tan, v.norm).Normalized();
 
-				if(flipAxisAndWinding)
+				if (flipAxisAndWinding)
 				{
-					v.position.z *= -1.f;
-					v.normal.z *= -1.f;
-					v.tangent.z *= -1.f;
+					v.pos.z *= -1.f;
+					v.norm.z *= -1.f;
+					v.tan.z *= -1.f;
 				}
-
 			}
 
 			return true;

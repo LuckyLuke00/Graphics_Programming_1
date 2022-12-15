@@ -80,6 +80,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColorRGB.h" />
+    <ClInclude Include="DataTypes.h" />
     <ClInclude Include="Effect.h" />
     <ClInclude Include="MathHelpers.h" />
     <ClInclude Include="Matrix.h" />
@@ -89,6 +90,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="Vector4.h" />

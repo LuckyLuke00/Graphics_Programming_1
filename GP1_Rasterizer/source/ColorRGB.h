@@ -118,14 +118,14 @@ namespace dae
 
 	namespace colors
 	{
-		constexpr static ColorRGB Red{ 1,0,0 };
-		constexpr static ColorRGB Blue{ 0,0,1 };
-		constexpr static ColorRGB Green{ 0,1,0 };
-		constexpr static ColorRGB Yellow{ 1,1,0 };
-		constexpr static ColorRGB Cyan{ 0,1,1 };
-		constexpr static ColorRGB Magenta{ 1,0,1 };
-		constexpr static ColorRGB White{ 1,1,1 };
-		constexpr static ColorRGB Black{ 0,0,0 };
-		constexpr static ColorRGB Gray{ 0.5f,0.5f,0.5f };
+		constexpr static ColorRGB Red{ 1.f, .0f, .0f };
+		constexpr static ColorRGB Blue{ .0f, .0f, 1.f };
+		constexpr static ColorRGB Green{ .0f, 1.f, .0f };
+		constexpr static ColorRGB Yellow{ 1.f, 1.f, .0f };
+		constexpr static ColorRGB Cyan{ .0f, 1.f, 1.f };
+		constexpr static ColorRGB Magenta{ 1.f, .0f, 1.f };
+		constexpr static ColorRGB White{ 1.f, 1.f, 1.f };
+		constexpr static ColorRGB Black{ .0f, .0f, .0f };
+		constexpr static ColorRGB Gray{ .5f, .5f, .5f };
 	}
 }

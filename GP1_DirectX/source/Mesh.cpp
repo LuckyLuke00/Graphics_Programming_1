@@ -2,10 +2,11 @@
 #include "Mesh.h"
 
 #include "Effect.h"
+#include "DataTypes.h"
 
 namespace dae
 {
-	Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_PosCol>& vertices, const std::vector<uint32_t>& indices)
+	Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
 		: m_pEffect{ new Effect{ pDevice, std::wstring{ L"Resources/PosCol3D.fx" } } },
 		m_pTechnique{ m_pEffect->GetTechnique() }
 	{
@@ -31,7 +32,7 @@ namespace dae
 		//Create vertex buffer
 		D3D11_BUFFER_DESC bd{};
 		bd.Usage = D3D11_USAGE_IMMUTABLE;
-		bd.ByteWidth = sizeof(Vertex_PosCol) * static_cast<uint32_t>(vertices.size());
+		bd.ByteWidth = sizeof(Vertex_In) * static_cast<uint32_t>(vertices.size());
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bd.CPUAccessFlags = 0;
 		bd.MiscFlags = 0;
@@ -88,7 +89,7 @@ namespace dae
 		m_pEffect = nullptr;
 	}
 
-	void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const
+	void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& WorldViewProjection) const
 	{
 		//1. Set primitive topology
 		pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -97,16 +98,13 @@ namespace dae
 		pDeviceContext->IASetInputLayout(m_pInputLayout);
 
 		//3. Set vertex buffer
-		constexpr UINT stride{ sizeof(Vertex_PosCol) };
+		constexpr UINT stride{ sizeof(Vertex_In) };
 		constexpr UINT offset{ 0 };
 
-		ID3D11Buffer* pVertexBuffer = m_pVertexBuffer;
+		const Matrix WVP{ m_WorldMatrix * WorldViewProjection };
 
-		pDeviceContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &stride, &offset);
-		m_pEffect->GetMatWorldViewProjVariable()->SetMatrix((float*)(&WorldViewProjection));
-
-		//pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-		//m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&WorldViewProjection));
+		pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+		m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&WVP));
 
 		//4. Set index buffer
 		pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -123,5 +121,10 @@ namespace dae
 	void Mesh::SetTexture(const Texture* texture)
 	{
 		m_pEffect->SetDiffuseMap(texture);
+	}
+
+	void Mesh::RotateY(const float degrees)
+	{
+		m_WorldMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_WorldMatrix;
 	}
 }

@@ -90,7 +90,6 @@
     <ClInclude Include="Vector4.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DataTypes.cpp" />
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Texture.cpp" />

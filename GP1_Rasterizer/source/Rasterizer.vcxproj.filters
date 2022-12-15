@@ -69,8 +69,5 @@
     <ClCompile Include="Texture.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
-    <ClCompile Include="DataTypes.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
