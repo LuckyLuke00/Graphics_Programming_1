@@ -24,6 +24,7 @@ namespace dae
 		// Transform matrices
 		Matrix projectionMatrix{};
 		Matrix viewMatrix{};
+		Matrix invViewMatrix{};
 
 		// Camera position and orientation
 		Vector3 origin{ Vector3::Zero };
@@ -67,6 +68,7 @@ namespace dae
 
 	public:
 		Matrix GetViewMatrix() const { return viewMatrix; }
+		Matrix GetInvViewMatrix() const { return invViewMatrix; }
 		Matrix GetProjectionMatrix() const { return projectionMatrix; }
 		Vector3 GetPosition() const { return origin; }
 
@@ -120,6 +122,7 @@ namespace dae
 		void CalculateViewMatrix()
 		{
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
+			invViewMatrix = Matrix::Inverse(viewMatrix);
 		}
 
 		void UpdateMouseState()

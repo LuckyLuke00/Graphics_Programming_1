@@ -11,7 +11,7 @@ namespace dae
 		m_pTechnique{ m_pEffect->GetTechnique() }
 	{
 		//Create vertex layout
-		static constexpr uint32_t numElements{ 3 };
+		static constexpr uint32_t numElements{ 4 };
 		D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 		vertexDesc[0].SemanticName = "POSITION";
@@ -19,15 +19,20 @@ namespace dae
 		vertexDesc[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
-		vertexDesc[1].SemanticName = "COLOR";
+		vertexDesc[1].SemanticName = "NORMAL";
 		vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 		vertexDesc[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
-		vertexDesc[2].SemanticName = "TEXCOORD";
-		vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+		vertexDesc[2].SemanticName = "TANGENT";
+		vertexDesc[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 		vertexDesc[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+		vertexDesc[3].SemanticName = "TEXCOORD";
+		vertexDesc[3].Format = DXGI_FORMAT_R32G32_FLOAT;
+		vertexDesc[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+		vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 		//Create vertex buffer
 		D3D11_BUFFER_DESC bd{};
@@ -89,7 +94,7 @@ namespace dae
 		m_pEffect = nullptr;
 	}
 
-	void Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& WorldViewProjection) const
+	void Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
 	{
 		//1. Set primitive topology
 		pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -100,11 +105,7 @@ namespace dae
 		//3. Set vertex buffer
 		constexpr UINT stride{ sizeof(Vertex_In) };
 		constexpr UINT offset{ 0 };
-
-		const Matrix WVP{ m_WorldMatrix * WorldViewProjection };
-
 		pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-		m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&WVP));
 
 		//4. Set index buffer
 		pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -118,14 +119,10 @@ namespace dae
 			pDeviceContext->DrawIndexed(m_NumIndices, 0, 0);
 		}
 	}
-	void Mesh::SetTexture(const Texture* texture)
-	{
-		m_pEffect->SetDiffuseMap(texture);
-	}
 
 	void Mesh::RotateY(const float degrees)
 	{
-		m_WorldMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_WorldMatrix;
+		m_RotationMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_RotationMatrix;
 	}
 
 	void Mesh::CycleTechniques()
@@ -133,5 +130,35 @@ namespace dae
 		static uint32_t techniqueIndex{ 0 };
 		techniqueIndex = (techniqueIndex + 1) % m_pEffect->GetTechniques().size();
 		m_pEffect->SetTechnique(m_pEffect->GetTechniques()[techniqueIndex]);
+	}
+
+	void Mesh::SetDiffuse(const Texture* diffuse)
+	{
+		m_pEffect->SetDiffuseMap(diffuse);
+	}
+
+	void Mesh::SetNormal(const Texture* normal)
+	{
+		m_pEffect->SetNormalMap(normal);
+	}
+
+	void Mesh::SetGloss(const Texture* gloss)
+	{
+		m_pEffect->SetGlossinessMap(gloss);
+	}
+
+	void Mesh::SetSpecular(const Texture* specular)
+	{
+		m_pEffect->SetSpecularMap(specular);
+	}
+
+	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView) const
+	{
+		const Matrix world{ m_RotationMatrix };
+		const Matrix worldViewProj{ world * viewProj };
+
+		m_pEffect->GetMatWorldVariable()->SetMatrix(reinterpret_cast<const float*>(&world));
+		m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&worldViewProj));
+		m_pEffect->GetMatInvViewVariable()->SetMatrix(reinterpret_cast<const float*>(&invView));
 	}
 }

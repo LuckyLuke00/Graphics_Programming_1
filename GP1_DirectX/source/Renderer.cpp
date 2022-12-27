@@ -24,7 +24,6 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		//InitQuad();
 		InitVehicle(true);
 	}
 
@@ -61,12 +60,6 @@ namespace dae
 
 		delete m_pCamera;
 		m_pCamera = nullptr;
-
-		if (m_pTexture)
-		{
-			delete m_pTexture;
-			m_pTexture = nullptr;
-		}
 	}
 
 	void Renderer::Update(const Timer* pTimer)
@@ -75,8 +68,10 @@ namespace dae
 
 		if (m_RotateMesh)
 		{
-			m_pMesh->RotateY(m_RotationSpeed * .5f * pTimer->GetElapsed());
+			m_pMesh->RotateY(m_RotationSpeed * pTimer->GetElapsed());
 		}
+
+		m_pMesh->SetMatrices(m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix(), m_pCamera->GetInvViewMatrix());
 	}
 
 	void Renderer::Render() const
@@ -91,48 +86,10 @@ namespace dae
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
-		m_pMesh->Render(m_pDeviceContext, m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix());
+		m_pMesh->Render(m_pDeviceContext);
 
 		//3. PRESENT BACKBUFFER (SWAP)
 		m_pSwapChain->Present(0, 0);
-	}
-
-	void Renderer::InitQuad(const bool rotate)
-	{
-		m_RotateMesh = rotate;
-
-		const std::vector<Vertex_In> vertices
-		{
-			{ { -3.f,  3.f, -2.f }, colors::White, { .0f, .0f } },
-			{ {  .0f,  3.f, -2.f }, colors::White, { .5f, .0f } },
-			{ {  3.f,  3.f, -2.f }, colors::White, { 1.f, .0f } },
-			{ { -3.f,  .0f, -2.f }, colors::White, { .0f, .5f } },
-			{ {  .0f,  .0f, -2.f }, colors::White, { .5f, .5f } },
-			{ {  3.f,  .0f, -2.f }, colors::White, { 1.f, .5f } },
-			{ { -3.f, -3.f, -2.f }, colors::White, { .0f, 1.f } },
-			{ {  .0f, -3.f, -2.f }, colors::White, { .5f, 1.f } },
-			{ {  3.f, -3.f, -2.f }, colors::White, { 1.f, 1.f } },
-		};
-
-		const std::vector<uint32_t> indices
-		{
-			3, 0, 1,	1, 4, 3,	4, 1, 2,
-			2, 5, 4,	6, 3, 4,	4, 7, 6,
-			7, 4, 5,	5, 8, 7,
-		};
-
-		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
-
-		m_pCamera = new Camera{};
-		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -14.f });
-
-		// Initialize the texture
-		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/uv_grid_2.png");
-		m_pDeviceContext->GenerateMips(m_pTexture->GetSRV());
-
-		// Initialize the mesh
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
-		m_pMesh->SetTexture(m_pTexture);
 	}
 
 	void Renderer::InitVehicle(const bool rotate)
@@ -149,13 +106,37 @@ namespace dae
 		m_pCamera = new Camera{};
 		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -50.f });
 
-		// Initialize the texture
-		m_pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png");
-		m_pDeviceContext->GenerateMips(m_pTexture->GetSRV());
-
 		// Initialize the mesh
 		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
-		m_pMesh->SetTexture(m_pTexture);
+
+		// Initialize the textures
+		// Diffuse
+		const Texture* pTexture{ Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png") };
+		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
+		m_pMesh->SetDiffuse(pTexture);
+		delete pTexture;
+		pTexture = nullptr;
+
+		// Normal
+		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_normal.png");
+		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
+		m_pMesh->SetNormal(pTexture);
+		delete pTexture;
+		pTexture = nullptr;
+
+		// Gloss
+		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_gloss.png");
+		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
+		m_pMesh->SetGloss(pTexture);
+		delete pTexture;
+		pTexture = nullptr;
+
+		// Specular
+		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_specular.png");
+		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
+		m_pMesh->SetSpecular(pTexture);
+		delete pTexture;
+		pTexture = nullptr;
 	}
 
 	HRESULT Renderer::InitializeDirectX()

@@ -19,10 +19,17 @@ namespace dae
 
 		~Mesh();
 
-		void Render(ID3D11DeviceContext* pDeviceContext, const dae::Matrix& WorldViewProjection) const;
-		void SetTexture(const Texture* texture);
+		void Render(ID3D11DeviceContext* pDeviceContext) const;
 		void RotateY(const float degrees);
 		void CycleTechniques();
+
+		// Setters
+		void SetDiffuse(const Texture* diffuse);
+		void SetNormal(const Texture* normal);
+		void SetGloss(const Texture* gloss);
+		void SetSpecular(const Texture* specular);
+
+		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
 
 	private:
 		Effect* m_pEffect{};
@@ -33,6 +40,6 @@ namespace dae
 		ID3DX11EffectTechnique* m_pTechnique{};
 		uint32_t m_NumIndices{};
 
-		Matrix m_WorldMatrix{};
+		Matrix m_RotationMatrix{};
 	};
 }
