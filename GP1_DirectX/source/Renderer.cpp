@@ -14,8 +14,7 @@ namespace dae
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
 		//Initialize DirectX pipeline
-		const HRESULT result = InitializeDirectX();
-		if (result == S_OK)
+		if (const HRESULT result{ InitializeDirectX() }; result == S_OK)
 		{
 			m_IsInitialized = true;
 			std::cout << "DirectX is initialized and ready!\n";
@@ -25,8 +24,8 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		InitQuad();
-		//InitVehicle(true);
+		//InitQuad();
+		InitVehicle(true);
 	}
 
 	Renderer::~Renderer()
