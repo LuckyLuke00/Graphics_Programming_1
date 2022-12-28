@@ -41,9 +41,9 @@ namespace dae
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 		desc.CPUAccessFlags = 0;
-		desc.MiscFlags = 0;
+		desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 		D3D11_SUBRESOURCE_DATA initData;
 		initData.pSysMem = pSurface->pixels;

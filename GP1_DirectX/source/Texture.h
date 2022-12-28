@@ -5,7 +5,7 @@ namespace dae
 	class Texture
 	{
 	public:
-		~Texture();
+		virtual ~Texture();
 
 		static Texture* LoadFromFile(ID3D11Device* pDevice, const std::string& path);
 

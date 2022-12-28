@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Math.h"
 
 namespace dae
@@ -10,4 +11,4 @@ namespace dae
 		Vector3 tan;
 		Vector2 uv;
 	};
-}
+};

@@ -1,58 +1,13 @@
 #include "pch.h"
 #include "Effect.h"
-#include "Texture.h"
 
 namespace dae
 {
 	Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 		: m_pEffect{ LoadEffect(pDevice, assetFile) }
 	{
+		InitVariables();
 		CaptureTechniques();
-
-		//m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
-		//if (!m_pMatWorldViewProjVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pMatWorldViewProjVariable is invalid\n";
-		//}
-
-		//m_pMatWorldVariable = m_pEffect->GetVariableByName("gWorld")->AsMatrix();
-		//if (!m_pMatWorldVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pMatWorldVariable is invalid\n";
-		//}
-
-		//m_pMatInvViewVariable = m_pEffect->GetVariableByName("gViewInverse")->AsMatrix();
-		//if (!m_pMatInvViewVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pMatInvViewVariable is invalid\n";
-		//}
-
-		//m_pDiffuseMapVariable = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
-		//if (!m_pDiffuseMapVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pDiffuseMapVariable is invalid\n";
-		//}
-
-		//// Save the normal texture variable of the effect as a member variable
-		//m_pNormalMapVariable = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
-		//if (!m_pNormalMapVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pNormalMapVariable is invalid\n";
-		//}
-
-		//// Save the specular texture variable of the effect as a member variable
-		//m_pSpecularMapVariable = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
-		//if (!m_pSpecularMapVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pSpecularMapVariable is invalid\n";
-		//}
-
-		//// Save the glossiness texture variable of the effect as a member variable
-		//m_pGlossMapVariable = m_pEffect->GetVariableByName("gGlossinessMap")->AsShaderResource();
-		//if (!m_pGlossMapVariable->IsValid())
-		//{
-		//	std::wcout << L"m_pGlossinessMapVariable is invalid\n";
-		//}
 	}
 
 	Effect::~Effect()
@@ -113,26 +68,6 @@ namespace dae
 		return pEffect;
 	}
 
-	//void Effect::SetDiffuseMap(const Texture* pDiffuseMap)
-	//{
-	//	m_pDiffuseMapVariable->SetResource(pDiffuseMap->GetSRV());
-	//}
-
-	//void Effect::SetNormalMap(const Texture* pNormalMap)
-	//{
-	//	m_pNormalMapVariable->SetResource(pNormalMap->GetSRV());
-	//}
-
-	//void Effect::SetSpecularMap(const Texture* pSpecularMap)
-	//{
-	//	m_pSpecularMapVariable->SetResource(pSpecularMap->GetSRV());
-	//}
-
-	//void Effect::SetGlossinessMap(const Texture* pGlossinessMap)
-	//{
-	//	m_pGlossMapVariable->SetResource(pGlossinessMap->GetSRV());
-	//}
-
 	void Effect::SetTechnique(ID3DX11EffectTechnique* pTechnique)
 	{
 		if (!pTechnique->IsValid())
@@ -144,6 +79,15 @@ namespace dae
 		m_pTechnique = pTechnique;
 
 		PrintTechnique();
+	}
+
+	void Effect::InitVariables()
+	{
+		m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
+		if (!m_pMatWorldViewProjVariable->IsValid())
+		{
+			std::wcout << L"m_pMatWorldViewProjVariable is invalid\n";
+		}
 	}
 
 	void Effect::CaptureTechniques()

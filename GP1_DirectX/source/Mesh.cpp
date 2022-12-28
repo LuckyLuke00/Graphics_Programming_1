@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "Mesh.h"
 
-#include "EffectPhong.h"
+#include "Effect.h"
 #include "DataTypes.h"
 
 namespace dae
 {
-	Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
-		: m_pEffect{ new EffectPhong{ pDevice, std::wstring{ L"Resources/PosCol3D.fx" } } },
+	Mesh::Mesh(ID3D11Device* pDevice, Effect* pEffect, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
+		: m_pEffect{ pEffect },
 		m_pTechnique{ m_pEffect->GetTechnique() }
 	{
 		//Create vertex layout
@@ -127,38 +127,33 @@ namespace dae
 
 	void Mesh::CycleTechniques()
 	{
-		static uint32_t techniqueIndex{ 0 };
-		techniqueIndex = (techniqueIndex + 1) % m_pEffect->GetTechniques().size();
-		m_pEffect->SetTechnique(m_pEffect->GetTechniques()[techniqueIndex]);
-	}
-
-	void Mesh::SetDiffuse(const Texture* diffuse)
-	{
-		m_pEffect->SetDiffuseMap(diffuse);
-	}
-
-	void Mesh::SetNormal(const Texture* normal)
-	{
-		m_pEffect->SetNormalMap(normal);
-	}
-
-	void Mesh::SetGloss(const Texture* gloss)
-	{
-		m_pEffect->SetGlossinessMap(gloss);
-	}
-
-	void Mesh::SetSpecular(const Texture* specular)
-	{
-		m_pEffect->SetSpecularMap(specular);
+		++m_TechniqueIndex %= m_pEffect->GetTechniques().size();
+		m_pEffect->SetTechnique(m_pEffect->GetTechniques()[m_TechniqueIndex]);
 	}
 
 	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView) const
 	{
 		const Matrix world{ m_RotationMatrix };
-		const Matrix worldViewProj{ world * viewProj };
+		m_pEffect->SetMatrices(world, world * viewProj, invView);
+	}
 
-		m_pEffect->GetMatWorldVariable()->SetMatrix(reinterpret_cast<const float*>(&world));
-		m_pEffect->GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&worldViewProj));
-		m_pEffect->GetMatInvViewVariable()->SetMatrix(reinterpret_cast<const float*>(&invView));
+	void Mesh::SetDiffuse(const Texture* diffuse)
+	{
+		m_pEffect->SetDiffuse(diffuse);
+	}
+
+	void Mesh::SetNormal(const Texture* normal)
+	{
+		m_pEffect->SetNormal(normal);
+	}
+
+	void Mesh::SetGloss(const Texture* gloss)
+	{
+		m_pEffect->SetGloss(gloss);
+	}
+
+	void Mesh::SetSpecular(const Texture* specular)
+	{
+		m_pEffect->SetSpecular(specular);
 	}
 }

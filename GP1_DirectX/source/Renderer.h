@@ -24,7 +24,7 @@ namespace dae
 		void Update(const Timer* pTimer);
 		void Render() const;
 
-		Mesh* GetMesh() const { return m_pMesh; }
+		std::vector<Mesh*> GetMeshes() const { return m_pMeshes; }
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -39,7 +39,9 @@ namespace dae
 
 		Camera* m_pCamera;
 		Mesh* m_pMesh;
+		std::vector<Mesh*> m_pMeshes;
 
+		void InitCamera();
 		void InitVehicle(const bool rotate = false);
 
 		//DirectX

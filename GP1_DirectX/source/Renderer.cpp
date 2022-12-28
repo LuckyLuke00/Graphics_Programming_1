@@ -4,6 +4,8 @@
 #include "DataTypes.h"
 #include "Mesh.h"
 #include "Utils.h"
+#include "EffectPhong.h"
+#include "EffectFire.h"
 
 namespace dae
 {
@@ -24,6 +26,7 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
+		InitCamera();
 		InitVehicle(true);
 	}
 
@@ -53,9 +56,13 @@ namespace dae
 
 			m_pDevice->Release();
 			m_pDevice = nullptr;
+		}
 
-			delete m_pMesh;
-			m_pMesh = nullptr;
+		// Clean up meshes
+		for (Mesh* pMesh : m_pMeshes)
+		{
+			delete pMesh;
+			pMesh = nullptr;
 		}
 
 		delete m_pCamera;
@@ -66,12 +73,11 @@ namespace dae
 	{
 		m_pCamera->Update(pTimer);
 
-		if (m_RotateMesh)
+		for (Mesh* pMesh : m_pMeshes)
 		{
-			m_pMesh->RotateY(m_RotationSpeed * pTimer->GetElapsed());
+			if (m_RotateMesh) pMesh->RotateY(m_RotationSpeed * pTimer->GetElapsed());
+			pMesh->SetMatrices(m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix(), m_pCamera->GetInvViewMatrix());
 		}
-
-		m_pMesh->SetMatrices(m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix(), m_pCamera->GetInvViewMatrix());
 	}
 
 	void Renderer::Render() const
@@ -86,55 +92,75 @@ namespace dae
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
-		m_pMesh->Render(m_pDeviceContext);
+		for (const Mesh* pMesh : m_pMeshes)
+		{
+			pMesh->Render(m_pDeviceContext);
+		}
 
 		//3. PRESENT BACKBUFFER (SWAP)
 		m_pSwapChain->Present(0, 0);
 	}
 
+	void Renderer::InitCamera()
+	{
+		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
+
+		m_pCamera = new Camera{};
+		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -50.f });
+	}
+
 	void Renderer::InitVehicle(const bool rotate)
 	{
+		// Initialize vehicle
 		m_RotateMesh = rotate;
 
 		std::vector<Vertex_In> vertices;
 		std::vector<uint32_t> indices;
 		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
 
-		// Initialize the camera
-		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
+		EffectPhong* pVehicleEffect{ new EffectPhong{ m_pDevice, L"Resources/PosCol3D.fx" } };
+		m_pMeshes.emplace_back(new Mesh{ m_pDevice, pVehicleEffect, vertices, indices });
 
-		m_pCamera = new Camera{};
-		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -50.f });
-
-		// Initialize the mesh
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
-
-		// Initialize the textures
-		// Diffuse
+		// Set vehicle diffuse
 		const Texture* pTexture{ Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png") };
 		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMesh->SetDiffuse(pTexture);
+		m_pMeshes.front()->SetDiffuse(pTexture);
 		delete pTexture;
 		pTexture = nullptr;
 
-		// Normal
+		// Set vehicle normal
 		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_normal.png");
 		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMesh->SetNormal(pTexture);
+		m_pMeshes.front()->SetNormal(pTexture);
 		delete pTexture;
 		pTexture = nullptr;
 
-		// Gloss
+		// Set vehicle gloss
 		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_gloss.png");
 		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMesh->SetGloss(pTexture);
+		m_pMeshes.front()->SetGloss(pTexture);
 		delete pTexture;
 		pTexture = nullptr;
 
-		// Specular
+		// Set vehicle specular
 		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_specular.png");
 		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMesh->SetSpecular(pTexture);
+		m_pMeshes.front()->SetSpecular(pTexture);
+		delete pTexture;
+		pTexture = nullptr;
+
+		// Initialize fire effect
+		vertices.clear();
+		indices.clear();
+		Utils::ParseOBJ("Resources/fireFX.obj", vertices, indices);
+
+		EffectFire* pFireEffect{ new EffectFire{ m_pDevice, L"Resources/FireEffect3D.fx" } };
+		m_pMeshes.emplace_back(new Mesh{ m_pDevice, pFireEffect, vertices, indices });
+
+		// Set FireFX diffuse
+		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/fireFX_diffuse.png");
+		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
+		m_pMeshes.back()->SetDiffuse(pTexture);
 		delete pTexture;
 		pTexture = nullptr;
 	}

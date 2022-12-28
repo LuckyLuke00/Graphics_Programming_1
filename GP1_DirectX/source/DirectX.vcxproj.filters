@@ -60,6 +60,9 @@
     <ClInclude Include="EffectPhong.h">
       <Filter>Effects</Filter>
     </ClInclude>
+    <ClInclude Include="EffectFire.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -90,6 +93,9 @@
       <Filter>Effects</Filter>
     </ClCompile>
     <ClCompile Include="EffectPhong.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectFire.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
   </ItemGroup>

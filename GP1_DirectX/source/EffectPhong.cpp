@@ -12,12 +12,6 @@ namespace dae
 
 	void EffectPhong::InitVariables()
 	{
-		m_pMatWorldViewProjVariable = GetEffect()->GetVariableByName("gWorldViewProj")->AsMatrix();
-		if (!m_pMatWorldViewProjVariable->IsValid())
-		{
-			std::wcout << L"m_pMatWorldViewProjVariable is invalid\n";
-		}
-
 		m_pMatWorldVariable = GetEffect()->GetVariableByName("gWorld")->AsMatrix();
 		if (!m_pMatWorldVariable->IsValid())
 		{
@@ -58,23 +52,27 @@ namespace dae
 		}
 	}
 
-	void EffectPhong::SetDiffuseMap(const Texture* pDiffuseMap)
+	void EffectPhong::SetMatrices(const Matrix& world, const Matrix& viewProj, const Matrix& invView) const
 	{
-		m_pDiffuseMapVariable->SetResource(pDiffuseMap->GetSRV());
+		Effect::GetMatWorldViewProjVariable()->SetMatrix(reinterpret_cast<const float*>(&viewProj));
+		m_pMatWorldVariable->SetMatrix(reinterpret_cast<const float*>(&world));
+		m_pMatInvViewVariable->SetMatrix(reinterpret_cast<const float*>(&invView));
 	}
 
-	void EffectPhong::SetNormalMap(const Texture* pNormalMap)
+	void EffectPhong::SetDiffuse(const Texture* diffuse)
 	{
-		m_pNormalMapVariable->SetResource(pNormalMap->GetSRV());
+		m_pDiffuseMapVariable->SetResource(diffuse->GetSRV());
 	}
-
-	void EffectPhong::SetSpecularMap(const Texture* pSpecularMap)
+	void EffectPhong::SetNormal(const Texture* normal)
 	{
-		m_pSpecularMapVariable->SetResource(pSpecularMap->GetSRV());
+		m_pNormalMapVariable->SetResource(normal->GetSRV());
 	}
-
-	void EffectPhong::SetGlossinessMap(const Texture* pGlossinessMap)
+	void EffectPhong::SetGloss(const Texture* gloss)
 	{
-		m_pGlossMapVariable->SetResource(pGlossinessMap->GetSRV());
+		m_pGlossMapVariable->SetResource(gloss->GetSRV());
+	}
+	void EffectPhong::SetSpecular(const Texture* specular)
+	{
+		m_pSpecularMapVariable->SetResource(specular->GetSRV());
 	}
 }

@@ -2,15 +2,16 @@
 
 namespace dae
 {
-	class EffectPhong;
-	class Texture;
+	class Effect;
 	struct Vertex_In;
+	struct Material;
+
+	class Texture;
 
 	class Mesh
 	{
 	public:
-		Mesh() = default;
-		Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices);
+		explicit Mesh(ID3D11Device* pDevice, Effect* pEffect, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices);
 
 		Mesh(const Mesh& other) = delete;
 		Mesh(Mesh&& other) = delete;
@@ -24,15 +25,15 @@ namespace dae
 		void CycleTechniques();
 
 		// Setters
+		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
+
 		void SetDiffuse(const Texture* diffuse);
 		void SetNormal(const Texture* normal);
 		void SetGloss(const Texture* gloss);
 		void SetSpecular(const Texture* specular);
 
-		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
-
 	private:
-		EffectPhong* m_pEffect{};
+		Effect* m_pEffect{};
 
 		ID3D11Buffer* m_pIndexBuffer{};
 		ID3D11Buffer* m_pVertexBuffer{};
@@ -41,5 +42,7 @@ namespace dae
 		uint32_t m_NumIndices{};
 
 		Matrix m_RotationMatrix{};
+
+		int m_TechniqueIndex{ 0 };
 	};
 }
