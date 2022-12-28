@@ -87,7 +87,7 @@ namespace dae
 
 		//1. CLEAR RTV & DSV
 		// Only clear when nothing has been drawn yet
-		constexpr ColorRGB clearColor{ .0f, .0f, .3f };
+		constexpr ColorRGB clearColor{ .39f, .59f, .93f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 

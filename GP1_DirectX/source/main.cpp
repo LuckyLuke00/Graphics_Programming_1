@@ -58,8 +58,16 @@ int main(int argc, char* args[])
 				break;
 			case SDL_KEYUP:
 				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+				{
+					pRenderer->ToggleMeshRotation();
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+				{
 					for (auto pMesh : pRenderer->GetMeshes())
+					{
 						pMesh->CycleTechniques();
+					}
+				}
 			default:;
 			}
 		}

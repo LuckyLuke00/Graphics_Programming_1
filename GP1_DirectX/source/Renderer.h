@@ -23,6 +23,7 @@ namespace dae
 
 		void Update(const Timer* pTimer);
 		void Render() const;
+		void ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; }
 
 		std::vector<Mesh*> GetMeshes() const { return m_pMeshes; }
 
