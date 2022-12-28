@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "Mesh.h"
 
-#include "Effect.h"
+#include "EffectPhong.h"
 #include "DataTypes.h"
 
 namespace dae
 {
 	Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex_In>& vertices, const std::vector<uint32_t>& indices)
-		: m_pEffect{ new Effect{ pDevice, std::wstring{ L"Resources/PosCol3D.fx" } } },
+		: m_pEffect{ new EffectPhong{ pDevice, std::wstring{ L"Resources/PosCol3D.fx" } } },
 		m_pTechnique{ m_pEffect->GetTechnique() }
 	{
 		//Create vertex layout

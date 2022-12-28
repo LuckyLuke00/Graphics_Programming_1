@@ -8,6 +8,9 @@
     <Filter Include="Misc">
       <UniqueIdentifier>{72056cb6-72a2-42b7-b05e-376f1ddd957e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Effects">
+      <UniqueIdentifier>{ae2ad3af-b1e2-48b6-bec8-e4af6d76d8b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h" />
@@ -36,9 +39,6 @@
     <ClInclude Include="ColorRGB.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="Effect.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Misc</Filter>
     </ClInclude>
@@ -53,6 +53,12 @@
     </ClInclude>
     <ClInclude Include="DataTypes.h">
       <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectPhong.h">
+      <Filter>Effects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -74,14 +80,17 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Effect.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectPhong.cpp">
+      <Filter>Effects</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 
 namespace dae
 {
-	class Effect;
+	class EffectPhong;
 	class Texture;
 	struct Vertex_In;
 
@@ -32,7 +32,7 @@ namespace dae
 		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
 
 	private:
-		Effect* m_pEffect{};
+		EffectPhong* m_pEffect{};
 
 		ID3D11Buffer* m_pIndexBuffer{};
 		ID3D11Buffer* m_pVertexBuffer{};
