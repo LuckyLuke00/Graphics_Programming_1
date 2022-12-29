@@ -75,7 +75,7 @@ int main(int argc, char* args[])
 				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
 				{
-					// TODO: Cycle Cull Modes
+					pRenderer->CycleCullMode();
 				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_F10)
 				{

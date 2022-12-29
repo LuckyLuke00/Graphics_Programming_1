@@ -61,11 +61,11 @@ SamplerState samAnisotropic
 //--------------------------------------------------
 // Rasterizer State
 //--------------------------------------------------
-RasterizerState gRasterizerState
-{
-	CullMode = back;
-	FrontCounterClockwise = false; // Default
-};
+// RasterizerState gRasterizerState
+// {
+// 	CullMode = back;
+// 	FrontCounterClockwise = false; // Default
+// };
 
 //--------------------------------------------------
 // Blend State
@@ -201,7 +201,7 @@ technique11 Point
 {
 	pass P0
 	{
-		SetRasterizerState(gRasterizerState);
+		//SetRasterizerState(gRasterizerState);
 		SetDepthStencilState(gDepthStencilState, 0);
 		SetBlendState(gBlendState, float4(.0f, .0f, .0f, .0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));
@@ -214,7 +214,7 @@ technique11 Linear
 {
 	pass P0
 	{
-		SetRasterizerState(gRasterizerState);
+		//SetRasterizerState(gRasterizerState);
 		SetDepthStencilState(gDepthStencilState, 0);
 		SetBlendState(gBlendState, float4(.0f, .0f, .0f, .0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));
@@ -227,7 +227,7 @@ technique11 Anisotropic
 {
 	pass P0
 	{
-		SetRasterizerState(gRasterizerState);
+		//SetRasterizerState(gRasterizerState);
 		SetDepthStencilState(gDepthStencilState, 0);
 		SetBlendState(gBlendState, float4(.0f, .0f, .0f, .0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));

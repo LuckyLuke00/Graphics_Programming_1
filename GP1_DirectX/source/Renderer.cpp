@@ -27,34 +27,62 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
+		m_RasterizerDesc.FillMode = D3D11_FILL_SOLID;
+		m_RasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+		m_pDevice->CreateRasterizerState(&m_RasterizerDesc, &m_pRasterizerState);
+
 		InitCamera();
 		InitVehicle();
 	}
 
 	Renderer::~Renderer()
 	{
-		if (m_pDeviceContext)
+		if (m_pRasterizerState)
+		{
+			m_pRasterizerState->Release();
+			m_pRasterizerState = nullptr;
+		}
+
+		if (m_pDepthStencilBuffer)
 		{
 			m_pDepthStencilBuffer->Release();
 			m_pDepthStencilBuffer = nullptr;
+		}
 
+		if (m_pDepthStencilView)
+		{
 			m_pDepthStencilView->Release();
 			m_pDepthStencilView = nullptr;
-
+		}
+		if (m_pRenderTargetBuffer)
+		{
 			m_pRenderTargetBuffer->Release();
 			m_pRenderTargetBuffer = nullptr;
+		}
 
+		if (m_pRenderTargetView)
+		{
 			m_pRenderTargetView->Release();
 			m_pRenderTargetView = nullptr;
+		}
 
+		if (m_pSwapChain)
+		{
 			m_pSwapChain->Release();
 			m_pSwapChain = nullptr;
+		}
 
+		if (m_pDeviceContext)
+		{
 			m_pDeviceContext->ClearState();
 			m_pDeviceContext->Flush();
 			m_pDeviceContext->Release();
 			m_pDeviceContext = nullptr;
+		}
 
+		if (m_pDevice)
+		{
 			m_pDevice->Release();
 			m_pDevice = nullptr;
 		}
@@ -88,9 +116,9 @@ namespace dae
 
 		//1. CLEAR RTV & DSV
 		// Only clear when nothing has been drawn yet
-		//constexpr ColorRGB clearColor{ .39f, .59f, .93f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &m_ClearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+		m_pDeviceContext->RSSetState(m_pRasterizerState);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
 		for (const Mesh* pMesh : m_pMeshes)
@@ -118,6 +146,38 @@ namespace dae
 	void Renderer::ToggleFireFXMesh()
 	{
 		m_pMeshes.back()->ToggleVisibility();
+	}
+
+	void Renderer::CycleCullMode()
+	{
+		// Release the current rasterizer state object
+		if (m_pRasterizerState)
+		{
+			m_pRasterizerState->Release();
+			m_pRasterizerState = nullptr;
+		}
+
+		m_RasterizerDesc.CullMode = static_cast<D3D11_CULL_MODE>(std::max(static_cast<int>((m_RasterizerDesc.CullMode + 1) % sizeof(D3D11_CULL_MODE)), 1));
+		m_pDevice->CreateRasterizerState(&m_RasterizerDesc, &m_pRasterizerState);
+
+		// Print the name of the cullmode
+		std::string cullModeName{ "**(SHARED) CullMode = " };
+		switch (m_RasterizerDesc.CullMode)
+		{
+		case D3D11_CULL_NONE:
+			cullModeName += "NONE";
+			break;
+		case D3D11_CULL_FRONT:
+			cullModeName += "FRONT";
+			break;
+		case D3D11_CULL_BACK:
+			cullModeName += "BACK";
+			break;
+		}
+
+		// Set console color to dark yellow
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+		std::cout << cullModeName << '\n';
 	}
 
 	void Renderer::InitCamera()

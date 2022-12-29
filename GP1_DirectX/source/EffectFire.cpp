@@ -39,5 +39,16 @@ namespace dae
 		{
 			std::wcout << L"m_pDiffuseMapVariable is invalid\n";
 		}
+
+		// Set the RasterizerState's CullMode to CullMode::None
+		ID3DX11EffectRasterizerVariable* pRasterizerVariable = GetEffect()->GetVariableByName("gRasterizerState")->AsRasterizer();
+		if (!pRasterizerVariable->IsValid())
+		{
+			std::wcout << L"pRasterizerVariable is invalid\n";
+		}
+
+		// Set the RasterizerState's CullMode to CullMode::None
+		D3D11_RASTERIZER_DESC rasterizerDesc{};
+		rasterizerDesc.CullMode = D3D11_CULL_NONE;
 	}
 }

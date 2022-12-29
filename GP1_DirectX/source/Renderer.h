@@ -28,6 +28,8 @@ namespace dae
 		void ToggleClearColor();
 		void ToggleFireFXMesh();
 
+		void CycleCullMode();
+
 		std::vector<Mesh*> GetMeshes() const { return m_pMeshes; }
 
 	private:
@@ -51,10 +53,12 @@ namespace dae
 
 		void InitCamera();
 		void InitVehicle();
-		void InitVehicleFireFX();
 
 		//DirectX
 		HRESULT InitializeDirectX();
+
+		ID3D11RasterizerState* m_pRasterizerState{};
+		D3D11_RASTERIZER_DESC  m_RasterizerDesc{};
 
 		ID3D11Device* m_pDevice{};
 		ID3D11DeviceContext* m_pDeviceContext{};
