@@ -45,6 +45,7 @@ int main(int argc, char* args[])
 	pTimer->Start();
 	float printTimer{ .0f };
 	bool isLooping{ true };
+	bool printFPW{ false };
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -61,12 +62,28 @@ int main(int argc, char* args[])
 				{
 					pRenderer->ToggleMeshRotation();
 				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
+				{
+					pRenderer->ToggleFireFXMesh();
+				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
 				{
 					for (auto pMesh : pRenderer->GetMeshes())
 					{
 						pMesh->CycleTechniques();
 					}
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
+				{
+					// TODO: Cycle Cull Modes
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F10)
+				{
+					pRenderer->ToggleClearColor();
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F11)
+				{
+					printFPW = !printFPW;
 				}
 			default:;
 			}
@@ -81,7 +98,7 @@ int main(int argc, char* args[])
 		//--------- Timer ---------
 		pTimer->Update();
 		printTimer += pTimer->GetElapsed();
-		if (printTimer >= 1.f)
+		if (printFPW && printTimer >= 1.f)
 		{
 			printTimer = .0f;
 			std::cout << "dFPS: " << pTimer->GetdFPS() << '\n';

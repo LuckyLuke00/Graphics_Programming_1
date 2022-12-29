@@ -23,12 +23,20 @@ namespace dae
 
 		void Update(const Timer* pTimer);
 		void Render() const;
+
 		void ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; }
+		void ToggleClearColor();
+		void ToggleFireFXMesh();
 
 		std::vector<Mesh*> GetMeshes() const { return m_pMeshes; }
 
 	private:
 		SDL_Window* m_pWindow{};
+
+		bool m_EnableUniformColor{ false };
+		const ColorRGB m_HardwareColor{ .39f, .59f, .93f };
+		const ColorRGB m_UniformColor{ .1f, .1f, .1f };
+		ColorRGB m_ClearColor;
 
 		const float m_RotationSpeed{ 45.f };
 
@@ -36,14 +44,14 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
-		bool m_RotateMesh{ false };
+		bool m_RotateMesh{ true };
 
 		Camera* m_pCamera;
-		Mesh* m_pMesh;
 		std::vector<Mesh*> m_pMeshes;
 
 		void InitCamera();
-		void InitVehicle(const bool rotate = false);
+		void InitVehicle();
+		void InitVehicleFireFX();
 
 		//DirectX
 		HRESULT InitializeDirectX();

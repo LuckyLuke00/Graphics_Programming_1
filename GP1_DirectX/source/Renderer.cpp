@@ -10,7 +10,8 @@
 namespace dae
 {
 	Renderer::Renderer(SDL_Window* pWindow) :
-		m_pWindow{ pWindow }
+		m_pWindow{ pWindow },
+		m_ClearColor{ m_HardwareColor }
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
@@ -27,7 +28,7 @@ namespace dae
 		}
 
 		InitCamera();
-		InitVehicle(true);
+		InitVehicle();
 	}
 
 	Renderer::~Renderer()
@@ -87,8 +88,8 @@ namespace dae
 
 		//1. CLEAR RTV & DSV
 		// Only clear when nothing has been drawn yet
-		constexpr ColorRGB clearColor{ .39f, .59f, .93f };
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
+		//constexpr ColorRGB clearColor{ .39f, .59f, .93f };
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &m_ClearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
@@ -101,6 +102,24 @@ namespace dae
 		m_pSwapChain->Present(0, 0);
 	}
 
+	void Renderer::ToggleClearColor()
+	{
+		m_EnableUniformColor = !m_EnableUniformColor;
+		m_ClearColor = m_EnableUniformColor ? m_UniformColor : m_HardwareColor;
+
+		// Set console color to dark yellow
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+		std::cout << "**(SHARED) Uniform ClearColor " << (m_EnableUniformColor ? "ON" : "OFF") << '\n';
+
+		// Reset console color dark gray
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
+	}
+
+	void Renderer::ToggleFireFXMesh()
+	{
+		m_pMeshes.back()->ToggleVisibility();
+	}
+
 	void Renderer::InitCamera()
 	{
 		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
@@ -109,11 +128,9 @@ namespace dae
 		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -50.f });
 	}
 
-	void Renderer::InitVehicle(const bool rotate)
+	void Renderer::InitVehicle()
 	{
 		// Initialize vehicle
-		m_RotateMesh = rotate;
-
 		std::vector<Vertex_In> vertices;
 		std::vector<uint32_t> indices;
 		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);

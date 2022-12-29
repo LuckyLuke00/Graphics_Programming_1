@@ -24,6 +24,8 @@ namespace dae
 		void RotateY(const float degrees);
 		void CycleTechniques();
 
+		void ToggleVisibility() { m_Visible = !m_Visible; }
+
 		// Setters
 		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
 
@@ -44,5 +46,6 @@ namespace dae
 		Matrix m_RotationMatrix{};
 
 		int m_TechniqueIndex{ 0 };
+		bool m_Visible{ true };
 	};
 }

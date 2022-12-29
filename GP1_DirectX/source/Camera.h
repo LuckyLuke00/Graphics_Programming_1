@@ -64,6 +64,7 @@ namespace dae
 		static constexpr float nearPlane{ .1f };
 
 		static constexpr float moveSpeed{ 50.f };
+		static constexpr float boostSpeed{ 2.5f };
 		static constexpr float sensitivity{ .0025f };
 
 	public:
@@ -153,13 +154,15 @@ namespace dae
 			// Calculate the forward and right movement deltas based on the keyboard input
 			const float forwardDelta{ static_cast<float>(pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) };
 			const float rightDelta{ static_cast<float>(pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) };
+			const float leftShiftDelta{ static_cast<float>(pKeyboardState[SDL_SCANCODE_LSHIFT]) };
 
 			// Calculate the desired velocity based on the mouse state and keyboard input
+			// If the left shift key is pressed, the camera will move faster
 			const Vector3 desiredVelocity{ (mouseState ? (forward * forwardDelta + right * rightDelta) * moveSpeed : Vector3::Zero) };
 
 			// Update the velocity using a linear interpolation to smoothly transition to the desired velocity
 			constexpr float lerpSpeed{ 5.f };
-			velocity = Lerp(velocity, desiredVelocity, deltaTime * lerpSpeed);
+			velocity = Lerp(velocity, desiredVelocity * std::max((boostSpeed * leftShiftDelta), 1.f), deltaTime * lerpSpeed);
 
 			// Update the player's position based on the calculated velocity
 			origin += velocity * deltaTime;

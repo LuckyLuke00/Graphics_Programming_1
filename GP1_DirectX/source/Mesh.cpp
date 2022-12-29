@@ -96,6 +96,8 @@ namespace dae
 
 	void Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
 	{
+		if (!m_Visible) return;
+
 		//1. Set primitive topology
 		pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
