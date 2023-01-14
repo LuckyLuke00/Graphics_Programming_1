@@ -109,21 +109,6 @@ void Renderer::ClearBuffers(const Uint8& r, const Uint8& g, const Uint8& b) cons
 	SDL_FillRect(m_pBackBuffer, nullptr, SDL_MapRGB(m_pBackBuffer->format, r, g, b));
 }
 
-void Renderer::ToggleDepthBuffer()
-{
-	m_RenderDepthBuffer = !m_RenderDepthBuffer;
-}
-
-void Renderer::ToggleRotation()
-{
-	m_RotateMesh = !m_RotateMesh;
-}
-
-void dae::Renderer::ToggleNormalMap()
-{
-	m_RenderNormalMap = !m_RenderNormalMap;
-}
-
 void dae::Renderer::CycleShadingMode()
 {
 	static constexpr int enumSize{ sizeof(ShadingMode) };
@@ -264,6 +249,13 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 			// Check if the pixel is inside the triangle
 			// If so, draw the pixel
 			const Vector2 pixel{ static_cast<float>(px) + .5f, static_cast<float>(py) + .5f };
+			const int zBufferIdx{ py * m_Width + px };
+
+			if (m_RenderBoundingBox)
+			{
+				m_pBackBufferPixels[zBufferIdx] = SDL_MapRGB(m_pBackBuffer->format, 255, 255, 255);
+				continue;
+			}
 
 			const float w0{ EdgeFunction(v1Pos, v2Pos, pixel) * invArea };
 			if (w0 < .0f) continue;
@@ -277,7 +269,6 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 
 			// Calculate the depth account for perspective interpolation
 			const float z{ Inverse(z0 * w0 + z1 * w1 + z2 * w2) };
-			const int zBufferIdx{ py * m_Width + px };
 			float& zBuffer{ m_pDepthBufferPixels[zBufferIdx] };
 
 			//Check if pixel is in front of the current pixel in the depth buffer

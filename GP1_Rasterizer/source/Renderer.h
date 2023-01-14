@@ -33,10 +33,11 @@ namespace dae
 
 		void Render();
 
-		void ToggleDepthBuffer();
-		void ToggleRotation();
-		void ToggleNormalMap();
 		void CycleShadingMode();
+		void ToggleBoundingBox() { m_RenderBoundingBox = !m_RenderBoundingBox; }
+		void ToggleDepthBuffer() { m_RenderDepthBuffer = !m_RenderDepthBuffer; }
+		void ToggleNormalMap() { m_RenderNormalMap = !m_RenderNormalMap; }
+		void ToggleRotation() { m_RotateMesh = !m_RotateMesh; }
 
 		void Update(const Timer* pTimer);
 
@@ -47,6 +48,7 @@ namespace dae
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{ nullptr };
 
+		bool m_RenderBoundingBox{ false };
 		bool m_RenderDepthBuffer{ false };
 		bool m_RenderNormalMap{ true };
 		bool m_RotateMesh{ true };

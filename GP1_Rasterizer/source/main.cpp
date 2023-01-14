@@ -69,14 +69,16 @@ int main(int argc, char* args[])
 					takeScreenshot = true;
 				if (e.key.keysym.scancode == SDL_SCANCODE_F1)
 					pTimer->StartBenchmark();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
-					pRenderer->ToggleDepthBuffer();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
 					pRenderer->ToggleRotation();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					pRenderer->CycleShadingMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					pRenderer->ToggleNormalMap();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
-					pRenderer->CycleShadingMode();
+					pRenderer->ToggleDepthBuffer();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
+					pRenderer->ToggleBoundingBox();
 			}
 		}
 
