@@ -8,7 +8,7 @@ namespace dae
 	class Renderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow);
+		explicit Renderer(SDL_Window* pWindow);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -26,6 +26,8 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+
+		void PrintKeybinds() const;
 
 		//DIRECTX
 		HRESULT InitializeDirectX();

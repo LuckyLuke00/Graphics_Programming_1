@@ -42,8 +42,9 @@ int main(int argc, char* args[])
 
 	//Start loop
 	pTimer->Start();
-	float printTimer = 0.f;
-	bool isLooping = true;
+	float printTimer{ .0f };
+	bool isLooping{ true };
+	bool printFPS{ false };
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -56,10 +57,19 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYUP:
-				//Test for a key
-				//if (e.key.keysym.scancode == SDL_SCANCODE_X)
+				switch (e.key.keysym.sym)
+				{
+				case SDLK_F11:
+					// Change console text color to yellow
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+					std::cout << "**(SHARED) Print FPS " << (printFPS ? "OFF" : "ON") << '\n';
+					printFPS = !printFPS;
+				default:
+					break;
+				}
 				break;
-			default:;
+			default:
+				break;
 			}
 		}
 
@@ -71,10 +81,20 @@ int main(int argc, char* args[])
 
 		//--------- Timer ---------
 		pTimer->Update();
+
+		if (!printFPS)
+		{
+			printTimer = 1.f;
+			continue;
+		}
+
 		printTimer += pTimer->GetElapsed();
 		if (printTimer >= 1.f)
 		{
 			printTimer = .0f;
+
+			// Change console text color to gray
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
 			std::cout << "dFPS: " << pTimer->GetdFPS() << '\n';
 		}
 	}
