@@ -10,6 +10,7 @@
 #include "Utils.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace dae;
 
@@ -115,6 +116,12 @@ void dae::Renderer::CycleShadingMode()
 	m_CurrentShadingMode = static_cast<ShadingMode>((static_cast<int>(m_CurrentShadingMode) + 1) % enumSize);
 }
 
+void dae::Renderer::CycleCullMode()
+{
+	static constexpr int enumSize{ sizeof(CullMode) };
+	m_CurrentCullMode = static_cast<CullMode>((static_cast<int>(m_CurrentCullMode) + 1) % enumSize);
+}
+
 void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 {
 	// Precompute the viewProjectionMatrix for each mesh
@@ -217,7 +224,10 @@ void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const 
 
 	const float area{ EdgeFunction(v0Pos, v1Pos, v2Pos) };
 
-	if (area < FLT_EPSILON) return;
+	// Cullmode checks
+	const bool isAreaNegative{ area < FLT_EPSILON };
+	if (isAreaNegative && m_CurrentCullMode == CullMode::Back) return;
+	else if (!isAreaNegative && m_CurrentCullMode == CullMode::Front) return;
 
 	const float invArea{ Inverse(area) };
 

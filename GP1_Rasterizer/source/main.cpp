@@ -79,6 +79,8 @@ int main(int argc, char* args[])
 					pRenderer->ToggleDepthBuffer();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
 					pRenderer->ToggleBoundingBox();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
+					pRenderer->CycleCullMode();
 			}
 		}
 

@@ -21,7 +21,7 @@ namespace dae
 	class Renderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow);
+		explicit Renderer(SDL_Window* pWindow);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -34,6 +34,7 @@ namespace dae
 		void Render();
 
 		void CycleShadingMode();
+		void CycleCullMode();
 		void ToggleBoundingBox() { m_RenderBoundingBox = !m_RenderBoundingBox; }
 		void ToggleDepthBuffer() { m_RenderDepthBuffer = !m_RenderDepthBuffer; }
 		void ToggleNormalMap() { m_RenderNormalMap = !m_RenderNormalMap; }
@@ -103,12 +104,21 @@ namespace dae
 			Combined,
 		};
 
+		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
+
+		enum class CullMode
+		{
+			Back,
+			Front,
+			None,
+		};
+
+		CullMode m_CurrentCullMode{ CullMode::Back };
+
 		// Hard-coded shading Values: ambient, intensity, direction, color and shininess
 		const Vector3 m_LightDirection;
 		static constexpr ColorRGB m_Ambient{ .025f, .025f, .025f };
 		static constexpr float m_LightIntensity{ 7.f };
 		static constexpr float m_Shininess{ 25.f };
-
-		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
 	};
 }
