@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Camera.h"
-#include "Texture.h"
 
 struct SDL_Window;
 struct SDL_Surface;

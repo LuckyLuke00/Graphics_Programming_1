@@ -1,43 +1,31 @@
 #include "pch.h"
-#include "Renderer.h"
+#include "HardwareRasterizer.h"
 
-#include "DataTypes.h"
-#include "EffectFire.h"
-#include "EffectPhong.h"
 #include "Mesh.h"
-#include "Texture.h"
-#include "Utils.h"
 
-namespace dae
-{
-	Renderer::Renderer(SDL_Window* pWindow) :
-		m_pWindow{ pWindow },
-		m_ClearColor{ m_HardwareColor }
+namespace dae {
+	HardwareRasterizer::HardwareRasterizer(SDL_Window* pWindow) :
+		m_pWindow(pWindow)
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
 		//Initialize DirectX pipeline
-		if (const HRESULT result{ InitializeDirectX() }; result == S_OK)
+		if (InitializeDirectX() != S_OK)
 		{
-			m_IsInitialized = true;
-			std::cout << "DirectX is initialized and ready!\n";
-		}
-		else
-		{
+			m_IsInitialized = false; // Safety
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		m_IsInitialized = true;
 
 		m_RasterizerDesc.FillMode = D3D11_FILL_SOLID;
 		m_RasterizerDesc.CullMode = D3D11_CULL_BACK;
 
 		m_pDevice->CreateRasterizerState(&m_RasterizerDesc, &m_pRasterizerState);
-
-		InitCamera();
-		InitVehicle();
 	}
 
-	Renderer::~Renderer()
+	HardwareRasterizer::~HardwareRasterizer()
 	{
 		if (m_pRasterizerState)
 		{
@@ -87,33 +75,16 @@ namespace dae
 			m_pDevice->Release();
 			m_pDevice = nullptr;
 		}
-
-		// Clean up meshes
-		for (Mesh* pMesh : m_pMeshes)
-		{
-			delete pMesh;
-			pMesh = nullptr;
-		}
-
-		delete m_pCamera;
-		m_pCamera = nullptr;
 	}
 
-	void Renderer::Update(const Timer* pTimer)
+	void HardwareRasterizer::Update(const Timer* pTimer)
 	{
-		m_pCamera->Update(pTimer);
-
-		for (Mesh* pMesh : m_pMeshes)
-		{
-			if (m_RotateMesh) pMesh->RotateY(m_RotationSpeed * pTimer->GetElapsed());
-			pMesh->SetMatrices(m_pCamera->GetViewMatrix() * m_pCamera->GetProjectionMatrix(), m_pCamera->GetInvViewMatrix());
-		}
 	}
 
-	void Renderer::Render() const
+	void HardwareRasterizer::Render(const std::vector<Mesh*>& pMeshes) const
 	{
-		if (!m_IsInitialized)
-			return;
+		//if (!m_IsInitialized)
+		//	return;
 
 		//1. CLEAR RTV & DSV
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &m_ClearColor.r);
@@ -121,7 +92,7 @@ namespace dae
 		m_pDeviceContext->RSSetState(m_pRasterizerState);
 
 		//2. SET PIPELINE + INVOKE DRAW CALLS (= RENDER)
-		for (const Mesh* pMesh : m_pMeshes)
+		for (const Mesh* pMesh : pMeshes)
 		{
 			pMesh->Render(m_pDeviceContext);
 		}
@@ -130,127 +101,15 @@ namespace dae
 		m_pSwapChain->Present(0, 0);
 	}
 
-	void Renderer::ToggleClearColor()
-	{
-		m_EnableUniformColor = !m_EnableUniformColor;
-		m_ClearColor = m_EnableUniformColor ? m_UniformColor : m_HardwareColor;
-
-		// Set console color to dark yellow
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
-		std::cout << "**(SHARED) Uniform ClearColor " << (m_EnableUniformColor ? "ON" : "OFF") << '\n';
-
-		// Reset console color dark gray
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8);
-	}
-
-	void Renderer::ToggleFireFXMesh()
-	{
-		m_pMeshes.back()->ToggleVisibility();
-	}
-
-	void Renderer::CycleCullMode()
-	{
-		// Release the current rasterizer state object
-		if (m_pRasterizerState)
-		{
-			m_pRasterizerState->Release();
-			m_pRasterizerState = nullptr;
-		}
-
-		m_RasterizerDesc.CullMode = static_cast<D3D11_CULL_MODE>(std::max(static_cast<int>((m_RasterizerDesc.CullMode + 1) % sizeof(D3D11_CULL_MODE)), 1));
-		m_pDevice->CreateRasterizerState(&m_RasterizerDesc, &m_pRasterizerState);
-
-		// Print the name of the cullmode
-		std::string cullModeName{ "**(SHARED) CullMode = " };
-		switch (m_RasterizerDesc.CullMode)
-		{
-		case D3D11_CULL_NONE:
-			cullModeName += "NONE";
-			break;
-		case D3D11_CULL_FRONT:
-			cullModeName += "FRONT";
-			break;
-		case D3D11_CULL_BACK:
-			cullModeName += "BACK";
-			break;
-		}
-
-		// Set console color to dark yellow
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
-		std::cout << cullModeName << '\n';
-	}
-
-	void Renderer::InitCamera()
-	{
-		const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
-
-		m_pCamera = new Camera{};
-		m_pCamera->Initialize(aspectRatio, 45.f, { .0f, .0f, -50.f });
-	}
-
-	void Renderer::InitVehicle()
-	{
-		// Initialize vehicle
-		std::vector<Vertex_In> vertices;
-		std::vector<uint32_t> indices;
-		Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
-
-		EffectPhong* pVehicleEffect{ new EffectPhong{ m_pDevice, L"Resources/PosCol3D.fx" } };
-		m_pMeshes.emplace_back(new Mesh{ m_pDevice, pVehicleEffect, vertices, indices });
-
-		// Set vehicle diffuse
-		const Texture* pTexture{ Texture::LoadFromFile(m_pDevice, "Resources/vehicle_diffuse.png") };
-		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetDiffuse(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
-
-		// Set vehicle normal
-		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_normal.png");
-		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetNormal(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
-
-		// Set vehicle gloss
-		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_gloss.png");
-		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetGloss(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
-
-		// Set vehicle specular
-		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/vehicle_specular.png");
-		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetSpecular(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
-
-		// Initialize fire effect
-		vertices.clear();
-		indices.clear();
-		Utils::ParseOBJ("Resources/fireFX.obj", vertices, indices);
-
-		EffectFire* pFireEffect{ new EffectFire{ m_pDevice, L"Resources/FireEffect3D.fx" } };
-		m_pMeshes.emplace_back(new Mesh{ m_pDevice, pFireEffect, vertices, indices });
-
-		// Set FireFX diffuse
-		pTexture = Texture::LoadFromFile(m_pDevice, "Resources/fireFX_diffuse.png");
-		m_pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.back()->SetDiffuse(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
-	}
-
-	HRESULT Renderer::InitializeDirectX()
+	HRESULT HardwareRasterizer::InitializeDirectX()
 	{
 		//1. Create Device & DeviceContext
 		//=====
 		D3D_FEATURE_LEVEL featureLevel{ D3D_FEATURE_LEVEL_11_1 };
 		uint32_t createDeviceFlags{ 0 };
-#if defined(DEBUG) || defined(_DEBUG)
-		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+		//#if defined(DEBUG) || defined(_DEBUG)
+		//		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		//#endif
 
 		HRESULT result
 		{

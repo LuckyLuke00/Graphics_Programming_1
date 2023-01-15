@@ -59,10 +59,20 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				switch (e.key.keysym.sym)
 				{
+				case SDLK_F2:
+					// Change console text color to yellow
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+					std::cout << "**(SHARED) Vehicle Rotation "
+						<< (pRenderer->ToggleMeshRotation() ? "OFF" : "ON") << '\n';
+					break;
+				case SDLK_F9:
+					pRenderer->CycleCullMode();
+					break;
 				case SDLK_F11:
 					// Change console text color to yellow
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
-					std::cout << "**(SHARED) Print FPS " << (printFPS ? "OFF" : "ON") << '\n';
+					std::cout << "**(SHARED) Print FPS "
+						<< (printFPS ? "OFF" : "ON") << '\n';
 					printFPS = !printFPS;
 				default:
 					break;
