@@ -59,15 +59,6 @@ SamplerState samAnisotropic
 };
 
 //--------------------------------------------------
-// Rasterizer State
-//--------------------------------------------------
-// RasterizerState gRasterizerState
-// {
-// 	CullMode = back;
-// 	FrontCounterClockwise = false; // Default
-// };
-
-//--------------------------------------------------
 // Blend State
 //--------------------------------------------------
 BlendState gBlendState

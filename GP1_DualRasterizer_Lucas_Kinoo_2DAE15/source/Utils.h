@@ -26,9 +26,9 @@ namespace dae
 			// start a while iteration ending when the end of file is reached (ios::eof)
 			while (!file.eof())
 			{
-				//read the first word of the string, use the >> operator (istream::operator>>) 
+				//read the first word of the string, use the >> operator (istream::operator>>)
 				file >> sCommand;
-				//use conditional statements to process the different commands	
+				//use conditional statements to process the different commands
 				if (sCommand == "#")
 				{
 					// Ignore Comment
@@ -100,7 +100,7 @@ namespace dae
 					}
 
 					indices.push_back(tempIndices[0]);
-					if (flipAxisAndWinding) 
+					if (flipAxisAndWinding)
 					{
 						indices.push_back(tempIndices[2]);
 						indices.push_back(tempIndices[1]);
@@ -146,13 +146,12 @@ namespace dae
 			{
 				v.tan = Vector3::Reject(v.tan, v.norm).Normalized();
 
-				if(flipAxisAndWinding)
+				if (flipAxisAndWinding)
 				{
 					v.pos.z *= -1.f;
 					v.norm.z *= -1.f;
 					v.tan.z *= -1.f;
 				}
-
 			}
 
 			return true;

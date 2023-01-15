@@ -81,13 +81,13 @@ namespace dae {
 	{
 	}
 
-	void HardwareRasterizer::Render(const std::vector<Mesh*>& pMeshes) const
+	void HardwareRasterizer::Render(const std::vector<Mesh*>& pMeshes, const ColorRGB& clearColor) const
 	{
-		//if (!m_IsInitialized)
-		//	return;
+		if (!m_IsInitialized)
+			return;
 
 		//1. CLEAR RTV & DSV
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &m_ClearColor.r);
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 		m_pDeviceContext->RSSetState(m_pRasterizerState);
 
@@ -101,15 +101,29 @@ namespace dae {
 		m_pSwapChain->Present(0, 0);
 	}
 
+	void HardwareRasterizer::SetCullMode(D3D11_CULL_MODE cullMode)
+	{
+		// Release the old rasterizer state object
+		if (m_pRasterizerState)
+		{
+			m_pRasterizerState->Release();
+			m_pRasterizerState = nullptr;
+		}
+
+		// Set the new cull mode and create a new rasterizer state object
+		m_RasterizerDesc.CullMode = cullMode;
+		m_pDevice->CreateRasterizerState(&m_RasterizerDesc, &m_pRasterizerState);
+	}
+
 	HRESULT HardwareRasterizer::InitializeDirectX()
 	{
 		//1. Create Device & DeviceContext
 		//=====
 		D3D_FEATURE_LEVEL featureLevel{ D3D_FEATURE_LEVEL_11_1 };
 		uint32_t createDeviceFlags{ 0 };
-		//#if defined(DEBUG) || defined(_DEBUG)
-		//		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-		//#endif
+#if defined(DEBUG) || defined(_DEBUG)
+		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 
 		HRESULT result
 		{

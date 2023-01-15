@@ -127,10 +127,17 @@ namespace dae
 		m_RotationMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_RotationMatrix;
 	}
 
-	void Mesh::CycleTechniques()
+	const char* Mesh::CycleTechniques()
 	{
 		++m_TechniqueIndex %= m_pEffect->GetTechniques().size();
 		m_pEffect->SetTechnique(m_pEffect->GetTechniques()[m_TechniqueIndex]);
+
+		// Return the name of the technique
+		// Create a technique description
+		D3DX11_TECHNIQUE_DESC techDesc{};
+		m_pEffect->GetTechnique()->GetDesc(&techDesc);
+
+		return techDesc.Name;
 	}
 
 	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView) const

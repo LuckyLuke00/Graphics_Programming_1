@@ -22,9 +22,9 @@ namespace dae
 
 		void Render(ID3D11DeviceContext* pDeviceContext) const;
 		void RotateY(const float degrees);
-		void CycleTechniques();
+		const char* CycleTechniques();
 
-		void ToggleVisibility() { m_Visible = !m_Visible; }
+		bool ToggleVisibility() { m_Visible = !m_Visible; return m_Visible; }
 
 		// Setters
 		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;

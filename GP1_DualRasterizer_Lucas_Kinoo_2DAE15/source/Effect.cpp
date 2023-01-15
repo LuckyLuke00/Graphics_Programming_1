@@ -77,8 +77,6 @@ namespace dae
 		}
 
 		m_pTechnique = pTechnique;
-
-		PrintTechnique();
 	}
 
 	void Effect::InitVariables()
@@ -119,12 +117,5 @@ namespace dae
 		}
 
 		SetTechnique(m_Techniques.front());
-	}
-
-	void Effect::PrintTechnique() const
-	{
-		D3DX11_TECHNIQUE_DESC techniqueDesc{};
-		m_pTechnique->GetDesc(&techniqueDesc);
-		std::wcout << "Current Technique: " << techniqueDesc.Name << '\n';
 	}
 }

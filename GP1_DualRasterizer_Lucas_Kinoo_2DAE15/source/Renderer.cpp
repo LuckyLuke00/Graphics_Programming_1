@@ -56,20 +56,28 @@ namespace dae {
 
 	void Renderer::Render() const
 	{
-		//if (!m_IsInitialized)
-		//	return;
-
 		switch (m_RasterizerMode)
 		{
 		case RasterizerMode::Hardware:
-			m_pHardwareRasterizer->Render(m_pMeshes);
+			m_pHardwareRasterizer->Render(m_pMeshes, m_UniformClearColor ? m_UniformColor : m_HardwareColor);
 			break;
 		}
 	}
 
+	bool Renderer::IsHardwareMode() const
+	{
+		return m_RasterizerMode == RasterizerMode::Hardware;
+	}
+
+	bool Renderer::ToggleFireFxMesh()
+	{
+		if (m_RasterizerMode != RasterizerMode::Hardware) return false;
+
+		return m_pMeshes.back()->ToggleVisibility();
+	}
+
 	void Renderer::CycleCullMode()
 	{
-		// TODO: Implement cullmode switching
 		static constexpr int enumSize{ sizeof(CullMode) - 1 };
 		m_CullMode = static_cast<CullMode>((static_cast<int>(m_CullMode) + 1) % enumSize);
 
@@ -79,14 +87,32 @@ namespace dae {
 		{
 		case CullMode::Back:
 			std::cout << "BACK\n";
+			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_BACK);
 			break;
 		case CullMode::Front:
 			std::cout << "FRONT\n";
+			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_FRONT);
 			break;
 		case CullMode::None:
 			std::cout << "NONE\n";
+			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_NONE);
 			break;
 		}
+	}
+
+	void Renderer::CycleTechniques() const
+	{
+		std::string techniqueName{};
+		for (const auto& pMesh : m_pMeshes)
+		{
+			techniqueName = pMesh->CycleTechniques();
+		}
+
+		// Make the string uppercase
+		std::ranges::transform(techniqueName.begin(), techniqueName.end(), techniqueName.begin(), ::toupper);
+
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
+		std::cout << "**(HARDWARE) Sampler Filter = " << techniqueName << '\n';
 	}
 
 	void Renderer::InitCamera()

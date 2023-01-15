@@ -65,8 +65,27 @@ int main(int argc, char* args[])
 					std::cout << "**(SHARED) Vehicle Rotation "
 						<< (pRenderer->ToggleMeshRotation() ? "OFF" : "ON") << '\n';
 					break;
+				case SDLK_F3:
+					if (!pRenderer->IsHardwareMode()) break;
+
+					// Change console text color to green
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
+					std::cout << "**(HARDWARE) FireFX "
+						<< (pRenderer->ToggleFireFxMesh() ? "ON" : "OFF") << '\n';
+					break;
+				case SDLK_F4:
+					// Change console text color to green
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
+					pRenderer->CycleTechniques();
+					break;
 				case SDLK_F9:
 					pRenderer->CycleCullMode();
+					break;
+				case SDLK_F10:
+					// Change console text color to yellow
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+					std::cout << "**(SHARED) Uniform ClearColor "
+						<< (pRenderer->ToggleUniformClearColor() ? "ON" : "OFF") << '\n';
 					break;
 				case SDLK_F11:
 					// Change console text color to yellow

@@ -44,6 +44,5 @@ namespace dae
 
 		void InitVariables();
 		void CaptureTechniques();
-		void PrintTechnique() const;
 	};
 }

@@ -19,11 +19,14 @@ namespace dae
 		HardwareRasterizer& operator=(HardwareRasterizer&&) noexcept = delete;
 
 		void Update(const Timer* pTimer);
-		void Render(const std::vector<Mesh*>& pMeshes) const;
+		void Render(const std::vector<Mesh*>& pMeshes, const ColorRGB& clearColor) const;
 
 		// Getters
 		ID3D11Device* GetDevice() const { return m_pDevice; }
 		ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
+
+		// Setters
+		void SetCullMode(D3D11_CULL_MODE cullMode);
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -32,8 +35,6 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
-
-		const ColorRGB m_ClearColor{ .39f, .59f, .93f };
 
 		//DIRECTX
 		HRESULT InitializeDirectX();

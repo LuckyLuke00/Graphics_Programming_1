@@ -25,8 +25,14 @@ namespace dae
 		void Update(const Timer* pTimer);
 		void Render() const;
 
+		// Function that returns wether or not the renderer is in hardware mode
+		bool IsHardwareMode() const;
+
+		bool ToggleFireFxMesh();
 		bool ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; return m_RotateMesh; }
+		bool ToggleUniformClearColor() { m_UniformClearColor = !m_UniformClearColor; return m_UniformClearColor; }
 		void CycleCullMode();
+		void CycleTechniques() const;
 
 	private:
 		enum class CullMode
@@ -51,11 +57,15 @@ namespace dae
 
 		const float m_RotationSpeed{ 45.f };
 
-		bool m_IsInitialized{ false };
 		bool m_RotateMesh{ true };
+		bool m_UniformClearColor{ false };
 
 		Camera* m_pCamera{ nullptr };
 		std::vector<Mesh*> m_pMeshes{};
+
+		const ColorRGB m_HardwareColor{ .39f, .59f, .93f };
+		const ColorRGB m_SoftwareColor{ .39f, .39f, .39f };
+		const ColorRGB m_UniformColor{ .1f, .1f, .1f };
 
 		// Rasterizers
 		HardwareRasterizer* m_pHardwareRasterizer{ nullptr };
