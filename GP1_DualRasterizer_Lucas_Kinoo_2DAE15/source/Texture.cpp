@@ -6,6 +6,12 @@ namespace dae
 	ID3D11Texture2D* Texture::m_pResource = nullptr;
 	ID3D11ShaderResourceView* Texture::m_pShaderResourceView = nullptr;
 
+	Texture::Texture(SDL_Surface* pSurface)
+		: m_pSurface{ pSurface },
+		m_pSurfacePixels{ reinterpret_cast<uint32_t*>(m_pSurface->pixels) }
+	{
+	}
+
 	Texture::~Texture()
 	{
 		if (m_pShaderResourceView)
@@ -70,6 +76,22 @@ namespace dae
 
 		SDL_FreeSurface(pSurface);
 
-		return new Texture{};
+		return new Texture{ IMG_Load(path.c_str()) };
+	}
+
+	ColorRGB Texture::Sample(const Vector2& uv) const
+	{
+		const int x{ static_cast<int>(uv.x * m_pSurface->w) };
+		const int y{ static_cast<int>(uv.y * m_pSurface->h) };
+
+		// Use bitwise operations to extract the individual color channels
+		const uint32_t color{ m_pSurfacePixels[y * m_pSurface->w + x] };
+		const uint8_t red{ color & 0xFF };
+		const uint8_t green{ (color >> 8) & 0xFF };
+		const uint8_t blue{ (color >> 16) & 0xFF };
+
+		// Use a precomputed value for 1/255
+		constexpr float inv255{ 1.f / 255.f };
+		return ColorRGB{ red * inv255, green * inv255, blue * inv255 };
 	}
 }

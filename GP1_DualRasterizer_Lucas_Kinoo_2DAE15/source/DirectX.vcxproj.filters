@@ -67,6 +67,9 @@
     <ClInclude Include="Texture.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="SoftwareRasterizer.h">
+      <Filter>Rasterizers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -104,6 +107,9 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftwareRasterizer.cpp">
+      <Filter>Rasterizers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

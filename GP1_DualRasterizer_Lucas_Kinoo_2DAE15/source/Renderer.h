@@ -1,5 +1,7 @@
 #pragma once
 
+#include "DataTypes.h"
+
 struct SDL_Window;
 struct SDL_Surface;
 
@@ -30,17 +32,12 @@ namespace dae
 
 		bool ToggleFireFxMesh();
 		bool ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; return m_RotateMesh; }
+		bool ToggleSoftwareRasterizer() { m_RasterizerMode = m_RasterizerMode == RasterizerMode::Hardware ? RasterizerMode::Software : RasterizerMode::Hardware; return m_RasterizerMode == RasterizerMode::Software; }
 		bool ToggleUniformClearColor() { m_UniformClearColor = !m_UniformClearColor; return m_UniformClearColor; }
 		void CycleCullMode();
 		void CycleTechniques() const;
 
 	private:
-		enum class CullMode
-		{
-			Back,
-			Front,
-			None,
-		};
 		CullMode m_CullMode{ CullMode::Back };
 
 		enum class RasterizerMode
@@ -69,9 +66,10 @@ namespace dae
 
 		// Rasterizers
 		HardwareRasterizer* m_pHardwareRasterizer{ nullptr };
+		SoftwareRasterizer* m_pSoftwareRasterizer{ nullptr };
 
 		void InitCamera();
-		void InitVehicle();
+		void InitVehicle(const Vector3& position = Vector3{ 0.f, 0.f, 0.f });
 
 		void PrintKeybinds() const;
 	};

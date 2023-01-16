@@ -2,25 +2,27 @@
 #include "Renderer.h"
 
 #include "Camera.h"
-#include "DataTypes.h"
 #include "EffectFire.h"
 #include "EffectPhong.h"
-#include "HardwareRasterizer.h"
 #include "Mesh.h"
 #include "Texture.h"
 #include "Utils.h"
+
+#include "HardwareRasterizer.h"
+#include "SoftwareRasterizer.h"
 
 namespace dae {
 	Renderer::Renderer(SDL_Window* pWindow) :
 		m_pWindow{ pWindow },
 		m_pCamera{ new Camera{} },
-		m_pHardwareRasterizer{ new HardwareRasterizer{ pWindow } }
+		m_pHardwareRasterizer{ new HardwareRasterizer{ pWindow } },
+		m_pSoftwareRasterizer{ new SoftwareRasterizer{ pWindow } }
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
 		InitCamera();
-		InitVehicle();
+		InitVehicle({ .0f, .0f, 50.f });
 
 		PrintKeybinds();
 	}
@@ -30,6 +32,10 @@ namespace dae {
 		// Destroy the hardware rasterizer
 		delete m_pHardwareRasterizer;
 		m_pHardwareRasterizer = nullptr;
+
+		// Destroy the software rasterizer
+		delete m_pSoftwareRasterizer;
+		m_pSoftwareRasterizer = nullptr;
 
 		// Clean up meshes
 		for (Mesh* pMesh : m_pMeshes)
@@ -60,6 +66,9 @@ namespace dae {
 		{
 		case RasterizerMode::Hardware:
 			m_pHardwareRasterizer->Render(m_pMeshes, m_UniformClearColor ? m_UniformColor : m_HardwareColor);
+			break;
+		case RasterizerMode::Software:
+			m_pSoftwareRasterizer->Render(m_UniformClearColor ? m_UniformColor : m_SoftwareColor);
 			break;
 		}
 	}
@@ -117,10 +126,10 @@ namespace dae {
 
 	void Renderer::InitCamera()
 	{
-		m_pCamera->Initialize(static_cast<float>(m_Width) / static_cast<float>(m_Height), 45.f, { .0f, .0f, -50.f });
+		m_pCamera->Initialize(static_cast<float>(m_Width) / static_cast<float>(m_Height), 45.f);
 	}
 
-	void Renderer::InitVehicle()
+	void Renderer::InitVehicle(const Vector3& position)
 	{
 		// Initialize vehicle
 		std::vector<Vertex_In> vertices;
@@ -132,6 +141,7 @@ namespace dae {
 
 		EffectPhong* pVehicleEffect{ new EffectPhong{ pDevice, L"Resources/PosCol3D.fx" } };
 		m_pMeshes.emplace_back(new Mesh{ pDevice, pVehicleEffect, vertices, indices });
+		m_pMeshes.front()->SetPosition(position);
 
 		// Set vehicle diffuse
 		const Texture* pTexture{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
@@ -173,6 +183,7 @@ namespace dae {
 		pTexture = Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png");
 		pDeviceContext->GenerateMips(pTexture->GetSRV());
 		m_pMeshes.back()->SetDiffuse(pTexture);
+		m_pMeshes.back()->SetPosition(position);
 		delete pTexture;
 		pTexture = nullptr;
 	}

@@ -77,10 +77,6 @@ namespace dae {
 		}
 	}
 
-	void HardwareRasterizer::Update(const Timer* pTimer)
-	{
-	}
-
 	void HardwareRasterizer::Render(const std::vector<Mesh*>& pMeshes, const ColorRGB& clearColor) const
 	{
 		if (!m_IsInitialized)

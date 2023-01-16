@@ -1,8 +1,5 @@
 #pragma once
 
-struct SDL_Window;
-struct SDL_Surface;
-
 namespace dae
 {
 	class Mesh;
@@ -18,7 +15,6 @@ namespace dae
 		HardwareRasterizer& operator=(const HardwareRasterizer&) = delete;
 		HardwareRasterizer& operator=(HardwareRasterizer&&) noexcept = delete;
 
-		void Update(const Timer* pTimer);
 		void Render(const std::vector<Mesh*>& pMeshes, const ColorRGB& clearColor) const;
 
 		// Getters

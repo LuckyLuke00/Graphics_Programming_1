@@ -26,6 +26,11 @@ namespace dae
 		return a * a;
 	}
 
+	inline float Inverse(const float a)
+	{
+		return 1.f / a;
+	}
+
 	inline float Lerpf(float a, float b, float factor)
 	{
 		return ((1 - factor) * a) + (factor * b);
@@ -61,5 +66,10 @@ namespace dae
 		if (v < 0.f) return 0.f;
 		if (v > 1.f) return 1.f;
 		return v;
+	}
+
+	inline float Remap(float value, float min, float max)
+	{
+		return Clamp((value - min) / (max - min), .0f, 1.f);
 	}
 }

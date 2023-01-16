@@ -1,9 +1,12 @@
 #pragma once
 
+#include "DataTypes.h"
+
 namespace dae
 {
 	class Effect;
 	struct Vertex_In;
+	struct Vertex_Out;
 	struct Material;
 
 	class Texture;
@@ -26,8 +29,16 @@ namespace dae
 
 		bool ToggleVisibility() { m_Visible = !m_Visible; return m_Visible; }
 
+		// Getters
+		const std::vector <Vertex_Out>& GetVerticesOut() const { return m_VerticesOut; }
+		const std::vector<uint32_t>& GetIndices() const { return m_Indices; }
+		const std::vector<Vertex_In>& GetVertices() const { return m_Vertices; }
+		Matrix& GetWorldMatrix() { return m_WorldMatrix; }
+		PrimitiveTopology GetPrimitiveTopology() const { return m_PrimitiveTopology; }
+
 		// Setters
 		void SetMatrices(const Matrix& viewProj, const Matrix& invView) const;
+		void SetPosition(const Vector3& position);
 
 		void SetDiffuse(const Texture* diffuse);
 		void SetNormal(const Texture* normal);
@@ -43,9 +54,15 @@ namespace dae
 		ID3DX11EffectTechnique* m_pTechnique{};
 		uint32_t m_NumIndices{};
 
-		Matrix m_RotationMatrix{};
+		Matrix m_WorldMatrix{};
 
 		int m_TechniqueIndex{ 0 };
 		bool m_Visible{ true };
+
+		// Software
+		std::vector<Vertex_In> m_Vertices{};
+		std::vector <Vertex_Out> m_VerticesOut{};
+		std::vector<uint32_t> m_Indices{};
+		PrimitiveTopology m_PrimitiveTopology{ PrimitiveTopology::TriangleList };
 	};
 }

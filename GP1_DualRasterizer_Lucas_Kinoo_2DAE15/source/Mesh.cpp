@@ -124,7 +124,7 @@ namespace dae
 
 	void Mesh::RotateY(const float degrees)
 	{
-		m_RotationMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_RotationMatrix;
+		m_WorldMatrix = Matrix::CreateRotationY(degrees * TO_RADIANS) * m_WorldMatrix;
 	}
 
 	const char* Mesh::CycleTechniques()
@@ -142,8 +142,12 @@ namespace dae
 
 	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView) const
 	{
-		const Matrix world{ m_RotationMatrix };
-		m_pEffect->SetMatrices(world, world * viewProj, invView);
+		m_pEffect->SetMatrices(m_WorldMatrix, m_WorldMatrix * viewProj, invView);
+	}
+
+	void Mesh::SetPosition(const Vector3& position)
+	{
+		m_WorldMatrix = Matrix::CreateTranslation(position);
 	}
 
 	void Mesh::SetDiffuse(const Texture* diffuse)

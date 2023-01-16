@@ -59,6 +59,12 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				switch (e.key.keysym.sym)
 				{
+				case SDLK_F1:
+					// Change console text color to yellow
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+					std::cout << "**(SHARED) Rasterizer Mode = "
+						<< (pRenderer->ToggleSoftwareRasterizer() ? "SOFTWARE" : "HARDWARE") << '\n';
+					break;
 				case SDLK_F2:
 					// Change console text color to yellow
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
@@ -67,7 +73,6 @@ int main(int argc, char* args[])
 					break;
 				case SDLK_F3:
 					if (!pRenderer->IsHardwareMode()) break;
-
 					// Change console text color to green
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 					std::cout << "**(HARDWARE) FireFX "
