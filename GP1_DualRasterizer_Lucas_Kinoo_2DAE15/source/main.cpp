@@ -83,6 +83,20 @@ int main(int argc, char* args[])
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 					pRenderer->CycleTechniques();
 					break;
+				case SDLK_F7:
+					if (pRenderer->IsHardwareMode()) break;
+					// Change console text color to purple
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
+					std::cout << "**(SOFTWARE) DepthBuffer Visualization"
+						<< (pRenderer->ToggleDepthBuffer() ? "ON" : "OFF") << '\n';
+					break;
+				case SDLK_F8:
+					if (pRenderer->IsHardwareMode()) break;
+					// Change console text color to purple
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
+					std::cout << "**(SOFTWARE) BoundingBox Visualization "
+						<< (pRenderer->ToggleBoundingBox() ? "ON" : "OFF") << '\n';
+					break;
 				case SDLK_F9:
 					pRenderer->CycleCullMode();
 					break;

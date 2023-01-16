@@ -10,6 +10,7 @@ namespace dae
 	class HardwareRasterizer;
 	class SoftwareRasterizer;
 	class Mesh;
+	class Texture;
 
 	struct Camera;
 
@@ -31,6 +32,8 @@ namespace dae
 		bool IsHardwareMode() const;
 
 		bool ToggleFireFxMesh();
+		bool ToggleBoundingBox();
+		bool ToggleDepthBuffer();
 		bool ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; return m_RotateMesh; }
 		bool ToggleSoftwareRasterizer() { m_RasterizerMode = m_RasterizerMode == RasterizerMode::Hardware ? RasterizerMode::Software : RasterizerMode::Hardware; return m_RasterizerMode == RasterizerMode::Software; }
 		bool ToggleUniformClearColor() { m_UniformClearColor = !m_UniformClearColor; return m_UniformClearColor; }

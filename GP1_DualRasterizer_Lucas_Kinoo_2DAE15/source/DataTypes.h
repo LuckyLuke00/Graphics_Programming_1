@@ -10,15 +10,16 @@ namespace dae
 		Vector3 norm{};
 		Vector3 tan{};
 		Vector2 uv{};
+		ColorRGB col{ colors::White };
 	};
 
 	struct Vertex_Out
 	{
 		Vector4 pos{};
-		ColorRGB col{ colors::White };
-		Vector2 uv{};
 		Vector3 norm{};
 		Vector3 tan{};
+		Vector2 uv{};
+		ColorRGB col{ colors::White };
 		Vector3 view{};
 	};
 

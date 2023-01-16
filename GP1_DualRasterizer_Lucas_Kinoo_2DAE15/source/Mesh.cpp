@@ -140,8 +140,9 @@ namespace dae
 		return techDesc.Name;
 	}
 
-	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView) const
+	void Mesh::SetMatrices(const Matrix& viewProj, const Matrix& invView)
 	{
+		m_ViewProjMatrix = viewProj;
 		m_pEffect->SetMatrices(m_WorldMatrix, m_WorldMatrix * viewProj, invView);
 	}
 

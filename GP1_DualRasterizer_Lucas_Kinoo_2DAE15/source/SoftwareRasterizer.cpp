@@ -38,7 +38,15 @@ namespace dae {
 		ClearDepthBuffer();
 		ClearBackBuffer(clearColor);
 
-		//VertexTransformationFunction(m_Meshes);
+		VertexTransformationFunction(m_pMeshes);
+		for (int idx{ 0 }; const auto & mesh : m_pMeshes)
+		{
+			m_CurrentMeshIndex = idx;
+
+			RenderMesh(mesh);
+
+			++idx;
+		}
 
 		//@END
 		//Update SDL Surface
@@ -50,6 +58,12 @@ namespace dae {
 	bool SoftwareRasterizer::SaveBufferToImage() const
 	{
 		return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
+	}
+
+	void SoftwareRasterizer::CycleShadingMode()
+	{
+		static constexpr int enumSize{ sizeof(ShadingMode) };
+		m_ShadingMode = static_cast<ShadingMode>((static_cast<int>(m_ShadingMode) + 1) % enumSize);
 	}
 
 	void SoftwareRasterizer::ClearDepthBuffer() const
@@ -194,10 +208,10 @@ namespace dae {
 					const Vertex_Out interpolatedVertex
 					{
 						{ pixel.x, pixel.y, z, w },
-						c0 * w0 + c1 * w1 + c2 * w2,
-						(uv0 * w0 + uv1 * w1 + uv2 * w2) * w,
 						((v0.norm * w0 + v1.norm * w1 + v2.norm * w2) * w).Normalized(),
 						((v0.tan * w0 + v1.tan * w1 + v2.tan * w2) * w).Normalized(),
+						(uv0 * w0 + uv1 * w1 + uv2 * w2) * w,
+						c0 * w0 + c1 * w1 + c2 * w2,
 						((v0.view * w0 + v1.view * w1 + v2.view * w2) * w).Normalized()
 					};
 
@@ -217,11 +231,21 @@ namespace dae {
 
 	ColorRGB SoftwareRasterizer::PixelShading(const Vertex_Out& v) const
 	{
-		// Sampled texture colors
-		const ColorRGB sampledColor{ m_pTexture->Sample(v.uv) };
-		const ColorRGB sampledGloss{ m_pGlossMap->Sample(v.uv) };
-		const ColorRGB sampledNormal{ m_pNormalMap->Sample(v.uv) };
-		const ColorRGB sampledSpecular{ m_pSpecularMap->Sample(v.uv) };
+		//const Texture* pDiffuse{ m_pMeshes[m_CurrentMeshIndex]->GetDiffuse() };
+		//const Texture* pGloss{ m_pMeshes[m_CurrentMeshIndex]->GetGloss() };
+		//const Texture* pNormal{ m_pMeshes[m_CurrentMeshIndex]->GetNormal() };
+		//const Texture* pSpecular{ m_pMeshes[m_CurrentMeshIndex]->GetSpecular() };
+
+		////// Sampled texture colors
+		//const ColorRGB sampledColor{ (pDiffuse ? pDiffuse->Sample(v.uv) : colors::Black) };
+		//const ColorRGB sampledNormal{ (pNormal ? pNormal->Sample(v.uv) : colors::Black) };
+		//const ColorRGB sampledSpecular{ (pSpecular ? pSpecular->Sample(v.uv) : colors::Black) };
+		//const ColorRGB sampledGloss{ (pGloss ? pGloss->Sample(v.uv) : colors::Black) };
+
+		const ColorRGB sampledColor{ colors::White };
+		const ColorRGB sampledNormal{ colors::White };
+		const ColorRGB sampledSpecular{ colors::White };
+		const ColorRGB sampledGloss{ colors::White };
 
 		// Normal mapping
 		const Vector3 binormal{ Vector3::Cross(v.norm, v.tan) };
@@ -275,63 +299,61 @@ namespace dae {
 		max.y = static_cast<int>(std::ceil(std::min(m_fHeight - 1.f, std::max(v0.pos.y, std::max(v1.pos.y, v2.pos.y)))));
 	}
 
-	void SoftwareRasterizer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
+	void SoftwareRasterizer::VertexTransformationFunction(const std::vector<Mesh*>& pMeshes) const
 	{
-		//// Precompute the viewProjectionMatrix for each mesh
-		//Matrix viewProjectionMatrix{ m_Camera.GetViewMatrix() * m_Camera.GetProjectionMatrix() };
+		// Compute half the width and height of the screen
+		const float halfWidth{ m_fWidth * .5f };
+		const float halfHeight{ m_fHeight * .5f };
 
-		//// Compute half the width and height of the screen
-		//const float halfWidth{ m_fWidth * .5f };
-		//const float halfHeight{ m_fHeight * .5f };
+		// Iterate over each mesh
+		for (auto& mesh : pMeshes)
+		{
+			// Precompute the viewProjectionMatrix for this mesh.
+			const Matrix& worldMatrix{ mesh->GetWorldMatrix() };
+			const Matrix worldViewProjMatrix{ worldMatrix * mesh->GetViewProjMatrix() };
 
-		//// Iterate over each mesh
-		//for (Mesh& mesh : meshes)
-		//{
-		//	// Precompute the viewProjectionMatrix for this mesh.
-		//	viewProjectionMatrix = mesh.worldMatrix * viewProjectionMatrix;
+			// Use a reference to the mesh vertices and vertices_out vectors
+			// to avoid repeated calls to the mesh accessor functions.
+			const std::vector<Vertex_In>& vertices{ mesh->GetVertices() };
+			std::vector<Vertex_Out>& verticesOut{ mesh->GetVerticesOut() };
 
-		//	// Use a reference to the mesh vertices and vertices_out vectors
-		//	// to avoid repeated calls to the mesh accessor functions.
-		//	const std::vector<Vertex>& vertices{ mesh.vertices };
-		//	std::vector<Vertex_Out>& verticesOut{ mesh.vertices_out };
+			// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
+			// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
+			if (verticesOut.empty())
+			{
+				verticesOut.reserve(vertices.size());
+				for (const Vertex_In& vertex : vertices)
+				{
+					verticesOut.emplace_back(Vertex_Out{ {}, vertex.norm, vertex.tan, vertex.uv, vertex.col });
+				}
+			}
 
-		//	// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
-		//	// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
-		//	if (verticesOut.empty())
-		//	{
-		//		verticesOut.reserve(vertices.size());
-		//		for (const Vertex_In& vertex : vertices)
-		//		{
-		//			verticesOut.emplace_back(Vertex_Out{ {}, vertex.col, vertex.uv, vertex.norm, vertex.tan });
-		//		}
-		//	}
+			// Iterate over the vertices of the mesh using a range-based for loop.
+			for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
+			{
+				// Transform the vertex position using the precomputed viewProjectionMatrix
+				vertex.pos = worldViewProjMatrix.TransformPoint({ vertices[i].pos, 1.f });
 
-		//	// Iterate over the vertices of the mesh using a range-based for loop.
-		//	for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
-		//	{
-		//		// Transform the vertex position using the precomputed viewProjectionMatrix
-		//		vertex.pos = viewProjectionMatrix.TransformPoint({ vertices[i].pos, 1.f });
+				// Transform the normal and tangent vectors using the world matrix of the mesh
+				vertex.norm = worldMatrix.TransformVector(vertices[i].norm);
+				vertex.tan = worldMatrix.TransformVector(vertices[i].tan);
 
-		//		// Transform the normal and tangent vectors using the world matrix of the mesh
-		//		vertex.norm = mesh.worldMatrix.TransformVector(vertices[i].normal);
-		//		vertex.tan = mesh.worldMatrix.TransformVector(vertices[i].tangent);
+				// Compute the view direction vector as the difference between the transformed vertex position
+				// and the origin of the camera.
+				vertex.view = vertex.pos.GetXYZ();
 
-		//		// Compute the view direction vector as the difference between the transformed vertex position
-		//		// and the origin of the camera.
-		//		vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].pos) - m_Camera.GetPosition();
+				// Divide the x, y, and z coordinates of the position by the w coordinate.
+				vertex.pos.x /= vertex.pos.w;
+				vertex.pos.y /= vertex.pos.w;
+				vertex.pos.z /= vertex.pos.w;
 
-		//		// Divide the x, y, and z coordinates of the position by the w coordinate.
-		//		vertex.pos.x /= vertex.pos.w;
-		//		vertex.pos.y /= vertex.pos.w;
-		//		vertex.pos.z /= vertex.pos.w;
+				// Transform the x and y coordinates of the position from normalized device coordinates
+				// to screen space coordinates.
+				vertex.pos.x = (vertex.pos.x + 1.f) * halfWidth;
+				vertex.pos.y = (1.f - vertex.pos.y) * halfHeight;
 
-		//		// Transform the x and y coordinates of the position from normalized device coordinates
-		//		// to screen space coordinates.
-		//		vertex.pos.x = (vertex.pos.x + 1.f) * halfWidth;
-		//		vertex.pos.y = (1.f - vertex.pos.y) * halfHeight;
-
-		//		++i;
-		//	}
-		//}
+				++i;
+			}
+		}
 	}
 }

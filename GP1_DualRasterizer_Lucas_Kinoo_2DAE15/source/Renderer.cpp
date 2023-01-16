@@ -85,6 +85,16 @@ namespace dae {
 		return m_pMeshes.back()->ToggleVisibility();
 	}
 
+	bool Renderer::ToggleBoundingBox()
+	{
+		return m_pSoftwareRasterizer->ToggleBoundingBox();
+	}
+
+	bool Renderer::ToggleDepthBuffer()
+	{
+		return m_pSoftwareRasterizer->ToggleDepthBuffer();
+	}
+
 	void Renderer::CycleCullMode()
 	{
 		static constexpr int enumSize{ sizeof(CullMode) - 1 };
@@ -97,20 +107,26 @@ namespace dae {
 		case CullMode::Back:
 			std::cout << "BACK\n";
 			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_BACK);
+			m_pSoftwareRasterizer->SetCullMode(CullMode::Back);
 			break;
 		case CullMode::Front:
 			std::cout << "FRONT\n";
 			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_FRONT);
+			m_pSoftwareRasterizer->SetCullMode(CullMode::Front);
 			break;
 		case CullMode::None:
 			std::cout << "NONE\n";
 			m_pHardwareRasterizer->SetCullMode(D3D11_CULL_NONE);
+			m_pSoftwareRasterizer->SetCullMode(CullMode::None);
 			break;
 		}
 	}
 
 	void Renderer::CycleTechniques() const
 	{
+		// Check if not in software mode
+		if (m_RasterizerMode == RasterizerMode::Software) return;
+
 		std::string techniqueName{};
 		for (const auto& pMesh : m_pMeshes)
 		{
@@ -141,10 +157,12 @@ namespace dae {
 
 		EffectPhong* pVehicleEffect{ new EffectPhong{ pDevice, L"Resources/PosCol3D.fx" } };
 		m_pMeshes.emplace_back(new Mesh{ pDevice, pVehicleEffect, vertices, indices });
+		m_pMeshes.front()->SetIndices(indices);
 		m_pMeshes.front()->SetPosition(position);
+		m_pMeshes.front()->SetVertices(vertices);
 
 		// Set vehicle diffuse
-		const Texture* pTexture{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
+		Texture* pTexture{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
 		pDeviceContext->GenerateMips(pTexture->GetSRV());
 		m_pMeshes.front()->SetDiffuse(pTexture);
 		delete pTexture;
@@ -178,6 +196,9 @@ namespace dae {
 
 		EffectFire* pFireEffect{ new EffectFire{ pDevice, L"Resources/FireEffect3D.fx" } };
 		m_pMeshes.emplace_back(new Mesh{ pDevice, pFireEffect, vertices, indices });
+		m_pMeshes.back()->SetIndices(indices);
+		m_pMeshes.back()->SetPosition(position);
+		m_pMeshes.back()->SetVertices(vertices);
 
 		// Set FireFX diffuse
 		pTexture = Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png");
@@ -186,6 +207,60 @@ namespace dae {
 		m_pMeshes.back()->SetPosition(position);
 		delete pTexture;
 		pTexture = nullptr;
+
+		// Only set the vehicle mesh
+		m_pSoftwareRasterizer->SetMeshes({ m_pMeshes.front() });
+
+		//// Initialize vehicle
+		//std::vector<Vertex_In> vertices;
+		//std::vector<uint32_t> indices;
+		//Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
+
+		//ID3D11DeviceContext* pDeviceContext{ m_pHardwareRasterizer->GetDeviceContext() };
+		//ID3D11Device* pDevice{ m_pHardwareRasterizer->GetDevice() };
+
+		//EffectPhong* pVehicleEffect{ new EffectPhong{ pDevice, L"Resources/PosCol3D.fx" } };
+		//m_pMeshes.emplace_back(new Mesh{ pDevice, pVehicleEffect, vertices, indices });
+		//m_pMeshes.front()->SetPosition(position);
+
+		//// Set vehicle diffuse
+		//Texture* pVehicleDiffuse{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
+		//pDeviceContext->GenerateMips(pVehicleDiffuse->GetSRV());
+		//m_pMeshes.front()->SetDiffuse(pVehicleDiffuse);
+		//m_pTextures.emplace_back(pVehicleDiffuse);
+
+		//// Set vehicle normal
+		//Texture* pVehicleNormal{ Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png") };
+		//pDeviceContext->GenerateMips(pVehicleNormal->GetSRV());
+		//m_pMeshes.front()->SetNormal(pVehicleNormal);
+		//m_pTextures.emplace_back(pVehicleNormal);
+
+		//// Set vehicle gloss
+		//Texture* pVehicleGloss{ Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png") };
+		//pDeviceContext->GenerateMips(pVehicleGloss->GetSRV());
+		//m_pMeshes.front()->SetGloss(pVehicleGloss);
+		//m_pTextures.emplace_back(pVehicleGloss);
+
+		//// Set vehicle specular
+		//Texture* pVehicleSpecular{ Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png") };
+		//pDeviceContext->GenerateMips(pVehicleSpecular->GetSRV());
+		//m_pMeshes.front()->SetSpecular(pVehicleSpecular);
+		//m_pTextures.emplace_back(pVehicleSpecular);
+
+		//// Initialize fire effect
+		//vertices.clear();
+		//indices.clear();
+		//Utils::ParseOBJ("Resources/fireFX.obj", vertices, indices);
+
+		//EffectFire* pFireEffect{ new EffectFire{ pDevice, L"Resources/FireEffect3D.fx" } };
+		//m_pMeshes.emplace_back(new Mesh{ pDevice, pFireEffect, vertices, indices });
+
+		//// Set FireFX diffuse
+		//Texture* pFireFXDiffuse{ Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png") };
+		//pDeviceContext->GenerateMips(pFireFXDiffuse->GetSRV());
+		//m_pMeshes.back()->SetDiffuse(pFireFXDiffuse);
+		//m_pMeshes.back()->SetPosition(position);
+		//m_pTextures.emplace_back(pFireFXDiffuse);
 	}
 
 	void Renderer::PrintKeybinds() const
