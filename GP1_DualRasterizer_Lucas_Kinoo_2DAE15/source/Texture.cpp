@@ -3,39 +3,10 @@
 
 namespace dae
 {
-	ID3D11Texture2D* Texture::m_pResource = nullptr;
-	ID3D11ShaderResourceView* Texture::m_pShaderResourceView = nullptr;
-
-	Texture::Texture(SDL_Surface* pSurface)
+	Texture::Texture(ID3D11Device* pDevice, SDL_Surface* pSurface)
 		: m_pSurface{ pSurface },
-		m_pSurfacePixels{ reinterpret_cast<uint32_t*>(m_pSurface->pixels) }
+		m_pSurfacePixels{ static_cast<uint32_t*>(m_pSurface->pixels) }
 	{
-	}
-
-	Texture::~Texture()
-	{
-		if (m_pShaderResourceView)
-		{
-			m_pShaderResourceView->Release();
-			m_pShaderResourceView = nullptr;
-		}
-
-		if (m_pResource)
-		{
-			m_pResource->Release();
-			m_pResource = nullptr;
-		}
-	}
-
-	Texture* Texture::LoadFromFile(ID3D11Device* pDevice, const std::string& path)
-	{
-		SDL_Surface* pSurface{ IMG_Load(path.c_str()) };
-		if (!pSurface)
-		{
-			std::cout << "Failed to load texture from file: " << path << "\n";
-			return nullptr;
-		}
-
 		DXGI_FORMAT format{ DXGI_FORMAT_R8G8B8A8_UNORM };
 		D3D11_TEXTURE2D_DESC desc{};
 		desc.Width = pSurface->w;
@@ -59,7 +30,6 @@ namespace dae
 		if (FAILED(hr))
 		{
 			std::cout << "Texture::LoadFromFile() failed: " << std::hex << hr << '\n';
-			return nullptr;
 		}
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
@@ -71,12 +41,40 @@ namespace dae
 		if (FAILED(hr))
 		{
 			std::cout << "Texture::LoadFromFile() failed: " << std::hex << hr << '\n';
+		}
+	}
+
+	Texture::~Texture()
+	{
+		if (m_pShaderResourceView)
+		{
+			m_pShaderResourceView->Release();
+			m_pShaderResourceView = nullptr;
+		}
+
+		if (m_pResource)
+		{
+			m_pResource->Release();
+			m_pResource = nullptr;
+		}
+
+		if (m_pSurface)
+		{
+			SDL_FreeSurface(m_pSurface);
+			m_pSurface = nullptr;
+		}
+	}
+
+	Texture* Texture::LoadFromFile(ID3D11Device* pDevice, const std::string& path)
+	{
+		SDL_Surface* pSurface{ IMG_Load(path.c_str()) };
+		if (!pSurface)
+		{
+			std::cout << "Failed to load texture from file: " << path << "\n";
 			return nullptr;
 		}
 
-		SDL_FreeSurface(pSurface);
-
-		return new Texture{ IMG_Load(path.c_str()) };
+		return new Texture{ pDevice, pSurface };
 	}
 
 	ColorRGB Texture::Sample(const Vector2& uv) const

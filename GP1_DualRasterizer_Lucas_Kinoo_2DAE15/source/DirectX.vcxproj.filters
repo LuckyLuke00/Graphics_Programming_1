@@ -64,11 +64,11 @@
     <ClInclude Include="Utils.h">
       <Filter>Misc</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="SoftwareRasterizer.h">
       <Filter>Rasterizers</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -105,11 +105,11 @@
     <ClCompile Include="EffectPhong.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="SoftwareRasterizer.cpp">
       <Filter>Rasterizers</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
