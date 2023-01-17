@@ -64,6 +64,28 @@ namespace dae {
 	{
 		static constexpr int enumSize{ sizeof(ShadingMode) };
 		m_ShadingMode = static_cast<ShadingMode>((static_cast<int>(m_ShadingMode) + 1) % enumSize);
+
+		// Set console text color to purple
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
+
+		std::cout << "**(SOFTWARE) Shading Mode = ";
+
+		// Print the name of the current shading mode
+		switch (m_ShadingMode)
+		{
+		case ShadingMode::ObservedArea:
+			std::cout << "OBSERVED_AREA\n";
+			break;
+		case ShadingMode::Diffuse:
+			std::cout << "DIFFUSE\n";
+			break;
+		case ShadingMode::Specular:
+			std::cout << "SPECULAR\n";
+			break;
+		case ShadingMode::Combined:
+			std::cout << "COMBINED\n";
+			break;
+		}
 	}
 
 	void SoftwareRasterizer::ClearDepthBuffer() const

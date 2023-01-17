@@ -104,6 +104,11 @@ namespace dae {
 		return m_pSoftwareRasterizer->ToggleDepthBuffer();
 	}
 
+	bool Renderer::ToggleNormalMap()
+	{
+		return m_pSoftwareRasterizer->ToggleNormalMap();
+	}
+
 	void Renderer::CycleCullMode()
 	{
 		static constexpr int enumSize{ sizeof(CullMode) - 1 };
@@ -147,6 +152,13 @@ namespace dae {
 
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 		std::cout << "**(HARDWARE) Sampler Filter = " << techniqueName << '\n';
+	}
+
+	void Renderer::CycleShadingMode()
+	{
+		if (m_RasterizerMode != RasterizerMode::Software) return;
+
+		m_pSoftwareRasterizer->CycleShadingMode();
 	}
 
 	void Renderer::InitCamera()
@@ -207,9 +219,10 @@ namespace dae {
 		m_pMeshes.back()->SetDiffuse(m_pTextures.back());
 		m_pMeshes.back()->SetPosition(position);
 
-		m_pSoftwareRasterizer->SetMeshes(m_pMeshes);
+		// All meshes
+		//m_pSoftwareRasterizer->SetMeshes(m_pMeshes);
 		// Only set the vehicle mesh
-		//m_pSoftwareRasterizer->SetMeshes({ m_pMeshes.front() });
+		m_pSoftwareRasterizer->SetMeshes({ m_pMeshes.front() });
 	}
 
 	void Renderer::PrintKeybinds() const

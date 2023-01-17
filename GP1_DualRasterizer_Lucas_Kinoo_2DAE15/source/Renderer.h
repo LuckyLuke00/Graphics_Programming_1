@@ -37,8 +37,10 @@ namespace dae
 		bool ToggleMeshRotation() { m_RotateMesh = !m_RotateMesh; return m_RotateMesh; }
 		bool ToggleSoftwareRasterizer() { m_RasterizerMode = m_RasterizerMode == RasterizerMode::Hardware ? RasterizerMode::Software : RasterizerMode::Hardware; return m_RasterizerMode == RasterizerMode::Software; }
 		bool ToggleUniformClearColor() { m_UniformClearColor = !m_UniformClearColor; return m_UniformClearColor; }
+		bool ToggleNormalMap();
 		void CycleCullMode();
 		void CycleTechniques() const;
+		void CycleShadingMode();
 
 	private:
 		CullMode m_CullMode{ CullMode::Back };

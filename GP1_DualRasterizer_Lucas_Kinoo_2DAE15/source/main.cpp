@@ -83,11 +83,21 @@ int main(int argc, char* args[])
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 					pRenderer->CycleTechniques();
 					break;
+				case SDLK_F5:
+					pRenderer->CycleShadingMode();
+					break;
+				case SDLK_F6:
+					if (pRenderer->IsHardwareMode()) break;
+					// Change console text color to purple
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
+					std::cout << "**(SOFTWARE) NormalMap "
+						<< (pRenderer->ToggleNormalMap() ? "ON" : "OFF") << '\n';
+					break;
 				case SDLK_F7:
 					if (pRenderer->IsHardwareMode()) break;
 					// Change console text color to purple
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
-					std::cout << "**(SOFTWARE) DepthBuffer Visualization"
+					std::cout << "**(SOFTWARE) DepthBuffer Visualization "
 						<< (pRenderer->ToggleDepthBuffer() ? "ON" : "OFF") << '\n';
 					break;
 				case SDLK_F8:
