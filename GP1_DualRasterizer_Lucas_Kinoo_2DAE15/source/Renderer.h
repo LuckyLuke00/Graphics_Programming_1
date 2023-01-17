@@ -62,6 +62,7 @@ namespace dae
 
 		Camera* m_pCamera{ nullptr };
 		std::vector<Mesh*> m_pMeshes{};
+		std::vector<const Texture*> m_pTextures{};
 
 		const ColorRGB m_HardwareColor{ .39f, .59f, .93f };
 		const ColorRGB m_SoftwareColor{ .39f, .39f, .39f };

@@ -43,6 +43,15 @@ namespace dae {
 			delete pMesh;
 			pMesh = nullptr;
 		}
+		m_pMeshes.clear();
+
+		// Clean up textures
+		for (const Texture* pTexture : m_pTextures)
+		{
+			delete pTexture;
+			pTexture = nullptr;
+		}
+		m_pTextures.clear();
 
 		// Destroy the camera
 		delete m_pCamera;
@@ -162,32 +171,24 @@ namespace dae {
 		m_pMeshes.front()->SetVertices(vertices);
 
 		// Set vehicle diffuse
-		Texture* pTexture{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
-		pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetDiffuse(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
+		m_pTextures.emplace_back(Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png"));
+		pDeviceContext->GenerateMips(m_pTextures.back()->GetSRV());
+		m_pMeshes.front()->SetDiffuse(m_pTextures.back());
 
 		// Set vehicle normal
-		pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png");
-		pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetNormal(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
+		m_pTextures.emplace_back(Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png"));
+		pDeviceContext->GenerateMips(m_pTextures.back()->GetSRV());
+		m_pMeshes.front()->SetNormal(m_pTextures.back());
 
 		// Set vehicle gloss
-		pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png");
-		pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetGloss(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
+		m_pTextures.emplace_back(Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png"));
+		pDeviceContext->GenerateMips(m_pTextures.back()->GetSRV());
+		m_pMeshes.front()->SetGloss(m_pTextures.back());
 
 		// Set vehicle specular
-		pTexture = Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png");
-		pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.front()->SetSpecular(pTexture);
-		delete pTexture;
-		pTexture = nullptr;
+		m_pTextures.emplace_back(Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png"));
+		pDeviceContext->GenerateMips(m_pTextures.back()->GetSRV());
+		m_pMeshes.front()->SetSpecular(m_pTextures.back());
 
 		// Initialize fire effect
 		vertices.clear();
@@ -201,66 +202,14 @@ namespace dae {
 		m_pMeshes.back()->SetVertices(vertices);
 
 		// Set FireFX diffuse
-		pTexture = Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png");
-		pDeviceContext->GenerateMips(pTexture->GetSRV());
-		m_pMeshes.back()->SetDiffuse(pTexture);
+		m_pTextures.emplace_back(Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png"));
+		pDeviceContext->GenerateMips(m_pTextures.back()->GetSRV());
+		m_pMeshes.back()->SetDiffuse(m_pTextures.back());
 		m_pMeshes.back()->SetPosition(position);
-		delete pTexture;
-		pTexture = nullptr;
 
+		m_pSoftwareRasterizer->SetMeshes(m_pMeshes);
 		// Only set the vehicle mesh
-		m_pSoftwareRasterizer->SetMeshes({ m_pMeshes.front() });
-
-		//// Initialize vehicle
-		//std::vector<Vertex_In> vertices;
-		//std::vector<uint32_t> indices;
-		//Utils::ParseOBJ("Resources/vehicle.obj", vertices, indices);
-
-		//ID3D11DeviceContext* pDeviceContext{ m_pHardwareRasterizer->GetDeviceContext() };
-		//ID3D11Device* pDevice{ m_pHardwareRasterizer->GetDevice() };
-
-		//EffectPhong* pVehicleEffect{ new EffectPhong{ pDevice, L"Resources/PosCol3D.fx" } };
-		//m_pMeshes.emplace_back(new Mesh{ pDevice, pVehicleEffect, vertices, indices });
-		//m_pMeshes.front()->SetPosition(position);
-
-		//// Set vehicle diffuse
-		//Texture* pVehicleDiffuse{ Texture::LoadFromFile(pDevice, "Resources/vehicle_diffuse.png") };
-		//pDeviceContext->GenerateMips(pVehicleDiffuse->GetSRV());
-		//m_pMeshes.front()->SetDiffuse(pVehicleDiffuse);
-		//m_pTextures.emplace_back(pVehicleDiffuse);
-
-		//// Set vehicle normal
-		//Texture* pVehicleNormal{ Texture::LoadFromFile(pDevice, "Resources/vehicle_normal.png") };
-		//pDeviceContext->GenerateMips(pVehicleNormal->GetSRV());
-		//m_pMeshes.front()->SetNormal(pVehicleNormal);
-		//m_pTextures.emplace_back(pVehicleNormal);
-
-		//// Set vehicle gloss
-		//Texture* pVehicleGloss{ Texture::LoadFromFile(pDevice, "Resources/vehicle_gloss.png") };
-		//pDeviceContext->GenerateMips(pVehicleGloss->GetSRV());
-		//m_pMeshes.front()->SetGloss(pVehicleGloss);
-		//m_pTextures.emplace_back(pVehicleGloss);
-
-		//// Set vehicle specular
-		//Texture* pVehicleSpecular{ Texture::LoadFromFile(pDevice, "Resources/vehicle_specular.png") };
-		//pDeviceContext->GenerateMips(pVehicleSpecular->GetSRV());
-		//m_pMeshes.front()->SetSpecular(pVehicleSpecular);
-		//m_pTextures.emplace_back(pVehicleSpecular);
-
-		//// Initialize fire effect
-		//vertices.clear();
-		//indices.clear();
-		//Utils::ParseOBJ("Resources/fireFX.obj", vertices, indices);
-
-		//EffectFire* pFireEffect{ new EffectFire{ pDevice, L"Resources/FireEffect3D.fx" } };
-		//m_pMeshes.emplace_back(new Mesh{ pDevice, pFireEffect, vertices, indices });
-
-		//// Set FireFX diffuse
-		//Texture* pFireFXDiffuse{ Texture::LoadFromFile(pDevice, "Resources/fireFX_diffuse.png") };
-		//pDeviceContext->GenerateMips(pFireFXDiffuse->GetSRV());
-		//m_pMeshes.back()->SetDiffuse(pFireFXDiffuse);
-		//m_pMeshes.back()->SetPosition(position);
-		//m_pTextures.emplace_back(pFireFXDiffuse);
+		//m_pSoftwareRasterizer->SetMeshes({ m_pMeshes.front() });
 	}
 
 	void Renderer::PrintKeybinds() const

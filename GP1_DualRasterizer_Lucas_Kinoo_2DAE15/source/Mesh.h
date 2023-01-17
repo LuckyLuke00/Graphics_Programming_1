@@ -47,7 +47,7 @@ namespace dae
 		// Setters
 		void SetMatrices(const Matrix& viewProj, const Matrix& invView);
 		void SetPosition(const Vector3& position);
-		void SetVertices(const std::vector<Vertex_In>& vertices) { m_Vertices = vertices; }
+		void SetVertices(const std::vector<Vertex_In>& vertices);
 		void SetIndices(const std::vector<uint32_t>& indices) { m_Indices = indices; }
 
 		void SetDiffuse(const Texture* diffuse);

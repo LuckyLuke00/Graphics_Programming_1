@@ -38,11 +38,11 @@ namespace dae {
 		ClearDepthBuffer();
 		ClearBackBuffer(clearColor);
 
-		VertexTransformationFunction(m_pMeshes);
 		for (int idx{ 0 }; const auto & mesh : m_pMeshes)
 		{
 			m_CurrentMeshIndex = idx;
 
+			VertexTransformationFunction(m_pMeshes);
 			RenderMesh(mesh);
 
 			++idx;
@@ -130,8 +130,10 @@ namespace dae {
 
 		const float area{ EdgeFunction(v0Pos, v1Pos, v2Pos) };
 
+		if (area == 0) return;
+
 		// Cullmode checks
-		const bool isAreaNegative{ area < FLT_EPSILON };
+		const bool isAreaNegative{ area <= FLT_EPSILON };
 		if (isAreaNegative && m_CullMode == CullMode::Back) return;
 		else if (!isAreaNegative && m_CullMode == CullMode::Front) return;
 
@@ -205,7 +207,7 @@ namespace dae {
 					// Interpolated w
 					const float w{ Inverse(w0V * w0 + w1V * w1 + w2V * w2) };
 
-					const Vertex_Out interpolatedVertex
+					Vertex_Out interpolatedVertex
 					{
 						{ pixel.x, pixel.y, z, w },
 						((v0.norm * w0 + v1.norm * w1 + v2.norm * w2) * w).Normalized(),
@@ -231,21 +233,16 @@ namespace dae {
 
 	ColorRGB SoftwareRasterizer::PixelShading(const Vertex_Out& v) const
 	{
-		//const Texture* pDiffuse{ m_pMeshes[m_CurrentMeshIndex]->GetDiffuse() };
-		//const Texture* pGloss{ m_pMeshes[m_CurrentMeshIndex]->GetGloss() };
-		//const Texture* pNormal{ m_pMeshes[m_CurrentMeshIndex]->GetNormal() };
-		//const Texture* pSpecular{ m_pMeshes[m_CurrentMeshIndex]->GetSpecular() };
+		const Texture* pDiffuse{ m_pMeshes[m_CurrentMeshIndex]->GetDiffuse() };
+		const Texture* pGloss{ m_pMeshes[m_CurrentMeshIndex]->GetGloss() };
+		const Texture* pNormal{ m_pMeshes[m_CurrentMeshIndex]->GetNormal() };
+		const Texture* pSpecular{ m_pMeshes[m_CurrentMeshIndex]->GetSpecular() };
 
-		////// Sampled texture colors
-		//const ColorRGB sampledColor{ (pDiffuse ? pDiffuse->Sample(v.uv) : colors::Black) };
-		//const ColorRGB sampledNormal{ (pNormal ? pNormal->Sample(v.uv) : colors::Black) };
-		//const ColorRGB sampledSpecular{ (pSpecular ? pSpecular->Sample(v.uv) : colors::Black) };
-		//const ColorRGB sampledGloss{ (pGloss ? pGloss->Sample(v.uv) : colors::Black) };
-
-		const ColorRGB sampledColor{ colors::White };
-		const ColorRGB sampledNormal{ colors::White };
-		const ColorRGB sampledSpecular{ colors::White };
-		const ColorRGB sampledGloss{ colors::White };
+		// Sampled texture colors
+		const ColorRGB sampledColor{ (pDiffuse ? pDiffuse->Sample(v.uv) : colors::Black) };
+		const ColorRGB sampledNormal{ (pNormal ? pNormal->Sample(v.uv) : colors::Black) };
+		const ColorRGB sampledSpecular{ (pSpecular ? pSpecular->Sample(v.uv) : colors::Black) };
+		const ColorRGB sampledGloss{ (pGloss ? pGloss->Sample(v.uv) : colors::Black) };
 
 		// Normal mapping
 		const Vector3 binormal{ Vector3::Cross(v.norm, v.tan) };
@@ -305,55 +302,40 @@ namespace dae {
 		const float halfWidth{ m_fWidth * .5f };
 		const float halfHeight{ m_fHeight * .5f };
 
-		// Iterate over each mesh
-		for (auto& mesh : pMeshes)
+		// Precompute the viewProjectionMatrix for this mesh.
+		const Matrix& worldMatrix{ m_pMeshes[m_CurrentMeshIndex]->GetWorldMatrix() };
+		const Matrix worldViewProjMatrix{ worldMatrix * m_pMeshes[m_CurrentMeshIndex]->GetViewProjMatrix() };
+
+		// Use a reference to the mesh vertices and vertices_out vectors
+		// to avoid repeated calls to the mesh accessor functions.
+		const std::vector<Vertex_In>& vertices{ m_pMeshes[m_CurrentMeshIndex]->GetVertices() };
+		std::vector<Vertex_Out>& verticesOut{ m_pMeshes[m_CurrentMeshIndex]->GetVerticesOut() };
+
+		// Iterate over the vertices of the mesh using a range-based for loop.
+		for (int i{ 0 }; auto & vertex : verticesOut)
 		{
-			// Precompute the viewProjectionMatrix for this mesh.
-			const Matrix& worldMatrix{ mesh->GetWorldMatrix() };
-			const Matrix worldViewProjMatrix{ worldMatrix * mesh->GetViewProjMatrix() };
+			// Transform the vertex position using the precomputed viewProjectionMatrix
+			vertex.pos = worldViewProjMatrix.TransformPoint({ vertices[i].pos, 1.f });
 
-			// Use a reference to the mesh vertices and vertices_out vectors
-			// to avoid repeated calls to the mesh accessor functions.
-			const std::vector<Vertex_In>& vertices{ mesh->GetVertices() };
-			std::vector<Vertex_Out>& verticesOut{ mesh->GetVerticesOut() };
+			// Transform the normal and tangent vectors using the world matrix of the mesh
+			vertex.norm = worldMatrix.TransformVector(vertices[i].norm);
+			vertex.tan = worldMatrix.TransformVector(vertices[i].tan);
 
-			// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
-			// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
-			if (verticesOut.empty())
-			{
-				verticesOut.reserve(vertices.size());
-				for (const Vertex_In& vertex : vertices)
-				{
-					verticesOut.emplace_back(Vertex_Out{ {}, vertex.norm, vertex.tan, vertex.uv, vertex.col });
-				}
-			}
+			// Compute the view direction vector as the difference between the transformed vertex position
+			// and the origin of the camera.
+			vertex.view = vertex.pos.GetXYZ();
 
-			// Iterate over the vertices of the mesh using a range-based for loop.
-			for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
-			{
-				// Transform the vertex position using the precomputed viewProjectionMatrix
-				vertex.pos = worldViewProjMatrix.TransformPoint({ vertices[i].pos, 1.f });
+			// Divide the x, y, and z coordinates of the position by the w coordinate.
+			vertex.pos.x /= vertex.pos.w;
+			vertex.pos.y /= vertex.pos.w;
+			vertex.pos.z /= vertex.pos.w;
 
-				// Transform the normal and tangent vectors using the world matrix of the mesh
-				vertex.norm = worldMatrix.TransformVector(vertices[i].norm);
-				vertex.tan = worldMatrix.TransformVector(vertices[i].tan);
+			// Transform the x and y coordinates of the position from normalized device coordinates
+			// to screen space coordinates.
+			vertex.pos.x = (vertex.pos.x + 1.f) * halfWidth;
+			vertex.pos.y = (1.f - vertex.pos.y) * halfHeight;
 
-				// Compute the view direction vector as the difference between the transformed vertex position
-				// and the origin of the camera.
-				vertex.view = vertex.pos.GetXYZ();
-
-				// Divide the x, y, and z coordinates of the position by the w coordinate.
-				vertex.pos.x /= vertex.pos.w;
-				vertex.pos.y /= vertex.pos.w;
-				vertex.pos.z /= vertex.pos.w;
-
-				// Transform the x and y coordinates of the position from normalized device coordinates
-				// to screen space coordinates.
-				vertex.pos.x = (vertex.pos.x + 1.f) * halfWidth;
-				vertex.pos.y = (1.f - vertex.pos.y) * halfHeight;
-
-				++i;
-			}
+			++i;
 		}
 	}
 }

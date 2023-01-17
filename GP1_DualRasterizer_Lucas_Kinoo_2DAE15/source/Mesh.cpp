@@ -151,23 +151,40 @@ namespace dae
 		m_WorldMatrix = Matrix::CreateTranslation(position);
 	}
 
+	void Mesh::SetVertices(const std::vector<Vertex_In>& vertices)
+	{
+		m_Vertices.reserve(vertices.size());
+		m_VerticesOut.reserve(vertices.size());
+
+		std::ranges::copy(vertices.begin(), vertices.end(), std::back_inserter(m_Vertices));
+
+		for (const auto& vertex : m_Vertices)
+		{
+			m_VerticesOut.emplace_back(Vertex_Out{ {}, vertex.norm, vertex.tan, vertex.uv, vertex.col });
+		}
+	}
+
 	void Mesh::SetDiffuse(const Texture* diffuse)
 	{
 		m_pEffect->SetDiffuse(diffuse);
+		m_pDiffuse = diffuse;
 	}
 
 	void Mesh::SetNormal(const Texture* normal)
 	{
 		m_pEffect->SetNormal(normal);
+		m_pNormal = normal;
 	}
 
 	void Mesh::SetGloss(const Texture* gloss)
 	{
 		m_pEffect->SetGloss(gloss);
+		m_pGloss = gloss;
 	}
 
 	void Mesh::SetSpecular(const Texture* specular)
 	{
 		m_pEffect->SetSpecular(specular);
+		m_pSpecular = specular;
 	}
 }
