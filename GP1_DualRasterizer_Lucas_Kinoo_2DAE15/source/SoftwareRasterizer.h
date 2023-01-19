@@ -5,6 +5,7 @@ namespace dae
 {
 	class Mesh;
 	class Texture;
+	struct Camera;
 	struct Vertex_Out;
 
 	class SoftwareRasterizer final
@@ -23,6 +24,7 @@ namespace dae
 
 		void SetMeshes(const std::vector<Mesh*>& meshes) { m_pMeshes = meshes; }
 		void SetCullMode(CullMode cullMode) { m_CullMode = cullMode; }
+		void SetCamera(Camera* pCamera) { m_pCamera = pCamera; }
 		void CycleShadingMode();
 		bool ToggleBoundingBox() { m_RenderBoundingBox = !m_RenderBoundingBox; return m_RenderBoundingBox; }
 		bool ToggleDepthBuffer() { m_RenderDepthBuffer = !m_RenderDepthBuffer; return m_RenderDepthBuffer; }
@@ -64,6 +66,7 @@ namespace dae
 		float* m_pDepthBufferPixels{};
 
 		CullMode m_CullMode{ CullMode::Back };
+		Camera* m_pCamera{ nullptr };
 
 		std::vector<Mesh*> m_pMeshes{};
 

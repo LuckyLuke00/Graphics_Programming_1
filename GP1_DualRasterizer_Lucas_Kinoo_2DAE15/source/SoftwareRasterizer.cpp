@@ -4,6 +4,7 @@
 #include "DataTypes.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "Camera.h"
 
 namespace dae {
 	SoftwareRasterizer::SoftwareRasterizer(SDL_Window* pWindow)
@@ -273,8 +274,7 @@ namespace dae {
 
 		const ColorRGB diffuse{ m_LightingData.intensity * sampledColor / PI };
 
-		const float observedArea{ Vector3::Dot(normal, -m_LightingData.direction) };
-		if (observedArea < .0f) return colors::Black;
+		const float observedArea{ std::max(Vector3::Dot(normal, -m_LightingData.direction), .0f) };
 
 		// Calculate diffuse and specular lighting
 		const float exp{ sampledGloss.r * m_LightingData.shininess };
@@ -290,7 +290,7 @@ namespace dae {
 		case Specular:
 			return specular;
 		case Combined:
-			return (diffuse + specular + m_LightingData.ambient) * observedArea;
+			return observedArea * diffuse + specular + m_LightingData.ambient;
 		}
 
 		return colors::Black;
@@ -345,7 +345,7 @@ namespace dae {
 
 			// Compute the view direction vector as the difference between the transformed vertex position
 			// and the origin of the camera.
-			vertex.view = vertex.pos.GetXYZ();
+			vertex.view = m_pMeshes[m_CurrentMeshIndex]->GetWorldMatrix().TransformPoint(vertices[i].pos) - m_pCamera->GetPosition();
 
 			// Divide the x, y, and z coordinates of the position by the w coordinate.
 			vertex.pos.x /= vertex.pos.w;

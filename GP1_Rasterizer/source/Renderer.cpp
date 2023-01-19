@@ -343,8 +343,7 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 
 	const ColorRGB diffuse{ m_LightIntensity * sampledColor / PI };
 
-	const float observedArea{ Vector3::Dot(normal, -m_LightDirection) };
-	if (observedArea < .0f) return colors::Black;
+	const float observedArea{ std::max(Vector3::Dot(normal, -m_LightDirection), .0f) };
 
 	// Calculate diffuse and specular lighting
 	const float exp{ sampledGloss.r * m_Shininess };
@@ -360,7 +359,7 @@ ColorRGB Renderer::PixelShading(const Vertex_Out& v) const
 	case Specular:
 		return specular;
 	case Combined:
-		return (diffuse + specular + m_Ambient) * observedArea;
+		return observedArea * diffuse + specular + m_Ambient;
 	}
 
 	return colors::Black;

@@ -25,6 +25,8 @@ namespace dae {
 		InitVehicle({ .0f, .0f, 50.f });
 
 		PrintKeybinds();
+
+		m_pSoftwareRasterizer->SetCamera(m_pCamera);
 	}
 
 	Renderer::~Renderer()
