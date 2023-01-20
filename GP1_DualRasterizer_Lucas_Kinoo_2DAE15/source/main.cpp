@@ -44,7 +44,7 @@ int main(int argc, char* args[])
 	pTimer->Start();
 	float printTimer{ .0f };
 	bool isLooping{ true };
-	bool printFPS{ false };
+	bool printFPS{ true };
 	while (isLooping)
 	{
 		//--------- Get input events ---------
