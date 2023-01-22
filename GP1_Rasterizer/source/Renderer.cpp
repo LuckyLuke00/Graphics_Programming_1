@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <ppl.h>
+
 using namespace dae;
 
 Renderer::Renderer(SDL_Window* pWindow) :
@@ -207,27 +209,29 @@ bool Renderer::IsOutsideViewFrustum(const Vertex_Out& v) const
 		v.position.z < .0f || v.position.z > 1.f;
 }
 
+bool dae::Renderer::CullTriangle(const float area) const
+{
+	return
+		(area == 0) ||
+		(m_CurrentCullMode == CullMode::Back && area < FLT_EPSILON) ||
+		(m_CurrentCullMode == CullMode::Front && area > FLT_EPSILON);
+}
+
 void Renderer::RenderTriangle(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2) const
 {
-	if (IsOutsideViewFrustum(v0) || IsOutsideViewFrustum(v1) || IsOutsideViewFrustum(v2)) return;
-
 	const Vector2& v0Pos{ v0.position.GetXY() };
 	const Vector2& v1Pos{ v1.position.GetXY() };
 	const Vector2& v2Pos{ v2.position.GetXY() };
+
+	const float area{ (EdgeFunction(v0Pos, v1Pos, v2Pos)) };
+	if (CullTriangle(area)) return;
+
+	const float invArea{ Inverse(area) };
 
 	// Calculate the bounding box - but make sure the triangle is inside the screen
 	Int2 min;
 	Int2 max;
 	CalculateBoundingBox(v0, v1, v2, min, max);
-
-	const float area{ EdgeFunction(v0Pos, v1Pos, v2Pos) };
-
-	// Cullmode checks
-	const bool isAreaNegative{ area < FLT_EPSILON };
-	if (isAreaNegative && m_CurrentCullMode == CullMode::Back) return;
-	else if (!isAreaNegative && m_CurrentCullMode == CullMode::Front) return;
-
-	const float invArea{ Inverse(area) };
 
 	// Pre-calculate the inverse z
 	const float z0{ Inverse(v0.position.z) };
@@ -382,6 +386,8 @@ void Renderer::RenderMesh(const Mesh& mesh) const
 		const Vertex_Out& v0{ mesh.vertices_out[idx0] };
 		const Vertex_Out& v1{ mesh.vertices_out[idx1] };
 		const Vertex_Out& v2{ mesh.vertices_out[idx2] };
+
+		if (IsOutsideViewFrustum(v0) || IsOutsideViewFrustum(v1) || IsOutsideViewFrustum(v2)) continue;
 
 		if (isTriangleList)
 		{

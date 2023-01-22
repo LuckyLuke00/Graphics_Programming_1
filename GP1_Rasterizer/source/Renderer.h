@@ -76,6 +76,30 @@ namespace dae
 
 		std::vector<Mesh> m_Meshes{};
 
+		enum class ShadingMode
+		{
+			ObservedArea,
+			Diffuse,
+			Specular,
+			Combined,
+		};
+		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
+
+		enum class CullMode
+		{
+			Back,
+			Front,
+			None,
+		};
+
+		CullMode m_CurrentCullMode{ CullMode::Back };
+
+		// Hard-coded shading Values: ambient, intensity, direction, color and shininess
+		const Vector3 m_LightDirection;
+		static constexpr ColorRGB m_Ambient{ .025f, .025f, .025f };
+		static constexpr float m_LightIntensity{ 7.f };
+		static constexpr float m_Shininess{ 25.f };
+
 		void ClearBuffers(const Uint8& r = 0, const Uint8& g = 0, const Uint8& b = 0) const;
 
 		void RenderMesh(const Mesh& mesh) const;
@@ -94,29 +118,6 @@ namespace dae
 		// Function that checks if a vertex is outside the view frustum
 		bool IsOutsideViewFrustum(const Vertex_Out& v) const;
 
-		enum class ShadingMode
-		{
-			ObservedArea,
-			Diffuse,
-			Specular,
-			Combined,
-		};
-
-		ShadingMode m_CurrentShadingMode{ ShadingMode::Combined };
-
-		enum class CullMode
-		{
-			Back,
-			Front,
-			None,
-		};
-
-		CullMode m_CurrentCullMode{ CullMode::Back };
-
-		// Hard-coded shading Values: ambient, intensity, direction, color and shininess
-		const Vector3 m_LightDirection;
-		static constexpr ColorRGB m_Ambient{ .025f, .025f, .025f };
-		static constexpr float m_LightIntensity{ 7.f };
-		static constexpr float m_Shininess{ 25.f };
+		bool CullTriangle(const float area) const;
 	};
-}
+};
