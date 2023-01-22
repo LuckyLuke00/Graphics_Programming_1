@@ -84,18 +84,22 @@ void Renderer::Update(const Timer* pTimer)
 	for (Mesh& mesh : m_Meshes)
 	{
 		mesh.RotateY(m_MeshRotationAngle * pTimer->GetElapsed());
+		VertexTransformationFunction(mesh);
 	}
 }
 
-void Renderer::Render()
+void Renderer::Render() const
 {
 	//@START
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
 
 	ClearBuffers(100, 100, 100);
-	VertexTransformationFunction(m_Meshes);
-	RenderMesh(m_Meshes[0]);
+
+	for (const Mesh& mesh : m_Meshes)
+	{
+		RenderMesh(mesh);
+	}
 
 	//@END
 	//Update SDL Surface
@@ -122,7 +126,7 @@ void dae::Renderer::CycleCullMode()
 	m_CurrentCullMode = static_cast<CullMode>((static_cast<int>(m_CurrentCullMode) + 1) % enumSize);
 }
 
-void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
+void dae::Renderer::VertexTransformationFunction(Mesh& mesh) const
 {
 	// Precompute the viewProjectionMatrix for each mesh
 	Matrix viewProjectionMatrix{ m_Camera.GetViewMatrix() * m_Camera.GetProjectionMatrix() };
@@ -131,54 +135,50 @@ void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshes) const
 	const float halfWidth{ m_fWidth * .5f };
 	const float halfHeight{ m_fHeight * .5f };
 
-	// Iterate over each mesh
-	for (Mesh& mesh : meshes)
+	// Precompute the viewProjectionMatrix for this mesh.
+	viewProjectionMatrix = mesh.worldMatrix * viewProjectionMatrix;
+
+	// Use a reference to the mesh vertices and vertices_out vectors
+	// to avoid repeated calls to the mesh accessor functions.
+	const std::vector<Vertex>& vertices{ mesh.vertices };
+	std::vector<Vertex_Out>& verticesOut{ mesh.vertices_out };
+
+	// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
+	// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
+	if (verticesOut.empty())
 	{
-		// Precompute the viewProjectionMatrix for this mesh.
-		viewProjectionMatrix = mesh.worldMatrix * viewProjectionMatrix;
-
-		// Use a reference to the mesh vertices and vertices_out vectors
-		// to avoid repeated calls to the mesh accessor functions.
-		const std::vector<Vertex>& vertices{ mesh.vertices };
-		std::vector<Vertex_Out>& verticesOut{ mesh.vertices_out };
-
-		// If the vertices_out vector is empty, initialize it to be the same size as the vertices vector
-		// and copy the vertex color, UV, normal, and tangent data into the vertices_out vector.
-		if (verticesOut.empty())
+		verticesOut.reserve(vertices.size());
+		for (const Vertex& vertex : vertices)
 		{
-			verticesOut.reserve(vertices.size());
-			for (const Vertex& vertex : vertices)
-			{
-				verticesOut.emplace_back(Vertex_Out{ {}, vertex.color, vertex.uv, vertex.normal, vertex.tangent });
-			}
+			verticesOut.emplace_back(Vertex_Out{ {}, vertex.color, vertex.uv, vertex.normal, vertex.tangent });
 		}
+	}
 
-		// Iterate over the vertices of the mesh using a range-based for loop.
-		for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
-		{
-			// Transform the vertex position using the precomputed viewProjectionMatrix
-			vertex.position = viewProjectionMatrix.TransformPoint({ vertices[i].position, 1.f });
+	// Iterate over the vertices of the mesh using a range-based for loop.
+	for (int i{ 0 }; Vertex_Out & vertex : verticesOut)
+	{
+		// Transform the vertex position using the precomputed viewProjectionMatrix
+		vertex.position = viewProjectionMatrix.TransformPoint({ vertices[i].position, 1.f });
 
-			// Transform the normal and tangent vectors using the world matrix of the mesh
-			vertex.normal = mesh.worldMatrix.TransformVector(vertices[i].normal);
-			vertex.tangent = mesh.worldMatrix.TransformVector(vertices[i].tangent);
+		// Transform the normal and tangent vectors using the world matrix of the mesh
+		vertex.normal = mesh.worldMatrix.TransformVector(vertices[i].normal);
+		vertex.tangent = mesh.worldMatrix.TransformVector(vertices[i].tangent);
 
-			// Compute the view direction vector as the difference between the transformed vertex position
-			// and the origin of the camera.
-			vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].position) - m_Camera.GetPosition();
+		// Compute the view direction vector as the difference between the transformed vertex position
+		// and the origin of the camera.
+		vertex.viewDirection = mesh.worldMatrix.TransformPoint(vertices[i].position) - m_Camera.GetPosition();
 
-			// Divide the x, y, and z coordinates of the position by the w coordinate.
-			vertex.position.x /= vertex.position.w;
-			vertex.position.y /= vertex.position.w;
-			vertex.position.z /= vertex.position.w;
+		// Divide the x, y, and z coordinates of the position by the w coordinate.
+		vertex.position.x /= vertex.position.w;
+		vertex.position.y /= vertex.position.w;
+		vertex.position.z /= vertex.position.w;
 
-			// Transform the x and y coordinates of the position from normalized device coordinates
-			// to screen space coordinates.
-			vertex.position.x = (vertex.position.x + 1.f) * halfWidth;
-			vertex.position.y = (1.f - vertex.position.y) * halfHeight;
+		// Transform the x and y coordinates of the position from normalized device coordinates
+		// to screen space coordinates.
+		vertex.position.x = (vertex.position.x + 1.f) * halfWidth;
+		vertex.position.y = (1.f - vertex.position.y) * halfHeight;
 
-			++i;
-		}
+		++i;
 	}
 }
 
@@ -197,8 +197,6 @@ void Renderer::InitializeMesh(const char* path, const Matrix& worldMatrix, const
 	m_Meshes.back().primitiveTopology = topology;
 	m_Meshes.back().worldMatrix = worldMatrix;
 	Utils::ParseOBJ(path, m_Meshes.back().vertices, m_Meshes.back().indices);
-
-	VertexTransformationFunction(m_Meshes);
 }
 
 bool Renderer::IsOutsideViewFrustum(const Vertex_Out& v) const

@@ -31,7 +31,7 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void Render();
+		void Render() const;
 
 		void CycleShadingMode();
 		void CycleCullMode();
@@ -87,10 +87,8 @@ namespace dae
 		ColorRGB PixelShading(const Vertex_Out& v) const;
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
-		void VertexTransformationFunction(std::vector<Mesh>& meshes) const;
+		void VertexTransformationFunction(Mesh& mesh) const;
 		void CalculateBoundingBox(const Vertex_Out& v0, const Vertex_Out& v1, const Vertex_Out& v2, Int2& min, Int2& max) const;
-		// Function that loops over the bounding box
-
 		void InitializeMesh(const char* path, const Matrix& worldMatrix = {}, const PrimitiveTopology& topology = PrimitiveTopology::TriangleList);
 
 		// Function that checks if a vertex is outside the view frustum
